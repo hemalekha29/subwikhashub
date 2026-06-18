@@ -1,0 +1,129 @@
+.wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--black-border);
+  background: var(--black-card);
+}
+
+/* ── TRIGGER BUTTON ── */
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 18px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.25s ease, background 0.25s ease;
+  background: transparent;
+}
+
+.trigger:hover,
+.triggerActive {
+  color: var(--gold);
+  background: var(--gold-muted);
+}
+
+.trigger svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.trigger span {
+  flex: 1;
+  text-align: left;
+}
+
+.arrow {
+  font-size: 1rem;
+  color: var(--gold);
+  opacity: 0.5;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  display: inline-block;
+  line-height: 1;
+}
+
+.arrowUp {
+  transform: rotate(90deg);
+  opacity: 1;
+}
+
+/* ── SHARE PANEL ── */
+.panel {
+  display: flex;
+  align-items: stretch;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.3s ease;
+  opacity: 0;
+  border-top: 0px solid var(--black-border);
+}
+
+.panelOpen {
+  max-height: 80px;
+  opacity: 1;
+  border-top: 1px solid var(--black-border);
+}
+
+.option {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 8px;
+  cursor: pointer;
+  background: transparent;
+  transition: background 0.2s ease, color 0.2s ease;
+  color: var(--text-secondary);
+}
+
+.option:hover {
+  background: var(--gold-muted);
+  color: var(--gold);
+}
+
+.option:hover .optionIcon {
+  transform: scale(1.18);
+}
+
+.optionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--black-border);
+  color: inherit;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.option:hover .optionIcon {
+  border-color: var(--gold-muted);
+}
+
+.optionLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.divider {
+  width: 1px;
+  background: var(--black-border);
+  flex-shrink: 0;
+}

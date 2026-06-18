@@ -4,6 +4,29 @@ import { useCart } from '../../context/CartContext';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
 
+function CardShareBtn({ product, e }) {
+  const handleShare = async (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    const url = `${window.location.origin}/product/${product.id}`;
+    if (navigator.share) {
+      navigator.share({ title: product.name, text: product.tagline, url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast.success('Link copied!');
+    }
+  };
+  return (
+    <button className={styles.shareBtn} onClick={handleShare} aria-label="Share product">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </button>
+  );
+}
+
 export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
@@ -80,6 +103,8 @@ export default function ProductCard({ product }) {
           {product.badge && <span className={styles.badge}>{product.badge}</span>}
           {discount > 0 && <span className={styles.discount}>−{discount}%</span>}
         </div>
+
+        <CardShareBtn product={product} />
 
         <div className={`${styles.overlay} ${hovered ? styles.overlayVisible : ''}`}>
           <button className={`btn-gold ${styles.addBtn}`} onClick={handleAddToCart}>

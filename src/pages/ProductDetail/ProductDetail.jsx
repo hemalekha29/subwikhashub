@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { products } from '../../data/products';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import ShareStrip from '../../components/ShareStrip/ShareStrip';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
@@ -206,6 +207,9 @@ export default function ProductDetail() {
               Add to Cart
             </button>
           </div>
+
+          {/* Share */}
+          <ShareStrip product={product} />
 
           {/* Trust Badges */}
           <div className={styles.trust}>
