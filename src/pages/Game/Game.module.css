@@ -1,0 +1,245 @@
+.page {
+  min-height: 100vh;
+  padding: 120px 24px 80px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40px;
+}
+
+/* ── HEADER ── */
+.header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 600px;
+}
+
+.title {
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--white);
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.tiers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+  padding: 10px 18px;
+  min-width: 90px;
+  transition: border-color 0.3s;
+}
+
+.tier:hover {
+  border-color: var(--gold-muted);
+}
+
+.tierDiscount {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  color: var(--gold);
+}
+
+.tierTime {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── STATS ── */
+.stats {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.stat {
+  text-align: center;
+}
+
+.statVal {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  color: var(--gold);
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 0.6rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* ── CARD GRID ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 84px);
+  gap: 10px;
+}
+
+/* ── CARD ── */
+.card {
+  width: 84px;
+  height: 100px;
+  perspective: 600px;
+  cursor: pointer;
+}
+
+.cardInner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.45s cubic-bezier(0.4, 0.2, 0.2, 1);
+  border-radius: 12px;
+}
+
+.cardFlipped .cardInner {
+  transform: rotateY(180deg);
+}
+
+.cardFront,
+.cardBack {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.cardFront {
+  background: linear-gradient(135deg, var(--black-card), #1a1a1a);
+  border: 1px solid var(--black-border);
+  color: var(--gold);
+  font-size: 1.5rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.card:hover:not(.cardFlipped) .cardFront {
+  border-color: var(--gold-muted);
+  box-shadow: 0 0 16px rgba(201,168,76,0.12);
+}
+
+.cardBack {
+  background: var(--black-card);
+  border: 1px solid var(--gold-muted);
+  font-size: 2rem;
+  transform: rotateY(180deg);
+}
+
+.cardMatched .cardFront,
+.cardMatched .cardBack {
+  border-color: rgba(74, 222, 128, 0.5);
+  background: rgba(74, 222, 128, 0.06);
+}
+
+/* ── HINT ── */
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  animation: pulse-gold 2s ease-in-out infinite;
+}
+
+/* ── RESULT ── */
+.result {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 40px;
+  max-width: 480px;
+  width: 100%;
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.resultGlow {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.resultBadge {
+  font-family: var(--font-serif);
+  font-size: 5rem;
+  color: var(--gold);
+  line-height: 1;
+  filter: drop-shadow(0 0 20px rgba(201,168,76,0.4));
+  animation: float 3s ease-in-out infinite;
+}
+
+.resultTitle {
+  font-size: 1.8rem;
+  color: var(--white);
+}
+
+.resultSub {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.resultNote {
+  font-size: 0.78rem;
+  color: var(--gold);
+  background: var(--gold-muted);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 8px;
+  padding: 10px 20px;
+  width: 100%;
+}
+
+.resultActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 500px) {
+  .grid {
+    grid-template-columns: repeat(5, 60px);
+    gap: 6px;
+  }
+  .card { width: 60px; height: 74px; }
+  .stats { gap: 24px; }
+  .result { padding: 40px 20px; }
+}

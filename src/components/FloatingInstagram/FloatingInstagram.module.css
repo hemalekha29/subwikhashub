@@ -1,0 +1,58 @@
+.btn {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 900;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(214, 36, 159, 0.4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn:hover {
+  transform: scale(1.12) rotate(-5deg);
+  box-shadow: 0 8px 32px rgba(214, 36, 159, 0.6);
+}
+
+.btn:hover .tooltip { opacity: 1; transform: translateX(0); }
+
+.pulse, .pulse2 {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(214, 36, 159, 0.35);
+  animation: igPulse 2.2s ease-out infinite;
+}
+
+.pulse2 { animation-delay: 1s; }
+
+@keyframes igPulse {
+  0%   { transform: scale(1); opacity: 0.6; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+.tooltip {
+  position: absolute;
+  right: 72px;
+  background: #111;
+  color: #fff;
+  font-size: 0.75rem;
+  font-family: 'Nunito', sans-serif;
+  padding: 6px 14px;
+  white-space: nowrap;
+  border: 1px solid #333;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.25s ease;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+@media (max-width: 600px) {
+  .btn { bottom: 20px; right: 20px; width: 52px; height: 52px; }
+}
