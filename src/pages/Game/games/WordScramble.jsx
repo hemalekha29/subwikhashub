@@ -1,17 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
 import { scoreToDiscount } from '../Game';
 
-const WORDS = [
-  { word: 'ANNIVERSARY', scrambled: 'RASVINRYANE' },
-  { word: 'HANDCRAFTED', scrambled: 'DNCEFHARDTA' },
-  { word: 'PERSONALIZE', scrambled: 'LEEIANPROZSZ' },
-  { word: 'CELEBRATION', scrambled: 'ONIEATBERCLL' },
-  { word: 'KEEPSAKE', scrambled: 'ESEAPKEK' },
-  { word: 'CUSTOMIZED', scrambled: 'DZOMITCUSE' },
-  { word: 'CHOCOLATE', scrambled: 'COHLCEATO' },
+const WORD_POOL = [
+  'ANNIVERSARY', 'HANDCRAFTED', 'PERSONALIZE', 'CELEBRATION',
+  'KEEPSAKE', 'CUSTOMIZED', 'CHOCOLATE', 'MEMORABLE', 'BOUQUET',
+  'KEYCHAIN', 'GIFTING', 'RESIN', 'SURPRISE', 'VALENTINE',
+  'PACKAGING', 'SUNFLOWER', 'BIRTHDAY', 'PRECIOUS', 'ROMANTIC',
+  'GLITTER', 'TREASURE', 'OCCASION', 'WORKSHOP', 'BLOSSOM',
+  'DEDICATE', 'CRAFTING', 'SPARKLE', 'PRESENT', 'LOVINGLY',
+  'MEMORIES', 'WRAPPING', 'CHARMING', 'SENTIMENTAL', 'HEARTFELT',
 ];
 
 const TIME_PER_WORD = 18;
+
+function scramble(word) {
+  const arr = word.split('');
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  const result = arr.join('');
+  return result === word ? scramble(word) : result;
+}
+
+function buildShuffledWords() {
+  const pool = [...WORD_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 7).map(w => ({ word: w, scrambled: scramble(w) }));
+}
 
 export default function WordScramble({ onComplete }) {
   const [round, setRound] = useState(0);
@@ -24,6 +43,7 @@ export default function WordScramble({ onComplete }) {
   const scoreRef = useRef(0);
   const roundRef = useRef(0);
   const lockedRef = useRef(false);
+  const wordsRef = useRef(buildShuffledWords());
 
   useEffect(() => {
     startTimer();
@@ -57,7 +77,7 @@ export default function WordScramble({ onComplete }) {
     if (lockedRef.current) return;
     lockedRef.current = true;
     clearInterval(timerRef.current);
-    const isCorrect = input.trim().toUpperCase() === WORDS[roundRef.current].word;
+    const isCorrect = input.trim().toUpperCase() === wordsRef.current[roundRef.current].word;
     setFeedback(isCorrect ? 'correct' : 'wrong');
     setLocked(true);
     if (isCorrect) {
@@ -69,8 +89,8 @@ export default function WordScramble({ onComplete }) {
 
   function advance() {
     const nextRound = roundRef.current + 1;
-    if (nextRound >= WORDS.length) {
-      onComplete(scoreToDiscount(scoreRef.current, WORDS.length));
+    if (nextRound >= wordsRef.current.length) {
+      onComplete(scoreToDiscount(scoreRef.current, wordsRef.current.length));
       return;
     }
     roundRef.current = nextRound;
@@ -80,13 +100,13 @@ export default function WordScramble({ onComplete }) {
     setLocked(false);
   }
 
-  const current = WORDS[round];
+  const current = wordsRef.current[round];
 
   return (
     <div style={{ maxWidth: '460px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-          Word {round + 1} / {WORDS.length}
+          Word {round + 1} / {wordsRef.current.length}
         </span>
         <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: 'var(--gold)' }}>
           Score: {score}
