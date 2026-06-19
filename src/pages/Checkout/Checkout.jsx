@@ -11,7 +11,7 @@ const EMAILJS_SERVICE_ID  = 'service_tq7y4u2';
 const EMAILJS_TEMPLATE_ID = 'template_wd6f6bw';
 const EMAILJS_PUBLIC_KEY  = 'kmmr3Ac8anXDDcvyn';
 
-const RAZORPAY_KEY = 'rzp_test_T33c0ExP1PrBxL';
+const RAZORPAY_KEY = 'rzp_live_T3PKJRpVYTxbOi';
 
 function getGameDiscount() {
   try {
