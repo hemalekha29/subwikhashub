@@ -1,24 +1,53 @@
 import { useState, useEffect, useRef } from 'react';
 import { scoreToDiscount } from '../Game';
 
-const ROUNDS = [
-  { emojis: ['🌸','🌻','🌹','💐','🌷','🏵️','🌺','🎁'], odd: 7 },
-  { emojis: ['🎁','🧸','🎀','🎊','🎈','🎶','🕯️','🍕'], odd: 7 },
-  { emojis: ['🍫','🍭','🍬','🍩','🧁','🍰','🎂','🔑'], odd: 7 },
-  { emojis: ['💍','💎','👑','✨','🌟','⭐','💫','🚗'], odd: 7 },
-  { emojis: ['❤️','💝','💖','💗','💓','💞','💕','🎃'], odd: 7 },
+// Odd emoji is less obvious — all from similar category, one subtle intruder
+const BASE_ROUNDS = [
+  { emojis: ['🌸','🌺','🌻','🌹','🌷','🏵️','💮','🌼'], odd: 4 },   // all flowers, rose is different shape
+  { emojis: ['🎁','🎀','🎊','🎉','🎈','🎏','🎐','🛍️'], odd: 7 },   // shopping bag sneaks in
+  { emojis: ['🍫','🍭','🍬','🍩','🧁','🍰','🍮','🥐'], odd: 7 },   // croissant not a sweet treat gift
+  { emojis: ['💍','💎','👑','✨','🌟','⭐','💫','🪙'], odd: 7 },     // coin is not ornament
+  { emojis: ['❤️','💝','💖','💗','💓','💞','💕','💢'], odd: 7 },    // angry heart intruder
+  { emojis: ['🕯️','🪔','🔦','💡','🌕','🌟','✨','🔆'], odd: 2 },   // torch is not a decorative light
+  { emojis: ['🎶','🎵','🎸','🎹','🎺','🎻','🥁','📻'], odd: 7 },   // radio not an instrument you play
 ];
 
-const ROUND_TIME = 10;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Pick 5 random rounds and shuffle each emoji order (odd position changes)
+function buildRounds() {
+  const picked = shuffle(BASE_ROUNDS).slice(0, 5);
+  return picked.map(({ emojis, odd }) => {
+    const oddEmoji = emojis[odd];
+    // Rebuild with shuffled positions
+    const rest = emojis.filter((_, i) => i !== odd);
+    const shuffledRest = shuffle(rest);
+    const newOddPos = Math.floor(Math.random() * 8);
+    const newEmojis = [...shuffledRest];
+    newEmojis.splice(newOddPos, 0, oddEmoji);
+    return { emojis: newEmojis.slice(0, 8), odd: newOddPos };
+  });
+}
+
+const ROUND_TIME = 6;
 
 export default function OddOneOut({ onComplete }) {
+  const [rounds] = useState(() => buildRounds());
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
-  const [feedback, setFeedback] = useState(null); // null | { chosen, correct }
+  const [feedback, setFeedback] = useState(null);
   const [locked, setLocked] = useState(false);
   const timerRef = useRef(null);
   const scoreRef = useRef(0);
+  const lockedRef = useRef(false);
 
   useEffect(() => {
     startTimer();
@@ -28,11 +57,12 @@ export default function OddOneOut({ onComplete }) {
   function startTimer() {
     clearInterval(timerRef.current);
     setTimeLeft(ROUND_TIME);
+    lockedRef.current = false;
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
         if (t <= 1) {
           clearInterval(timerRef.current);
-          handleTimeout();
+          if (!lockedRef.current) handleTimeout();
           return 0;
         }
         return t - 1;
@@ -41,29 +71,30 @@ export default function OddOneOut({ onComplete }) {
   }
 
   function handleTimeout() {
-    setFeedback({ chosen: -1, correct: ROUNDS[round].odd });
+    lockedRef.current = true;
+    setFeedback({ chosen: -1, correct: rounds[round].odd });
     setLocked(true);
-    setTimeout(() => advance(), 1200);
+    setTimeout(() => advance(), 1400);
   }
 
   function handleClick(idx) {
-    if (locked) return;
+    if (lockedRef.current) return;
+    lockedRef.current = true;
     clearInterval(timerRef.current);
-    const isCorrect = idx === ROUNDS[round].odd;
+    const isCorrect = idx === rounds[round].odd;
     if (isCorrect) {
-      const newScore = scoreRef.current + 1;
-      scoreRef.current = newScore;
-      setScore(newScore);
+      scoreRef.current += 1;
+      setScore(scoreRef.current);
     }
-    setFeedback({ chosen: idx, correct: ROUNDS[round].odd });
+    setFeedback({ chosen: idx, correct: rounds[round].odd });
     setLocked(true);
     setTimeout(() => advance(), 1000);
   }
 
   function advance() {
     const nextRound = round + 1;
-    if (nextRound >= ROUNDS.length) {
-      onComplete(scoreToDiscount(scoreRef.current, ROUNDS.length));
+    if (nextRound >= rounds.length) {
+      onComplete(scoreToDiscount(scoreRef.current, rounds.length));
       return;
     }
     setRound(nextRound);
@@ -71,7 +102,7 @@ export default function OddOneOut({ onComplete }) {
     setLocked(false);
   }
 
-  const current = ROUNDS[round];
+  const current = rounds[round];
 
   function getButtonStyle(idx) {
     const base = {
@@ -98,18 +129,18 @@ export default function OddOneOut({ onComplete }) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', maxWidth: '480px', width: '100%' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px', maxWidth: '480px', width: '100%' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
         <span style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-          Round {round + 1} / {ROUNDS.length}
+          Round {round + 1} / {rounds.length}
         </span>
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.2rem', color: 'var(--gold)' }}>
+        <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: 'var(--gold)' }}>
           Score: {score}
         </span>
       </div>
 
       <p style={{ fontSize: '0.9rem', color: 'var(--white)', textAlign: 'center' }}>
-        Find the one that doesn't belong!
+        Quick! Find the one that doesn't belong.
       </p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 72px)', gap: '12px' }}>
@@ -120,19 +151,18 @@ export default function OddOneOut({ onComplete }) {
         ))}
       </div>
 
-      {/* Timer bar */}
       <div style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>TIME</span>
-        <div style={{ flex: 1, height: '6px', background: 'var(--black-border)', borderRadius: '3px', overflow: 'hidden' }}>
+        <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>TIME</span>
+        <div style={{ flex: 1, height: '5px', background: 'var(--black-border)', borderRadius: '3px', overflow: 'hidden' }}>
           <div style={{
             height: '100%',
             width: `${(timeLeft / ROUND_TIME) * 100}%`,
-            background: timeLeft <= 3 ? '#f87171' : 'var(--gold)',
+            background: timeLeft <= 2 ? '#f87171' : 'var(--gold)',
             borderRadius: '3px',
             transition: 'width 1s linear',
           }} />
         </div>
-        <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: timeLeft <= 3 ? '#f87171' : 'var(--gold)', minWidth: '24px', textAlign: 'right' }}>
+        <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1rem', color: timeLeft <= 2 ? '#f87171' : 'var(--gold)', minWidth: '20px', textAlign: 'right' }}>
           {timeLeft}
         </span>
       </div>

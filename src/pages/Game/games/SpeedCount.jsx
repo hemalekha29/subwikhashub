@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { scoreToDiscount } from '../Game';
 
 const POOL = ['🎁','🌸','💝','✨','💐','🎀'];
-const GRID_SIZE = 20; // 5×4
-const SHOW_DURATION = 2000;
+const GRID_SIZE = 25; // 5×5
+const SHOW_DURATION = 1200;
 const TOTAL_ROUNDS = 5;
 
 function generateRound(targetEmoji) {
@@ -15,7 +15,7 @@ function generateRound(targetEmoji) {
 }
 
 function makeOptions(correct) {
-  const offsets = [-3, -2, -1, 1, 2, 3];
+  const offsets = [-2, -1, 1, 2];
   const candidates = [];
   for (const d of offsets) {
     const v = correct + d;
@@ -126,10 +126,10 @@ export default function SpeedCount({ onComplete }) {
           <p style={{ fontSize: '0.85rem', color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             Memorise the grid!
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 48px)', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 44px)', gap: '6px' }}>
             {roundData.grid.map((emoji, i) => (
               <div key={i} style={{
-                width: '48px', height: '48px',
+                width: '44px', height: '44px',
                 background: 'var(--black-card)',
                 border: '1px solid var(--black-border)',
                 borderRadius: '8px',
@@ -141,7 +141,7 @@ export default function SpeedCount({ onComplete }) {
             ))}
           </div>
           <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Grid disappears in 2 seconds...
+            Grid disappears in 1.2 seconds — be fast!
           </p>
         </>
       ) : (

@@ -75,8 +75,9 @@
   position: relative;
   z-index: 3;
   text-align: center;
-  padding: 0 24px;
+  padding: 100px 24px 80px;
   max-width: 860px;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -168,34 +169,38 @@
 .heroStats {
   display: flex;
   align-items: center;
-  gap: 28px;
+  gap: 0;
   animation: fadeUp 1s ease 0.6s both;
+  margin-bottom: 60px;
+}
+
+.statGroup {
+  display: flex;
+  align-items: center;
 }
 
 .stat {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 28px;
+  gap: 5px;
+  padding: 0 32px;
 }
-
-.stat:last-child .statDivider { display: none; }
 
 .statNum {
   font-family: var(--font-serif);
   font-size: 1.7rem;
   color: var(--gold);
-  display: block;
+  line-height: 1;
   text-align: center;
 }
 
 .statLabel {
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(255,255,255,0.45);
-  display: block;
   text-align: center;
-  margin-top: 2px;
 }
 
 .statDivider {
@@ -208,7 +213,7 @@
 /* Scroll hint */
 .scrollHint {
   position: absolute;
-  bottom: 36px;
+  bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 3;
@@ -216,11 +221,12 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  color: rgba(255,255,255,0.35);
-  font-size: 0.6rem;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.58rem;
   letter-spacing: 0.25em;
   text-transform: uppercase;
   animation: float 2.5s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .scrollMouse {
@@ -585,8 +591,11 @@
   .productGrid { grid-template-columns: 1fr 1fr; gap: 12px; }
   .uspStrip { grid-template-columns: 1fr; padding: 40px 20px; }
   .heroBtns { flex-direction: column; align-items: center; }
-  .heroStats { gap: 16px; }
+  .heroStats { gap: 0; }
+  .stat { padding: 0 16px; }
+  .statNum { font-size: 1.3rem; }
   .heroLogo { height: 80px; }
+  .heroContent { padding: 80px 16px 60px; }
   .heroTitle { font-size: clamp(2.4rem, 8vw, 4rem); }
   .ctaSection { padding: 80px 20px; }
 }

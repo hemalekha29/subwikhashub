@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { products } from '../../data/products';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
@@ -63,8 +64,33 @@ export default function ProductDetail() {
     navigate('/checkout');
   };
 
+  const BASE = 'https://subwikhashub.vercel.app';
+  const pageTitle = `${product.name} | Subwikha's Hub`;
+  const pageDesc = product.description?.substring(0, 160) ?? `Buy ${product.name} from Subwikha's Hub – handcrafted with love.`;
+  const pageImg = `${BASE}${product.images[0]}`;
+  const pageUrl = `${BASE}/product/${product.id}`;
+
   return (
     <div className={`page-container ${styles.detail}`}>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDesc} />
+        <link rel="canonical" href={pageUrl} />
+        <meta property="og:type" content="product" />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDesc} />
+        <meta property="og:image" content={pageImg} />
+        <meta property="og:image:width" content="800" />
+        <meta property="og:image:height" content="800" />
+        <meta property="og:url" content={pageUrl} />
+        <meta property="product:price:amount" content={String(activePrice)} />
+        <meta property="product:price:currency" content="INR" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDesc} />
+        <meta name="twitter:image" content={pageImg} />
+      </Helmet>
+
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link to="/">Home</Link>

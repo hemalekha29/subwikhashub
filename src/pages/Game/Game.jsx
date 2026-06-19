@@ -5,7 +5,6 @@ import styles from './Game.module.css';
 import MemoryMatch from './games/MemoryMatch';
 import GiftQuiz from './games/GiftQuiz';
 import WordScramble from './games/WordScramble';
-import TapRush from './games/TapRush';
 import PatternEcho from './games/PatternEcho';
 import OddOneOut from './games/OddOneOut';
 import EmojiDecode from './games/EmojiDecode';
@@ -16,7 +15,6 @@ const GAMES = [
   MemoryMatch,
   GiftQuiz,
   WordScramble,
-  TapRush,
   PatternEcho,
   OddOneOut,
   EmojiDecode,
@@ -28,7 +26,6 @@ const GAME_TITLES = [
   'Memory Match',
   'Gift Quiz',
   'Word Scramble',
-  'Tap Rush',
   'Pattern Echo',
   'Odd One Out',
   'Emoji Decode',
@@ -44,7 +41,7 @@ export function scoreToDiscount(score, max) {
   return 3;
 }
 
-const gameIndex = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)) % 9;
+const gameIndex = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000)) % 8;
 
 export default function Game() {
   const [result, setResult] = useState(null);

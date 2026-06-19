@@ -70,7 +70,7 @@ export default function Cart() {
                 <span className={styles.totalAmt}>₹{total.toLocaleString('en-IN')}</span>
               </div>
               <p className={styles.freeShip}>
-                {total >= 999 ? '✓ Free shipping included' : `Add ₹${(999 - total).toLocaleString('en-IN')} for free shipping`}
+                {total >= 500 ? '✓ Free shipping included' : `Add ₹${(500 - total).toLocaleString('en-IN')} for free shipping`}
               </p>
               <Link
                 to="/checkout"

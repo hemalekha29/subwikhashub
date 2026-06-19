@@ -1,5 +1,6 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { products, testimonials } from '../../data/products';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
@@ -63,6 +64,14 @@ export default function Home() {
 
   return (
     <div className={styles.home}>
+      <Helmet>
+        <title>Subwikha's Hub | Customized Gifts, Chocolate Bouquets &amp; Resin Art</title>
+        <meta name="description" content="Subwikha's Hub – Premium handcrafted gifts: chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes for every occasion." />
+        <link rel="canonical" href="https://subwikhashub.vercel.app" />
+        <meta property="og:title" content="Subwikha's Hub | Where Memories Become Gifts" />
+        <meta property="og:description" content="Premium handcrafted gifts: chocolate bouquets, resin art, personalized keepsakes &amp; more — crafted with love." />
+        <meta property="og:url" content="https://subwikhashub.vercel.app" />
+      </Helmet>
 
       {/* ── HERO ── */}
       <section className={styles.hero}>
@@ -112,9 +121,11 @@ export default function Home() {
               { num: '100%', label: 'Handcrafted' },
               { num: '2024', label: 'Est.' },
             ].map(({ num, label }, i) => (
-              <div key={i} className={styles.stat}>
-                <span className={styles.statNum}>{num}</span>
-                <span className={styles.statLabel}>{label}</span>
+              <div key={i} className={styles.statGroup}>
+                <div className={styles.stat}>
+                  <span className={styles.statNum}>{num}</span>
+                  <span className={styles.statLabel}>{label}</span>
+                </div>
                 {i < 2 && <div className={styles.statDivider} />}
               </div>
             ))}

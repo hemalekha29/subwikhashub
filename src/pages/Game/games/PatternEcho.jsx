@@ -3,9 +3,9 @@ import { scoreToDiscount } from '../Game';
 
 const EMOJIS = ['🎁', '🌸', '💝', '✨', '💐', '🎀', '🏵️', '🎊'];
 const MAX_ROUNDS = 10;
-const MAX_MISTAKES = 3;
-const FLASH_DURATION = 700;
-const FLASH_GAP = 200;
+const MAX_MISTAKES = 2;
+const FLASH_DURATION = 420;
+const FLASH_GAP = 100;
 
 function generateSequence(length) {
   return Array.from({ length }, () => Math.floor(Math.random() * EMOJIS.length));
@@ -103,7 +103,7 @@ export default function PatternEcho({ onComplete }) {
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
           <p style={{ color: 'var(--text-secondary)', maxWidth: '360px', lineHeight: '1.7' }}>
             Watch the emoji sequence, then repeat it by clicking. Sequence grows each round.
-            3 mistakes and it's game over. Go up to 10 rounds!
+            Only 2 mistakes allowed — it's game over after that. Go up to 10 rounds!
           </p>
           <button className="btn-gold" onClick={begin}>Start Game</button>
         </div>
