@@ -1,8 +1,9 @@
-﻿import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
-import { db } from '../../firebase';
+import { db, storage } from '../../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
 import styles from './Checkout.module.css';
@@ -25,27 +26,67 @@ function getGameDiscount() {
   }
 }
 
+function needsPhoto(item) {
+  return (item.variants || []).some(v => /photo/i.test(v));
+}
+
 export default function Checkout() {
   const { items, total, dispatch } = useCart();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     firstName: '', lastName: '', email: '', phone: '',
     address: '', city: '', state: '', pincode: '',
     giftMessage: '',
   });
   const [errors, setErrors] = useState({});
+  const [photoFiles, setPhotoFiles] = useState({});
+  const fileInputRefs = useRef({});
 
   const gameDiscount = getGameDiscount();
   const discountAmount = gameDiscount ? Math.floor(total * gameDiscount / 100) : 0;
   const shipping = (total - discountAmount) >= 500 ? 0 : 80;
   const grandTotal = total - discountAmount + shipping;
 
+  const photoItems = items.filter(needsPhoto);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
     if (errors[name]) setErrors(err => ({ ...err, [name]: '' }));
   };
+
+  function handlePhotoChange(itemId, files) {
+    const arr = Array.from(files).filter(f => f.size <= 15 * 1024 * 1024).slice(0, 5);
+    setPhotoFiles(prev => ({ ...prev, [itemId]: [...(prev[itemId] || []), ...arr].slice(0, 5) }));
+    setErrors(prev => ({ ...prev, [`photo_${itemId}`]: '' }));
+  }
+
+  function removePhoto(itemId, index) {
+    setPhotoFiles(prev => ({
+      ...prev,
+      [itemId]: (prev[itemId] || []).filter((_, i) => i !== index),
+    }));
+  }
+
+  async function uploadOrderPhotos(orderId) {
+    const links = {};
+    for (const item of photoItems) {
+      const files = photoFiles[item.id] || [];
+      if (!files.length) continue;
+      const urls = [];
+      for (const file of files) {
+        const path = `orders/${orderId}/${item.id}/${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, path);
+        await uploadBytes(storageRef, file);
+        const url = await getDownloadURL(storageRef);
+        urls.push(url);
+      }
+      links[item.name] = urls;
+    }
+    return links;
+  }
 
   const validate = () => {
     const errs = {};
@@ -57,6 +98,11 @@ export default function Checkout() {
     if (!form.city.trim()) errs.city = 'Required';
     if (!form.state.trim()) errs.state = 'Required';
     if (!form.pincode.trim() || !/^\d{6}$/.test(form.pincode)) errs.pincode = '6-digit pincode required';
+    photoItems.forEach(item => {
+      if (!photoFiles[item.id]?.length) {
+        errs[`photo_${item.id}`] = `Please upload at least one photo for ${item.name}`;
+      }
+    });
     return errs;
   };
 
@@ -66,6 +112,7 @@ export default function Checkout() {
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
       toast.error('Please fix the errors below');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -78,7 +125,7 @@ export default function Checkout() {
 
     const options = {
       key: RAZORPAY_KEY,
-      amount: grandTotal * 100, // in paise
+      amount: grandTotal * 100,
       currency: 'INR',
       name: "Subwikha's Hub",
       description: `${items.length} Gift${items.length > 1 ? 's' : ''}: Where Memories Become Gifts`,
@@ -86,6 +133,18 @@ export default function Checkout() {
       handler: async function (response) {
         const orderId = response.razorpay_order_id || `ORD${Date.now()}`;
         const paymentId = response.razorpay_payment_id;
+
+        // Upload photos
+        let photoLinks = {};
+        if (photoItems.length > 0) {
+          setUploading(true);
+          try {
+            photoLinks = await uploadOrderPhotos(orderId);
+          } catch (err) {
+            console.error('Photo upload failed:', err);
+          }
+          setUploading(false);
+        }
 
         const orderData = {
           orderId,
@@ -107,20 +166,23 @@ export default function Checkout() {
           shipping,
           grandTotal,
           giftMessage: form.giftMessage || '',
+          photos: photoLinks,
           status: 'paid',
           createdAt: serverTimestamp(),
         };
 
-        // Save to Firebase
         try {
           await addDoc(collection(db, 'orders'), orderData);
         } catch (err) {
           console.error('Firebase save failed:', err);
         }
 
-        // Send email notification
         try {
           const itemsList = items.map(i => `${i.name}${i.variant ? ` (${i.variant})` : ''} × ${i.qty} = ₹${i.price * i.qty}`).join('\n');
+          const photoSection = Object.entries(photoLinks).length > 0
+            ? '\n\n━━━ CUSTOMER PHOTOS ━━━\n' + Object.entries(photoLinks).map(([name, urls]) => `📎 ${name}:\n${urls.join('\n')}`).join('\n\n')
+            : '';
+
           await emailjs.send(
             EMAILJS_SERVICE_ID,
             EMAILJS_TEMPLATE_ID,
@@ -128,7 +190,7 @@ export default function Checkout() {
               name: 'Order Alert',
               email: 'enistechteam@gmail.com',
               subject: `New Order ${orderId}: ₹${grandTotal}`,
-              message: `New order received!\n\nOrder ID: ${orderId}\nPayment ID: ${paymentId}\n\nCustomer: ${form.firstName} ${form.lastName}\nEmail: ${form.email}\nPhone: ${form.phone}\nAddress: ${form.address}, ${form.city}, ${form.state} - ${form.pincode}\n\nItems:\n${itemsList}\n\nSubtotal: ₹${total}\nShipping: ₹${shipping}\nTotal: ₹${grandTotal}\n\nGift Message: ${form.giftMessage || 'None'}`,
+              message: `New order received!\n\nOrder ID: ${orderId}\nPayment ID: ${paymentId}\n\nCustomer: ${form.firstName} ${form.lastName}\nEmail: ${form.email}\nPhone: ${form.phone}\nAddress: ${form.address}, ${form.city}, ${form.state} - ${form.pincode}\n\nItems:\n${itemsList}\n\nSubtotal: ₹${total}\nDiscount: ₹${discountAmount}\nShipping: ₹${shipping}\nTotal: ₹${grandTotal}\n\nGift Message: ${form.giftMessage || 'None'}${photoSection}`,
             },
             EMAILJS_PUBLIC_KEY
           );
@@ -157,10 +219,7 @@ export default function Checkout() {
         address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
         gift_message: form.giftMessage,
       },
-      theme: {
-        color: '#c9a84c',
-        backdrop_color: '#0a0a0a',
-      },
+      theme: { color: '#c9a84c', backdrop_color: '#0a0a0a' },
       modal: {
         ondismiss: () => {
           setLoading(false);
@@ -197,13 +256,23 @@ export default function Checkout() {
 
   return (
     <div className={`page-container ${styles.checkout}`}>
+      {uploading && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(10,10,10,0.85)',
+          zIndex: 9999, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 20,
+        }}>
+          <div style={{ width: 48, height: 48, border: '3px solid rgba(201,168,76,0.3)', borderTopColor: 'var(--gold)', borderRadius: '50%', animation: 'rotate 0.8s linear infinite' }} />
+          <p style={{ color: 'var(--gold)', fontSize: '0.9rem', letterSpacing: '0.1em' }}>Uploading your photos...</p>
+        </div>
+      )}
+
       <div className={styles.header}>
         <span className="section-label">Secure Checkout</span>
         <h1 className={styles.title}>Complete Your Order</h1>
       </div>
 
       <div className={styles.inner}>
-        {/* Form */}
         <form className={styles.form} onSubmit={handlePayment} noValidate>
           {/* Contact */}
           <div className={styles.formSection}>
@@ -226,6 +295,90 @@ export default function Checkout() {
             </div>
             <Field label="PIN Code" name="pincode" value={form.pincode} onChange={handleChange} error={errors.pincode} placeholder="6-digit PIN" />
           </div>
+
+          {/* Photo Upload — only if cart has photo products */}
+          {photoItems.length > 0 && (
+            <div className={styles.formSection}>
+              <h3 className={styles.sectionTitle}>
+                Upload Your Photos
+                <span className={styles.optional}> — Required for custom items</span>
+              </h3>
+              {photoItems.map(item => {
+                const files = photoFiles[item.id] || [];
+                const err = errors[`photo_${item.id}`];
+                return (
+                  <div key={item.id} className={styles.photoUploadItem}>
+                    <p className={styles.photoProductName}>📎 {item.name}</p>
+
+                    {files.length === 0 ? (
+                      <label
+                        className={`${styles.photoDropZone} ${err ? styles.photoDropZoneError : ''}`}
+                        onClick={() => fileInputRefs.current[item.id]?.click()}
+                      >
+                        <span className={styles.photoDropIcon}>🖼️</span>
+                        <span className={styles.photoDropText}>Click to upload photos</span>
+                        <span className={styles.photoDropHint}>High resolution JPG / PNG · Max 15 MB each · Up to 5 photos</span>
+                      </label>
+                    ) : (
+                      <>
+                        {/* Thumbnails row */}
+                        <div className={styles.photoThumbs}>
+                          {files.map((f, i) => (
+                            <div key={i} className={styles.photoThumbWrap}>
+                              <img src={URL.createObjectURL(f)} className={styles.photoThumb} alt="" />
+                              <button
+                                type="button"
+                                className={styles.photoThumbRemove}
+                                onClick={() => removePhoto(item.id, i)}
+                              >✕</button>
+                            </div>
+                          ))}
+                          {files.length < 5 && (
+                            <button
+                              type="button"
+                              className={styles.photoAddMore}
+                              onClick={() => fileInputRefs.current[item.id]?.click()}
+                              title="Add more photos"
+                            >+</button>
+                          )}
+                          <span className={styles.photoCount}>{files.length} / 5 photo{files.length > 1 ? 's' : ''}</span>
+                        </div>
+
+                        {/* Side-by-side preview */}
+                        <div className={styles.photoPreviewCard}>
+                          <span className={styles.photoPreviewLabel}>Preview</span>
+                          <div className={styles.photoPreviewInner}>
+                            <div className={styles.photoPreviewSide}>
+                              <img src={item.images[0]} alt={item.name} className={styles.photoPreviewImg} />
+                              <span className={styles.photoPreviewCaption}>Your Product</span>
+                            </div>
+                            <div className={styles.photoPreviewPlus}>✦</div>
+                            <div className={styles.photoPreviewSide}>
+                              <img src={URL.createObjectURL(files[0])} alt="Your photo" className={styles.photoPreviewImg} />
+                              <span className={styles.photoPreviewCaption}>Your Photo</span>
+                            </div>
+                          </div>
+                          <p className={styles.photoPreviewNote}>
+                            We will personalise your {item.name.toLowerCase()} with this photo. Make sure it is clear and high resolution.
+                          </p>
+                        </div>
+                      </>
+                    )}
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: 'none' }}
+                      ref={el => fileInputRefs.current[item.id] = el}
+                      onChange={e => handlePhotoChange(item.id, e.target.files)}
+                    />
+                    {err && <span className={styles.photoErrorMsg}>{err}</span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Gift Message */}
           <div className={styles.formSection}>
@@ -257,7 +410,7 @@ export default function Checkout() {
           <button
             type="submit"
             className={`btn-gold ${styles.payBtn}`}
-            disabled={loading}
+            disabled={loading || uploading}
           >
             {loading ? (
               <span className={styles.spinner} />

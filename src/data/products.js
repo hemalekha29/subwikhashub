@@ -323,11 +323,11 @@ export const products = [
     reviews: 22,
     images: ["/images/bouquet-1.webp", "/images/bouquet-2.webp"],
     description:
-      "A stunning handmade bouquet combining fresh red roses, delicate white flowers and baby's breath, beautifully wrapped in premium black & gold paper and tied with a bold red ribbon bow. Tucked inside are Cadbury Dairy Milk chocolates: making this the ultimate gift for birthdays, anniversaries, or any special moment.",
+      "A stunning handmade bouquet combining fresh red roses, delicate white flowers and baby's breath, beautifully wrapped in premium black & gold paper and tied with a bold red ribbon bow. Tucked inside are your chosen chocolates: making this the ultimate gift for birthdays, anniversaries, or any special moment. Price varies based on size and chocolate selection — DM us to customise.",
     includes: [
       "Fresh red roses & white flowers",
       "Baby's breath & greens",
-      "Cadbury Dairy Milk chocolates",
+      "Chocolates of your choice",
       "Premium black & gold wrapping",
       "Red ribbon bow",
       "Personalized message card",
@@ -335,20 +335,21 @@ export const products = [
     priceVariants: [
       {
         label: "Small",
-        desc: "3 Dairy Milk · 2–3 roses · petite charm",
+        desc: "Petite bouquet · few roses · chocolates included · price based on requirement",
         price: 299,
       },
       {
         label: "Medium",
-        desc: "6 Dairy Milk · 4–5 roses · classic beauty",
+        desc: "Classic bouquet · more roses · chocolates included · price based on requirement",
         price: 499,
       },
       {
         label: "Large",
-        desc: "12 Dairy Milk · 7–8 roses · grand luxury",
+        desc: "Grand bouquet · full roses · chocolates included · price based on requirement",
         price: 699,
       },
     ],
+    variants: ["DM us on Instagram with your size & chocolate preference for exact pricing"],
     deliveryDays: "1-3",
     inStock: true,
     customizable: true,
@@ -535,7 +536,7 @@ export const products = [
 export const testimonials = [
   {
     id: 1,
-    name: "A Happy Customer",
+    name: "Vishal ❤ Priya",
     text: "I ordered the bouquet for my girlfriend and she loved it so much. Thank you Subwikha's Hub: you made the moment truly special!",
     rating: 5,
     gift: "Handmade Bouquet",
