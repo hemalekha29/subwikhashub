@@ -64,7 +64,7 @@ export default function ProductDetail() {
     navigate('/checkout');
   };
 
-  const BASE = 'https://subwikhashub.vercel.app';
+  const BASE = 'https://subwikhahub.vercel.app';
   const pageTitle = `${product.name} | Subwikha's Hub`;
   const pageDesc = product.description?.substring(0, 160) ?? `Buy ${product.name} from Subwikha's Hub – handcrafted with love.`;
   const pageImg = `${BASE}${product.images[0]}`;

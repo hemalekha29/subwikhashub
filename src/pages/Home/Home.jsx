@@ -67,10 +67,10 @@ export default function Home() {
       <Helmet>
         <title>Subwikha's Hub | Customized Gifts, Chocolate Bouquets &amp; Resin Art</title>
         <meta name="description" content="Subwikha's Hub – Premium handcrafted gifts: chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes for every occasion." />
-        <link rel="canonical" href="https://subwikhashub.vercel.app" />
+        <link rel="canonical" href="https://subwikhahub.vercel.app" />
         <meta property="og:title" content="Subwikha's Hub | Where Memories Become Gifts" />
         <meta property="og:description" content="Premium handcrafted gifts: chocolate bouquets, resin art, personalized keepsakes &amp; more — crafted with love." />
-        <meta property="og:url" content="https://subwikhashub.vercel.app" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app" />
       </Helmet>
 
       {/* ── HERO ── */}
