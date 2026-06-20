@@ -5,7 +5,7 @@ import styles from './ShareStrip.module.css';
 export default function ShareStrip({ product }) {
   const [copied, setCopied] = useState(false);
   const [open, setOpen] = useState(false);
-  const url = `${window.location.origin}/product/${product.id}`;
+  const url = `${window.location.origin}/product/${product.slug}`;
   const text = `🎁 Check out this gift from Subwikha's Hub!\n\n${product.name} — ₹${product.price}\n`;
 
   const copyLink = async () => {

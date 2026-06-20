@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
 import styles from './Contact.module.css';
@@ -48,6 +49,17 @@ export default function Contact() {
 
   return (
     <div className={`page-container ${styles.contact}`}>
+      <Helmet>
+        <title>Contact Us | Subwikha's Hub</title>
+        <meta name="description" content="Contact Subwikha's Hub — Coimbatore's handcrafted gift brand. Reach us for custom gift orders, personalized keepsakes, or any queries via the contact form or Instagram DM." />
+        <meta name="keywords" content="contact Subwikha's Hub Coimbatore, custom gift order Tamil Nadu, personalized gift enquiry, handmade gifts Coimbatore" />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/contact" />
+        <meta property="og:title" content="Contact Us | Subwikha's Hub" />
+        <meta property="og:description" content="Reach out for custom gifts, order help or any questions — we're happy to help!" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/contact" />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+      </Helmet>
+
       <div className={styles.header}>
         <span className="section-label">Get In Touch</span>
         <h1 className={styles.title}>Contact Us</h1>

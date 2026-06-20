@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar/Navbar';
+import AnnouncementBar from './components/AnnouncementBar/AnnouncementBar';
 import Cart from './components/Cart/Cart';
 import Cursor from './components/Cursor/Cursor';
 import Footer from './components/Footer/Footer';
@@ -19,6 +20,7 @@ import About from './pages/About/About';
 import Contact from './pages/Contact/Contact';
 import { ShippingPage, ReturnsPage, PrivacyPage, TermsPage } from './pages/Policy/PolicyPage';
 import Game from './pages/Game/Game';
+import Wishlist from './pages/Wishlist/Wishlist';
 
 const pageVariants = {
   initial: { opacity: 0, y: 18 },
@@ -40,7 +42,7 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
-          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/about" element={<About />} />
@@ -50,6 +52,7 @@ function AnimatedRoutes() {
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/game" element={<Game />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
@@ -84,6 +87,7 @@ export default function App() {
         <CartProvider>
           <ScrollToTop />
           <Cursor />
+          <AnnouncementBar />
           <Navbar />
           <Cart />
           <AnimatedRoutes />

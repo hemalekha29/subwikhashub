@@ -1,4 +1,5 @@
 ﻿import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import styles from './PolicyPage.module.css';
 
 function PolicyLayout({ label, title, children }) {
@@ -26,14 +27,31 @@ function Section({ title, children }) {
 export function ShippingPage() {
   return (
     <PolicyLayout label="Delivery" title="Shipping Info">
+      <Helmet>
+        <title>Shipping Info | Subwikha's Hub</title>
+        <meta name="description" content="Learn about Subwikha's Hub shipping and delivery timelines. Free shipping on orders above ₹500. Handmade items dispatched across India." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/shipping" />
+        <meta property="og:title" content="Shipping Info | Subwikha's Hub" />
+        <meta property="og:description" content="Free shipping on orders above ₹500. Handmade gifts dispatched across India with love." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/shipping" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Section title="Processing Time">
         <p>All our products are handmade to order. Processing begins after payment confirmation.</p>
         <ul>
-          <li><strong>Chocolate Bouquets</strong>: 3–5 business days</li>
-          <li><strong>Flower Pots</strong>: 3–5 business days</li>
           <li><strong>Pipe Cleaner Keychains</strong>: 2–4 business days</li>
+          <li><strong>Metal Keychains</strong>: 2–4 business days</li>
+          <li><strong>Night Lights &amp; Lamps</strong>: 2–4 business days</li>
+          <li><strong>Chocolate Bouquets</strong>: 3–5 business days</li>
+          <li><strong>Pipe Cleaner Bouquets</strong>: 3–5 business days</li>
+          <li><strong>Flower Pots</strong>: 3–5 business days</li>
+          <li><strong>Fridge Magnets</strong>: 3–5 business days</li>
           <li><strong>Resin Keychains</strong>: 3–5 business days</li>
+          <li><strong>Custom 4×4 Frames</strong>: 3–5 business days</li>
+          <li><strong>Photo Frames (A5 / A4)</strong>: 5–7 business days (custom design)</li>
           <li><strong>Resin Photo Keychains</strong>: 5–7 business days (custom photo printing)</li>
+          <li><strong>Resin Photo Coasters</strong>: 5–7 business days (custom photo casting)</li>
         </ul>
       </Section>
       <Section title="Delivery">
@@ -57,6 +75,16 @@ export function ShippingPage() {
 export function ReturnsPage() {
   return (
     <PolicyLayout label="Returns" title="Returns & Exchange">
+      <Helmet>
+        <title>Returns & Exchange | Subwikha's Hub</title>
+        <meta name="description" content="Read Subwikha's Hub return and exchange policy. Custom handmade orders are non-returnable. Damaged items are replaced within 48 hours of delivery." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/returns" />
+        <meta property="og:title" content="Returns & Exchange | Subwikha's Hub" />
+        <meta property="og:description" content="Damaged item? We'll make it right within 48 hours. Read our full returns policy." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/returns" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Section title="No Returns on Custom Orders">
         <p>Because every product at Subwikha's Hub is made by hand: especially for you: <strong>we do not accept returns or exchanges on customized orders</strong> (photo keychains, personalized items, custom bouquets).</p>
         <p>Please review your order carefully before placing it. If you have any doubts, DM us on Instagram before ordering: we're happy to help.</p>
@@ -78,6 +106,16 @@ export function ReturnsPage() {
 export function PrivacyPage() {
   return (
     <PolicyLayout label="Privacy" title="Privacy Policy">
+      <Helmet>
+        <title>Privacy Policy | Subwikha's Hub</title>
+        <meta name="description" content="Subwikha's Hub privacy policy — how we collect, use and protect your personal information. Payments secured by Razorpay." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/privacy" />
+        <meta property="og:title" content="Privacy Policy | Subwikha's Hub" />
+        <meta property="og:description" content="Your data is safe with us. Payments secured by Razorpay. We never share your information." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/privacy" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Section title="Information We Collect">
         <p>When you place an order, we collect your name, email address, phone number, and delivery address solely to process and deliver your order.</p>
       </Section>
@@ -105,6 +143,16 @@ export function PrivacyPage() {
 export function TermsPage() {
   return (
     <PolicyLayout label="Legal" title="Terms of Service">
+      <Helmet>
+        <title>Terms of Service | Subwikha's Hub</title>
+        <meta name="description" content="Read the terms of service for Subwikha's Hub. All orders are handmade to order, paid via Razorpay, and non-refundable for custom items." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/terms" />
+        <meta property="og:title" content="Terms of Service | Subwikha's Hub" />
+        <meta property="og:description" content="Terms covering orders, payments, custom items and intellectual property for Subwikha's Hub." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/terms" />
+        <meta property="og:type" content="website" />
+      </Helmet>
       <Section title="Overview">
         <p>By placing an order on Subwikha's Hub, you agree to the following terms. Please read them carefully.</p>
       </Section>

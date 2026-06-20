@@ -1,4 +1,5 @@
 ﻿import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import styles from './About.module.css';
 
 const milestones = [
@@ -11,6 +12,17 @@ const milestones = [
 export default function About() {
   return (
     <div className={`page-container ${styles.about}`}>
+      <Helmet>
+        <title>Our Story | Subwikha's Hub</title>
+        <meta name="description" content="Learn the story behind Subwikha's Hub — a handcrafted gift brand based in Coimbatore, Tamil Nadu, creating personalized keepsakes and unique gifts with love since 2024." />
+        <meta name="keywords" content="about Subwikha's Hub, handmade gifts Coimbatore, gift brand Tamil Nadu, gifting story India, personalized gifts Coimbatore" />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/about" />
+        <meta property="og:title" content="Our Story | Subwikha's Hub" />
+        <meta property="og:description" content="A passion project turned gifting brand — handcrafted with love since 2024." />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/about" />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+      </Helmet>
+
       {/* Hero */}
       <section className={styles.hero}>
         <div className={styles.heroBg} />

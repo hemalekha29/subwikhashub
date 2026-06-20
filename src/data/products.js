@@ -1,4 +1,4 @@
-﻿export const categories = [
+export const categories = [
   { id: "all", label: "All Gifts" },
   { id: "bouquets", label: "Bouquets" },
   { id: "frames", label: "Photo Frames" },
@@ -15,6 +15,7 @@
 export const products = [
   {
     id: 20,
+    slug: "pipe-cleaner-flower-bouquet",
     name: "Pipe Cleaner Flower Bouquet",
     tagline: "Handcrafted blooms that last forever",
     price: 179,
@@ -41,6 +42,7 @@ export const products = [
   },
   {
     id: 19,
+    slug: "custom-resin-photo-coaster",
     name: "Custom Resin Photo Coaster",
     tagline: "Your memory, cast in gold & silver resin",
     price: 259,
@@ -68,6 +70,7 @@ export const products = [
   },
   {
     id: 16,
+    slug: "evil-eye-bell-keychain",
     name: "Evil Eye Bell Keychain",
     tagline: "Protection & style on every keyring",
     price: 99,
@@ -97,6 +100,7 @@ export const products = [
   },
   {
     id: 15,
+    slug: "a4-wedding-couple-frame",
     name: "A4 Wedding & Couple Frame",
     tagline: "Your love story, beautifully preserved",
     price: 499,
@@ -124,6 +128,7 @@ export const products = [
   },
   {
     id: 18,
+    slug: "custom-fridge-magnet",
     name: "Custom Fridge Magnet",
     tagline: "Your favourite memory on your fridge",
     price: 89,
@@ -148,6 +153,7 @@ export const products = [
   },
   {
     id: 17,
+    slug: "panda-colour-changing-lamp",
     name: "Panda Colour-Changing Lamp",
     tagline: "7 colours of cosy, cuddly glow",
     price: 399,
@@ -172,6 +178,7 @@ export const products = [
   },
   {
     id: 14,
+    slug: "cute-animal-night-light",
     name: "Cute Animal Night Light",
     tagline: "A little glow for a big heart",
     price: 129,
@@ -203,6 +210,7 @@ export const products = [
   },
   {
     id: 12,
+    slug: "custom-a4-birthday-frame",
     name: "Custom A4 Birthday Frame",
     tagline: "A whole year of love, framed in one",
     price: 499,
@@ -234,6 +242,7 @@ export const products = [
   },
   {
     id: 11,
+    slug: "custom-4x4-frame",
     name: "Custom 4×4 Frame",
     tagline: "Small frame, big meaning",
     price: 179,
@@ -260,6 +269,7 @@ export const products = [
   },
   {
     id: 10,
+    slug: "custom-photo-frame",
     name: "Custom Photo Frame",
     tagline: "Your story, framed forever",
     price: 399,
@@ -289,6 +299,7 @@ export const products = [
   },
   {
     id: 9,
+    slug: "pipe-cleaner-sunflower-pot",
     name: "Pipe Cleaner Sunflower Pot",
     tagline: "Sunshine that never wilts",
     price: 129,
@@ -307,12 +318,13 @@ export const products = [
       "Green textured pot rim detail",
       "Ready to gift: no packaging needed",
     ],
-    deliveryDays: "2-4",
+    deliveryDays: "3-5",
     inStock: true,
     customizable: true,
   },
   {
     id: 8,
+    slug: "chocolate-bouquet",
     name: "Chocolate Bouquet",
     tagline: "Roses & chocolates: the perfect pair",
     price: 299,
@@ -350,12 +362,13 @@ export const products = [
       },
     ],
     variants: ["DM us on Instagram with your size & chocolate preference for exact pricing"],
-    deliveryDays: "1-3",
+    deliveryDays: "3-5",
     inStock: true,
     customizable: true,
   },
   {
     id: 7,
+    slug: "resin-photo-keychain",
     name: "Resin Photo Keychain",
     tagline: "Your favourite memory, always with you",
     price: 149,
@@ -384,6 +397,7 @@ export const products = [
   },
   {
     id: 1,
+    slug: "resin-letter-keychain",
     name: "Resin Letter Keychain",
     tagline: "Your initial, your memory, forever",
     price: 99,
@@ -417,6 +431,7 @@ export const products = [
   },
   {
     id: 2,
+    slug: "resin-heart-keychain",
     name: "Resin Heart Keychain",
     tagline: "Carry love wherever you go",
     price: 99,
@@ -440,6 +455,7 @@ export const products = [
   },
   {
     id: 3,
+    slug: "resin-globe-keychain",
     name: "Resin Globe Keychain",
     tagline: "A little world captured in resin",
     price: 99,
@@ -463,6 +479,7 @@ export const products = [
   },
   {
     id: 4,
+    slug: "pipe-cleaner-flower-keychain",
     name: "Pipe Cleaner Flower Keychain",
     tagline: "Handmade blooms that never fade",
     price: 49,
@@ -487,6 +504,7 @@ export const products = [
   },
   {
     id: 5,
+    slug: "pink-daisy-keychain",
     name: "Pink Daisy Keychain",
     tagline: "Soft, sweet and full of charm",
     price: 49,
@@ -510,6 +528,7 @@ export const products = [
   },
   {
     id: 6,
+    slug: "red-rose-keychain",
     name: "Red Rose Keychain",
     tagline: "Classic love, handcrafted forever",
     price: 49,
@@ -540,19 +559,14 @@ export const testimonials = [
     text: "I ordered the bouquet for my girlfriend and she loved it so much. Thank you Subwikha's Hub: you made the moment truly special!",
     rating: 5,
     gift: "Handmade Bouquet",
+    photo: "/images/review-vishal.webp",
   },
   {
     id: 2,
-    name: "Priya Sharma",
-    text: "The packaging alone made my friend gasp. The quality was exceptional at every level. Subwikha's Hub truly knows how to make memories.",
+    name: "Mr. Karthi",
+    text: "Thank you so much for this truly memorable and wonderful gift — the resin coaster is absolutely awesome! The quality and craftsmanship blew me away. I will always cherish it.",
     rating: 5,
-    gift: "Personalized Gift",
-  },
-  {
-    id: 3,
-    name: "Ananya Krishnan",
-    text: "Every detail was perfect: from the wrapping to the gift itself. My mother was in tears when she opened it. Will always order from here!",
-    rating: 5,
-    gift: "Handmade Keepsake",
+    gift: "Custom Resin Photo Coaster",
+    photo: "/images/review-karthi.webp",
   },
 ];

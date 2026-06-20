@@ -1,0 +1,64 @@
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1050;
+  height: 36px;
+  background: linear-gradient(90deg, #0a0a0a 0%, #1a1400 50%, #0a0a0a 100%);
+  border-bottom: 1px solid rgba(201, 168, 76, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.msg {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  color: rgba(201, 168, 76, 0.9);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+}
+
+.msgVisible { opacity: 1; transform: translateY(0); }
+.msgHidden  { opacity: 0; transform: translateY(-6px); }
+
+.icon { font-size: 0.85rem; }
+
+.dots {
+  display: flex;
+  gap: 5px;
+  padding-right: 16px;
+  flex-shrink: 0;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(201, 168, 76, 0.25);
+  cursor: pointer;
+  border: none;
+  transition: background 0.3s;
+  padding: 0;
+}
+
+.dotActive { background: var(--gold); }
+
+@media (max-width: 600px) {
+  .msg { font-size: 0.6rem; letter-spacing: 0.06em; }
+  .dots { display: none; }
+}

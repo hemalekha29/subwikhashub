@@ -9,10 +9,10 @@ import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
-  const { dispatch } = useCart();
-  const product = products.find(p => p.id === Number(id));
+  const { items, dispatch } = useCart();
+  const product = products.find(p => p.slug === slug) ?? products.find(p => p.id === Number(slug));
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
   const [selectedVariant, setSelectedVariant] = useState(
@@ -41,6 +41,9 @@ export default function ProductDetail() {
     ? { ...product, price: selectedVariant.price, variant: selectedVariant.label, id: `${product.id}_${selectedVariant.label}` }
     : product;
 
+  const cartItem = items.find(i => i.id === cartPayload.id);
+  const inCart = !!cartItem;
+
   const handleAddToCart = () => {
     for (let i = 0; i < qty; i++) {
       dispatch({ type: 'ADD_ITEM', payload: cartPayload });
@@ -58,17 +61,60 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
-    for (let i = 0; i < qty; i++) {
-      dispatch({ type: 'ADD_ITEM', payload: cartPayload });
+    if (!inCart) {
+      for (let i = 0; i < qty; i++) {
+        dispatch({ type: 'ADD_ITEM', payload: cartPayload });
+      }
     }
     navigate('/checkout');
+  };
+
+  const handleIncrease = () => {
+    dispatch({ type: 'UPDATE_QTY', payload: { id: cartPayload.id, qty: cartItem.qty + 1 } });
+  };
+
+  const handleDecrease = () => {
+    if (cartItem.qty === 1) {
+      dispatch({ type: 'REMOVE_ITEM', payload: cartPayload.id });
+    } else {
+      dispatch({ type: 'UPDATE_QTY', payload: { id: cartPayload.id, qty: cartItem.qty - 1 } });
+    }
+  };
+
+  const handleRemove = () => {
+    dispatch({ type: 'REMOVE_ITEM', payload: cartPayload.id });
+    toast('Removed from cart', { icon: null, style: { background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem' } });
   };
 
   const BASE = 'https://subwikhahub.vercel.app';
   const pageTitle = `${product.name} | Subwikha's Hub`;
   const pageDesc = product.description?.substring(0, 160) ?? `Buy ${product.name} from Subwikha's Hub – handcrafted with love.`;
   const pageImg = `${BASE}${product.images[0]}`;
-  const pageUrl = `${BASE}/product/${product.id}`;
+  const pageUrl = `${BASE}/product/${product.slug}`;
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    image: product.images.map(img => `${BASE}${img}`),
+    description: product.description,
+    brand: { "@type": "Brand", name: "Subwikha's Hub" },
+    offers: {
+      "@type": "Offer",
+      url: pageUrl,
+      priceCurrency: "INR",
+      price: String(activePrice),
+      availability: product.inStock
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      seller: { "@type": "Organization", name: "Subwikha's Hub" },
+    },
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: String(product.rating),
+      reviewCount: String(product.reviews),
+    },
+  };
 
   return (
     <div className={`page-container ${styles.detail}`}>
@@ -89,6 +135,7 @@ export default function ProductDetail() {
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDesc} />
         <meta name="twitter:image" content={pageImg} />
+        <script type="application/ld+json">{JSON.stringify(schema)}</script>
       </Helmet>
 
       {/* Breadcrumb */}
@@ -105,7 +152,7 @@ export default function ProductDetail() {
         {/* Images */}
         <div className={styles.images}>
           <div className={styles.mainImg}>
-            <img src={product.images[activeImg]} alt={product.name} />
+            <img src={product.images[activeImg]} alt={product.name} loading="lazy" />
             {product.badge && <span className={styles.badge}>{product.badge}</span>}
             {discount > 0 && <span className={styles.discountTag}>−{discount}% OFF</span>}
           </div>
@@ -116,7 +163,7 @@ export default function ProductDetail() {
                 className={`${styles.thumb} ${activeImg === i ? styles.thumbActive : ''}`}
                 onClick={() => setActiveImg(i)}
               >
-                <img src={img} alt="" />
+                <img src={img} alt="" loading="lazy" />
               </button>
             ))}
           </div>
@@ -214,24 +261,40 @@ export default function ProductDetail() {
             <span>Estimated delivery: <strong>{product.deliveryDays} business days</strong></span>
           </div>
 
-          {/* Quantity */}
-          <div className={styles.qtyRow}>
-            <span className={styles.qtyLabel}>Quantity</span>
-            <div className={styles.qtyControl}>
-              <button className={styles.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
-              <span className={styles.qtyNum}>{qty}</span>
-              <button className={styles.qtyBtn} onClick={() => setQty(q => q + 1)}>+</button>
+          {/* Quantity — only show when not yet in cart */}
+          {!inCart && (
+            <div className={styles.qtyRow}>
+              <span className={styles.qtyLabel}>Quantity</span>
+              <div className={styles.qtyControl}>
+                <button className={styles.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
+                <span className={styles.qtyNum}>{qty}</span>
+                <button className={styles.qtyBtn} onClick={() => setQty(q => q + 1)}>+</button>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Actions */}
           <div className={styles.actions}>
             <button className={`btn-gold ${styles.buyBtn}`} onClick={handleBuyNow}>
               Buy Now
             </button>
-            <button className={`btn-outline ${styles.cartBtn}`} onClick={handleAddToCart}>
-              Add to Cart
-            </button>
+
+            {inCart ? (
+              <div className={styles.cartInlineControls}>
+                <div className={styles.cartQtyPill}>
+                  <button className={styles.cartQtyBtn} onClick={handleDecrease}>−</button>
+                  <span className={styles.cartQtyNum}>{cartItem.qty}</span>
+                  <button className={styles.cartQtyBtn} onClick={handleIncrease}>+</button>
+                </div>
+                <button className={styles.removeCartBtn} onClick={handleRemove}>
+                  🗑 Remove
+                </button>
+              </div>
+            ) : (
+              <button className={`btn-outline ${styles.cartBtn}`} onClick={handleAddToCart}>
+                Add to Cart
+              </button>
+            )}
           </div>
 
           {/* Share */}

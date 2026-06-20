@@ -23,6 +23,7 @@ export default function Home() {
   const heroBgRef = useRef(null);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [lightboxImg, setLightboxImg] = useState(null);
   const [sparkles] = useState(() =>
     Array.from({ length: 30 }, (_, i) => ({
       id: i,
@@ -65,11 +66,12 @@ export default function Home() {
   return (
     <div className={styles.home}>
       <Helmet>
-        <title>Subwikha's Hub | Customized Gifts, Chocolate Bouquets &amp; Resin Art</title>
-        <meta name="description" content="Subwikha's Hub – Premium handcrafted gifts: chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes for every occasion." />
+        <title>Subwikha's Hub | Handcrafted Gifts in Coimbatore, Tamil Nadu</title>
+        <meta name="description" content="Subwikha's Hub – Handcrafted gifts in Coimbatore, Tamil Nadu. Custom chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes. Free shipping across India." />
+        <meta name="keywords" content="personalized gifts Coimbatore, custom gifts Tamil Nadu, handmade gifts Coimbatore, birthday gifts boyfriend, anniversary gifts, resin keychain Coimbatore, chocolate bouquet Coimbatore, photo frame Tamil Nadu, gift shop Coimbatore, customized gifts India" />
         <link rel="canonical" href="https://subwikhahub.vercel.app" />
-        <meta property="og:title" content="Subwikha's Hub | Where Memories Become Gifts" />
-        <meta property="og:description" content="Premium handcrafted gifts: chocolate bouquets, resin art, personalized keepsakes &amp; more — crafted with love." />
+        <meta property="og:title" content="Subwikha's Hub | Handcrafted Gifts in Coimbatore" />
+        <meta property="og:description" content="Handcrafted gifts from Coimbatore — chocolate bouquets, resin art, personalized keepsakes &amp; more. Free shipping across India." />
         <meta property="og:url" content="https://subwikhahub.vercel.app" />
       </Helmet>
 
@@ -248,8 +250,19 @@ export default function Home() {
               <p className={styles.testimonialText}>{t.text}</p>
               <div className={styles.stars}>{'★'.repeat(t.rating)}</div>
               <div className={styles.testimonialMeta}>
-                <span className={styles.testimonialName}>{t.name}</span>
-                <span className={styles.testimonialGift}>{t.gift}</span>
+                {t.photo && (
+                  <img
+                    src={t.photo}
+                    alt={t.name}
+                    className={styles.testimonialAvatar}
+                    onClick={() => setLightboxImg(t.photo)}
+                    title="Click to view"
+                  />
+                )}
+                <div>
+                  <span className={styles.testimonialName}>{t.name}</span>
+                  <span className={styles.testimonialGift}>{t.gift}</span>
+                </div>
               </div>
             </div>
           ))}
@@ -275,6 +288,16 @@ export default function Home() {
           </div>
         </RevealSection>
       </section>
+
+      {/* Lightbox */}
+      {lightboxImg && (
+        <div className={styles.lightboxOverlay} onClick={() => setLightboxImg(null)}>
+          <div className={styles.lightboxBox} onClick={e => e.stopPropagation()}>
+            <img src={lightboxImg} alt="Customer review" className={styles.lightboxImg} />
+            <button className={styles.lightboxClose} onClick={() => setLightboxImg(null)}>✕</button>
+          </div>
+        </div>
+      )}
 
     </div>
   );

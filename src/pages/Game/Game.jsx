@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import styles from './Game.module.css';
 
 import MemoryMatch from './games/MemoryMatch';
@@ -64,6 +65,17 @@ export default function Game() {
 
   return (
     <div className={`page-container ${styles.page}`}>
+      <Helmet>
+        <title>Play & Win Discounts | Subwikha's Hub Game Zone</title>
+        <meta name="description" content="Play fun mini-games at Subwikha's Hub and win up to 10% OFF on your next order. Memory match, word scramble, gift quiz and more!" />
+        <meta name="keywords" content="gift discount game, play and win, Subwikha's Hub game zone" />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/game" />
+        <meta property="og:title" content="Play & Win Discounts | Subwikha's Hub" />
+        <meta property="og:description" content="Win up to 10% OFF by playing mini-games — Memory Match, Word Scramble, Gift Quiz and more!" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/game" />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+      </Helmet>
+
       <div className={styles.header}>
         <span className="section-label">Play &amp; Win</span>
         <h1 className={styles.title}>{GAME_TITLES[gameIndex]}</h1>

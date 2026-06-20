@@ -6,8 +6,44 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "postbuild": "react-snap",
     "lint": "eslint .",
     "preview": "vite preview"
+  },
+  "reactSnap": {
+    "source": "dist",
+    "crawl": true,
+    "inlineCss": false,
+    "include": [
+      "/",
+      "/shop",
+      "/about",
+      "/contact",
+      "/game",
+      "/shipping",
+      "/returns",
+      "/privacy",
+      "/terms",
+      "/product/pipe-cleaner-flower-bouquet",
+      "/product/custom-resin-photo-coaster",
+      "/product/evil-eye-bell-keychain",
+      "/product/a4-wedding-couple-frame",
+      "/product/custom-fridge-magnet",
+      "/product/panda-colour-changing-lamp",
+      "/product/cute-animal-night-light",
+      "/product/custom-a4-birthday-frame",
+      "/product/custom-4x4-frame",
+      "/product/custom-photo-frame",
+      "/product/pipe-cleaner-sunflower-pot",
+      "/product/chocolate-bouquet",
+      "/product/resin-photo-keychain",
+      "/product/resin-letter-keychain",
+      "/product/resin-heart-keychain",
+      "/product/resin-globe-keychain",
+      "/product/pipe-cleaner-flower-keychain",
+      "/product/pink-daisy-keychain",
+      "/product/red-rose-keychain"
+    ]
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
@@ -30,7 +66,9 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "react-snap": "^1.23.0",
     "sharp": "^0.35.1",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vite-plugin-compression": "^0.5.1"
   }
 }
