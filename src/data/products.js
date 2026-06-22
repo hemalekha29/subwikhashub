@@ -8,6 +8,7 @@ export const categories = [
   { id: "keychains", label: "Keychains" },
   { id: "metal", label: "Metal Keychains" },
   { id: "resin", label: "Resin Art" },
+  { id: "coasters", label: "Resin Coasters" },
   { id: "pipe", label: "Pipe Cleaner Keychains" },
   { id: "photo", label: "Photo Keychains" },
 ];
@@ -47,7 +48,7 @@ export const products = [
     tagline: "Your memory, cast in gold & silver resin",
     price: 259,
     originalPrice: null,
-    category: "resin",
+    category: "coasters",
     badge: "New",
     rating: 5,
     reviews: 4,

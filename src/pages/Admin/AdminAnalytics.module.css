@@ -1,0 +1,413 @@
+.page {
+  min-height: 100vh;
+  background: #080808;
+  color: #fff;
+}
+
+/* ── Loading ── */
+.loadingPage {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #080808;
+  color: rgba(255,255,255,0.4);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid rgba(201,168,76,0.2);
+  border-top-color: #c9a84c;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Top Bar ── */
+.topBar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 64px;
+  background: #0e0e0e;
+  border-bottom: 1px solid rgba(201,168,76,0.15);
+  gap: 16px;
+}
+
+.topLeft { display: flex; align-items: center; gap: 14px; }
+.topLogo { width: 36px; height: 36px; object-fit: contain; }
+.topText { display: flex; flex-direction: column; }
+.topBrand { font-size: 0.95rem; font-weight: 700; color: #fff; line-height: 1.2; }
+.topLabel { font-size: 0.7rem; color: rgba(201,168,76,0.7); letter-spacing: 0.08em; text-transform: uppercase; }
+
+.topNav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.navLink {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+
+.navLink:hover { color: #fff; }
+
+.navActive {
+  background: rgba(201,168,76,0.12);
+  color: #c9a84c;
+}
+
+.topRight { display: flex; align-items: center; }
+
+.logoutBtn {
+  padding: 7px 16px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 6px;
+  color: #f87171;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.logoutBtn:hover { background: rgba(239,68,68,0.2); }
+
+/* ── Content ── */
+.content {
+  padding: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── KPI Row ── */
+.kpiRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.kpiCard {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 22px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpiGold {
+  border-color: rgba(201,168,76,0.2);
+  background: rgba(201,168,76,0.04);
+}
+
+.kpiValue {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.kpiGold .kpiValue { color: #c9a84c; }
+
+.kpiLabel {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.kpiSub {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.25);
+  margin-top: 2px;
+}
+
+/* ── Row 2 (Chart + Donut) ── */
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+/* ── Chart Card ── */
+.chartCard {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 22px 24px 18px;
+}
+
+.chartHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.cardTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.75);
+  margin: 0 0 4px;
+}
+
+.chartSub {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.3);
+  margin: 0;
+}
+
+.rangeTabs {
+  display: flex;
+  gap: 4px;
+  background: #1a1a1a;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 3px;
+}
+
+.rangeTab {
+  padding: 5px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: rgba(255,255,255,0.4);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.rangeTab:hover { color: #fff; }
+
+.rangeTabActive {
+  background: rgba(201,168,76,0.12);
+  color: #c9a84c;
+}
+
+.barSvg {
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+/* ── Donut Card ── */
+.donutCard {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.donutSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+}
+
+.donut {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.donutHole {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: #111;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donutTotal {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1;
+}
+
+.donutTotalLabel {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.donutZero {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.2);
+}
+
+.donutLegend {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendName {
+  flex: 1;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.55);
+}
+
+.legendVal {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.legendPct {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+  min-width: 30px;
+  text-align: right;
+}
+
+/* ── Top Products Card ── */
+.productsCard {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 14px;
+  padding: 22px 24px;
+}
+
+.productsTable {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-top: 16px;
+}
+
+.productRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.productRow:last-child { border-bottom: none; }
+
+.productRank {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(201,168,76,0.5);
+  min-width: 26px;
+  font-family: monospace;
+}
+
+.productInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.productName {
+  font-size: 0.85rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.productBarWrap {
+  height: 4px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.productBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(201,168,76,0.6), #c9a84c);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.productMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.productRevenue {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #c9a84c;
+}
+
+.productQty {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+}
+
+.noData {
+  font-size: 0.82rem;
+  color: rgba(255,255,255,0.3);
+  text-align: center;
+  padding: 32px 0;
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .kpiRow { grid-template-columns: repeat(2, 1fr); }
+  .row2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .content { padding: 16px; }
+  .kpiRow { grid-template-columns: repeat(2, 1fr); }
+  .topNav { display: none; }
+}

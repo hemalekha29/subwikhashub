@@ -1,7 +1,7 @@
 ﻿import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { products } from '../../data/products';
+import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import ShareStrip from '../../components/ShareStrip/ShareStrip';
@@ -12,6 +12,7 @@ export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { items, dispatch } = useCart();
+  const products = useAllProducts();
   const product = products.find(p => p.slug === slug) ?? products.find(p => p.id === Number(slug));
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);

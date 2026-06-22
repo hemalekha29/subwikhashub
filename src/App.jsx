@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
@@ -21,6 +21,11 @@ import Contact from './pages/Contact/Contact';
 import { ShippingPage, ReturnsPage, PrivacyPage, TermsPage } from './pages/Policy/PolicyPage';
 import Game from './pages/Game/Game';
 import Wishlist from './pages/Wishlist/Wishlist';
+import AdminLogin from './pages/Admin/AdminLogin';
+import AdminOrders from './pages/Admin/AdminOrders';
+import AdminOrderDetail from './pages/Admin/AdminOrderDetail';
+import AdminAnalytics from './pages/Admin/AdminAnalytics';
+import AdminProducts from './pages/Admin/AdminProducts';
 
 const pageVariants = {
   initial: { opacity: 0, y: 18 },
@@ -60,6 +65,39 @@ function AnimatedRoutes() {
   );
 }
 
+function AdminRoutes() {
+  return (
+    <Routes>
+      <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/orders" element={<AdminOrders />} />
+      <Route path="/admin/orders/:orderId" element={<AdminOrderDetail />} />
+      <Route path="/admin/analytics" element={<AdminAnalytics />} />
+      <Route path="/admin/products"  element={<AdminProducts />} />
+    </Routes>
+  );
+}
+
+function AppContent() {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  if (isAdmin) return <AdminRoutes />;
+
+  return (
+    <>
+      <ScrollToTop />
+      <Cursor />
+      <AnnouncementBar />
+      <Navbar />
+      <Cart />
+      <AnimatedRoutes />
+      <Footer />
+      <FloatingInstagram />
+    </>
+  );
+}
+
 export default function App() {
   const [loaded, setLoaded] = useState(false);
 
@@ -85,14 +123,7 @@ export default function App() {
       {!loaded && <Loader onDone={() => setLoaded(true)} />}
       <BrowserRouter>
         <CartProvider>
-          <ScrollToTop />
-          <Cursor />
-          <AnnouncementBar />
-          <Navbar />
-          <Cart />
-          <AnimatedRoutes />
-          <Footer />
-          <FloatingInstagram />
+          <AppContent />
           <Toaster
             position="top-right"
             toastOptions={{

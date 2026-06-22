@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { products, categories } from '../../data/products';
+import { categories } from '../../data/products';
+import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import styles from './Shop.module.css';
 
@@ -21,13 +22,8 @@ const PRICE_RANGES = [
   { label: '₹500+', min: 500, max: Infinity },
 ];
 
-function catCount(catId) {
-  if (catId === 'all') return products.length;
-  if (catId === 'keychains') return products.filter(p => ['resin','pipe','photo','metal'].includes(p.category)).length;
-  return products.filter(p => p.category === catId).length;
-}
-
 export default function Shop() {
+  const products = useAllProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCat, setActiveCat] = useState(searchParams.get('cat') || 'all');
   const [sort, setSort] = useState('default');
@@ -103,7 +99,11 @@ export default function Shop() {
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
   else if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
   else if (sort === 'rating') filtered = [...filtered].sort((a, b) => b.rating - a.rating);
-  else if (sort === 'newest') filtered = [...filtered].sort((a, b) => b.id - a.id);
+  else if (sort === 'newest') filtered = [...filtered].sort((a, b) => {
+    const aT = a.createdAt ? (a.createdAt.toDate?.() ?? new Date(a.createdAt)).getTime() : (a.id || 0) * 1000;
+    const bT = b.createdAt ? (b.createdAt.toDate?.() ?? new Date(b.createdAt)).getTime() : (b.id || 0) * 1000;
+    return bT - aT;
+  });
 
   const hasFilters = activeCat !== 'all' || search || priceRange > 0 || sort !== 'default';
 
@@ -160,7 +160,11 @@ export default function Shop() {
                 onClick={() => handleCat(cat.id)}
               >
                 {cat.label}
-                <span className={styles.chipCount}>{catCount(cat.id)}</span>
+                <span className={styles.chipCount}>
+                  {cat.id === 'all' ? products.length
+                    : cat.id === 'keychains' ? products.filter(p => ['resin','pipe','photo','metal'].includes(p.category)).length
+                    : products.filter(p => p.category === cat.id).length}
+                </span>
               </button>
             ))}
           </div>
@@ -233,7 +237,7 @@ export default function Shop() {
           </div>
         ) : (
           <div className={styles.grid} style={{ '--cols': gridCols }}>
-            {filtered.map(p => <ProductCard key={p.id} product={p} />)}
+            {filtered.map(p => <ProductCard key={p.slug} product={p} />)}
           </div>
         )}
       </div>
