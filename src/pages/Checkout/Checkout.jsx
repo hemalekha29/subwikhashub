@@ -1,16 +1,14 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAllProducts } from '../../hooks/useAllProducts';
 import { db, storage } from '../../firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
+import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../lib/emailjsConfig';
 import styles from './Checkout.module.css';
-
-const EMAILJS_SERVICE_ID  = 'service_tq7y4u2';
-const EMAILJS_TEMPLATE_ID = 'template_wd6f6bw';
-const EMAILJS_PUBLIC_KEY  = 'kmmr3Ac8anXDDcvyn';
 
 const RAZORPAY_KEY = 'rzp_live_T3PKJRpVYTxbOi';
 
@@ -26,13 +24,14 @@ function getGameDiscount() {
   }
 }
 
-function needsPhoto(item) {
-  return (item.variants || []).some(v => /photo/i.test(v));
+function needsPhotoVariants(p) {
+  return (p?.variants || []).some(v => /photo/i.test(v));
 }
 
 export default function Checkout() {
   const { items, total, dispatch } = useCart();
   const navigate = useNavigate();
+  const allProducts = useAllProducts();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
@@ -42,14 +41,43 @@ export default function Checkout() {
   });
   const [errors, setErrors] = useState({});
   const [photoFiles, setPhotoFiles] = useState({});
+  const [referralInfo, setReferralInfo] = useState(null);
   const fileInputRefs = useRef({});
 
+  useEffect(() => {
+    const refCode = localStorage.getItem('subwikha_referral');
+    const myCode = localStorage.getItem('subwikha_my_referral_code');
+    if (!refCode || refCode === myCode) return;
+    getDocs(collection(db, 'referrals'))
+      .then(snap => {
+        const match = snap.docs.find(d => d.data().code === refCode);
+        if (match) setReferralInfo({ firestoreId: match.id, code: refCode });
+      })
+      .catch(() => {});
+  }, []);
+
   const gameDiscount = getGameDiscount();
-  const discountAmount = gameDiscount ? Math.floor(total * gameDiscount / 100) : 0;
+  const REFERRAL_DISCOUNT_PERCENT = 5;
+  const referralPercent = referralInfo ? REFERRAL_DISCOUNT_PERCENT : 0;
+  const usingReferral = referralPercent > (gameDiscount || 0);
+  const appliedDiscountPercent = usingReferral ? referralPercent : gameDiscount;
+  const discountAmount = appliedDiscountPercent ? Math.floor(total * appliedDiscountPercent / 100) : 0;
   const shipping = (total - discountAmount) >= 500 ? 0 : 80;
   const grandTotal = total - discountAmount + shipping;
 
-  const photoItems = items.filter(needsPhoto);
+  // Flatten bundle components so each product needing a photo (custom or hamper) gets its own upload slot
+  const photoItems = items.flatMap(item => {
+    if (item.isBundle) {
+      return item.components
+        .map((c, idx) => {
+          const full = allProducts.find(p => p.slug === c.slug || p.id === c.productId);
+          if (!full || !needsPhotoVariants(full)) return null;
+          return { id: `${item.id}__${idx}`, name: `${c.name} (from ${item.name})`, images: full.images };
+        })
+        .filter(Boolean);
+    }
+    return needsPhotoVariants(item) ? [{ id: item.id, name: item.name, images: item.images }] : [];
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -155,12 +183,11 @@ export default function Checkout() {
             phone: form.phone,
             address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
           },
-          items: items.map(i => ({
-            name: i.name,
-            qty: i.qty,
-            price: i.price,
-            variant: i.variant || null,
-          })),
+          items: items.flatMap(i =>
+            i.isBundle
+              ? i.components.map(c => ({ name: c.name, qty: c.qty, price: c.price, variant: null, fromHamper: i.name }))
+              : [{ name: i.name, qty: i.qty, price: i.price, variant: i.variant || null, customization: i.customization || null }]
+          ),
           subtotal: total,
           discount: discountAmount,
           shipping,
@@ -175,6 +202,22 @@ export default function Checkout() {
           await addDoc(collection(db, 'orders'), orderData);
         } catch (err) {
           console.error('Firebase save failed:', err);
+        }
+
+        try {
+          const decrementTargets = items.flatMap(i =>
+            i.isBundle
+              ? i.components.map(c => ({ slug: c.slug, qty: c.qty }))
+              : [{ slug: i.slug, qty: i.qty }]
+          );
+          for (const t of decrementTargets) {
+            const full = allProducts.find(p => p.slug === t.slug);
+            if (full?.firestoreId && typeof full.stock === 'number') {
+              await updateDoc(doc(db, 'products', full.firestoreId), { stock: increment(-t.qty) });
+            }
+          }
+        } catch (err) {
+          console.error('Stock decrement failed:', err);
         }
 
         try {
@@ -198,7 +241,14 @@ export default function Checkout() {
           console.error('Email notification failed:', err);
         }
 
-        if (gameDiscount) {
+        if (usingReferral && referralInfo) {
+          try {
+            await updateDoc(doc(db, 'referrals', referralInfo.firestoreId), { uses: increment(1) });
+          } catch (err) {
+            console.error('Referral update failed:', err);
+          }
+          localStorage.removeItem('subwikha_referral');
+        } else if (gameDiscount) {
           const raw = localStorage.getItem('subwikha_discount');
           if (raw) {
             const d = JSON.parse(raw);
@@ -436,7 +486,16 @@ export default function Checkout() {
                 </div>
                 <div className={styles.summaryInfo}>
                   <p className={styles.summaryName}>{item.name}</p>
-                  <p className={styles.summaryTagline}>{item.tagline}</p>
+                  {item.isBundle ? (
+                    <p className={styles.summaryTagline}>{item.components.map(c => c.name).join(', ')}</p>
+                  ) : (
+                    <p className={styles.summaryTagline}>{item.tagline}</p>
+                  )}
+                  {item.customization && Object.keys(item.customization).length > 0 && (
+                    <p className={styles.summaryTagline} style={{ color: 'var(--gold)' }}>
+                      {Object.entries(item.customization).map(([k, v]) => `${k}: ${v}`).join(' · ')}
+                    </p>
+                  )}
                 </div>
                 <p className={styles.summaryPrice}>₹{(item.price * item.qty).toLocaleString('en-IN')}</p>
               </li>
@@ -444,9 +503,11 @@ export default function Checkout() {
           </ul>
 
           <div className={styles.summaryTotals}>
-            {gameDiscount && (
+            {appliedDiscountPercent > 0 && (
               <div className={styles.discountBanner}>
-                🎮 Game discount ({gameDiscount}%) applied!
+                {usingReferral
+                  ? `🎉 Referral discount (${appliedDiscountPercent}%) applied!`
+                  : `🎮 Game discount (${appliedDiscountPercent}%) applied!`}
               </div>
             )}
             <div className={styles.summaryRow}>
@@ -455,7 +516,7 @@ export default function Checkout() {
             </div>
             {discountAmount > 0 && (
               <div className={`${styles.summaryRow} ${styles.discountRow}`}>
-                <span>Discount ({gameDiscount}% off)</span>
+                <span>Discount ({appliedDiscountPercent}% off)</span>
                 <span>- ₹{discountAmount.toLocaleString('en-IN')}</span>
               </div>
             )}

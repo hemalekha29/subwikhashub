@@ -1,20 +1,17 @@
 import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../hooks/useWishlist';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
-
-function getWishlist() {
-  try { return JSON.parse(localStorage.getItem('subwikha_wishlist') || '[]'); }
-  catch { return []; }
-}
 
 export default function ProductCard({ product }) {
   const [hovered, setHovered] = useState(false);
   const [imgIdx, setImgIdx] = useState(0);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [shine, setShine] = useState({ x: 50, y: 50 });
-  const [wishlisted, setWishlisted] = useState(() => getWishlist().includes(product.id));
+  const { isWishlisted, toggle } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
   const cardRef = useRef(null);
   const { items, dispatch } = useCart();
 
@@ -37,11 +34,8 @@ export default function ProductCard({ product }) {
 
   const toggleWishlist = (e) => {
     e.preventDefault(); e.stopPropagation();
-    const list = getWishlist();
-    const next = wishlisted ? list.filter(id => id !== product.id) : [...list, product.id];
-    localStorage.setItem('subwikha_wishlist', JSON.stringify(next));
-    setWishlisted(!wishlisted);
-    toast(wishlisted ? 'Removed from wishlist' : '❤️ Saved to wishlist', { duration: 1800, icon: null, style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } });
+    const nowWishlisted = toggle(product);
+    toast(nowWishlisted ? '❤️ Saved to wishlist' : 'Removed from wishlist', { duration: 1800, icon: null, style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } });
   };
 
   const handleShare = async (e) => {

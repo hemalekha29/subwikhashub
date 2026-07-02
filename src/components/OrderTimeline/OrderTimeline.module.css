@@ -1,0 +1,87 @@
+.cancelledBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 20px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.2);
+  border-radius: 10px;
+}
+
+.cancelledIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(239,68,68,0.15);
+  border: 2px solid rgba(239,68,68,0.3);
+  color: #f87171;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cancelledBanner strong {
+  display: block;
+  color: #f87171;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+}
+
+.cancelledBanner p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.5;
+}
+
+.pipeline {
+  display: grid;
+  grid-template-columns: 32px 1fr 32px 1fr 32px 1fr 32px;
+  grid-template-rows: 32px auto;
+  align-items: center;
+  row-gap: 10px;
+}
+
+.pipeLine {
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.3s;
+}
+
+.pipeLineDone { background: rgba(201,168,76,0.4); }
+
+.pipeDot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  transition: all 0.3s;
+  z-index: 1;
+}
+
+.pipeDotDone { color: #000; }
+
+.pipeLabel {
+  font-size: 0.68rem;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
+  text-align: center;
+  transition: color 0.3s;
+  grid-row: 2;
+}
+
+.pipeLabelDone { color: rgba(255,255,255,0.6); }
+
+@media (max-width: 480px) {
+  .pipeLabel { font-size: 0.6rem; }
+}

@@ -6,7 +6,7 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
-import { products as staticProducts } from '../../data/products';
+import { products as staticProducts, occasions as OCCASION_OPTIONS } from '../../data/products';
 import toast from 'react-hot-toast';
 import styles from './AdminProducts.module.css';
 
@@ -56,6 +56,46 @@ function DynList({ items, setItems, placeholder }) {
   );
 }
 
+function CustomOptList({ items, setItems }) {
+  return (
+    <div className={styles.dynList}>
+      {items.map((opt, i) => (
+        <div key={i} className={styles.dynRow} style={{ flexWrap: 'wrap', gap: 6 }}>
+          <input
+            className={styles.input}
+            style={{ flex: 2 }}
+            value={opt.label}
+            onChange={e => setItems(prev => prev.map((x, j) => j === i ? { ...x, label: e.target.value } : x))}
+            placeholder="e.g. Name to Engrave"
+          />
+          <select
+            className={styles.select}
+            style={{ flex: 1 }}
+            value={opt.type}
+            onChange={e => setItems(prev => prev.map((x, j) => j === i ? { ...x, type: e.target.value } : x))}
+          >
+            <option value="text">Free text</option>
+            <option value="select">Dropdown choices</option>
+          </select>
+          {opt.type === 'select' && (
+            <input
+              className={styles.input}
+              style={{ flex: 2 }}
+              value={opt.choicesStr}
+              onChange={e => setItems(prev => prev.map((x, j) => j === i ? { ...x, choicesStr: e.target.value } : x))}
+              placeholder="Comma-separated choices"
+            />
+          )}
+          <button type="button" className={styles.dynRemove}
+            onClick={() => setItems(prev => prev.filter((_, j) => j !== i))}>✕</button>
+        </div>
+      ))}
+      <button type="button" className={styles.dynAdd}
+        onClick={() => setItems(prev => [...prev, { label: '', type: 'text', choicesStr: '' }])}>+ Add personalization option</button>
+    </div>
+  );
+}
+
 // ── Product Drawer (Add / Edit form) ─────────────────────────────────────────
 
 function ProductDrawer({ product, onClose, onSaved }) {
@@ -82,6 +122,17 @@ function ProductDrawer({ product, onClose, onSaved }) {
   const [variants, setVariants]     = useState(
     product?.variants?.length > 0 ? product.variants : ['']
   );
+  const [occasionTags, setOccasionTags] = useState(product?.occasion || []);
+  const [customOpts, setCustomOpts] = useState(
+    (product?.customOptions || []).map(o => ({
+      label: o.label, type: o.type === 'select' ? 'select' : 'text', choicesStr: (o.choices || []).join(', '),
+    }))
+  );
+  const [stock, setStock] = useState(product?.stock ?? '');
+
+  const toggleOccasion = (occ) => {
+    setOccasionTags(prev => prev.includes(occ) ? prev.filter(o => o !== occ) : [...prev, occ]);
+  };
 
   const [existingImgs, setExistingImgs] = useState(product?.images || []);
   const [newFiles, setNewFiles]         = useState([]);
@@ -142,6 +193,16 @@ function ProductDrawer({ product, onClose, onSaved }) {
         images: [...existingImgs, ...uploaded],
         includes: includes.filter(x => x.trim()),
         variants: variants.filter(x => x.trim()),
+        occasion: occasionTags,
+        customOptions: customOpts
+          .filter(o => o.label.trim())
+          .map(o => ({
+            key: toSlug(o.label).replace(/-/g, '_'),
+            label: o.label.trim(),
+            type: o.type,
+            ...(o.type === 'select' ? { choices: o.choicesStr.split(',').map(c => c.trim()).filter(Boolean) } : {}),
+          })),
+        stock: stock === '' ? null : Number(stock),
         source: 'admin',
         updatedAt: serverTimestamp(),
       };
@@ -278,6 +339,25 @@ function ProductDrawer({ product, onClose, onSaved }) {
               <DynList items={variants} setItems={setVariants} placeholder="e.g. Pink / Red / Blue" />
             </div>
 
+            {/* Personalization options */}
+            <div className={styles.section}>
+              <p className={styles.sectionTitle}>Personalization Options (shown as fields on the product page)</p>
+              <CustomOptList items={customOpts} setItems={setCustomOpts} />
+            </div>
+
+            {/* Occasions */}
+            <div className={styles.section}>
+              <p className={styles.sectionTitle}>Occasions</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {OCCASION_OPTIONS.map(occ => (
+                  <label key={occ} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.8rem', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={occasionTags.includes(occ)} onChange={() => toggleOccasion(occ)} />
+                    {occ}
+                  </label>
+                ))}
+              </div>
+            </div>
+
             {/* Settings */}
             <div className={styles.section}>
               <p className={styles.sectionTitle}>Settings</p>
@@ -291,6 +371,10 @@ function ProductDrawer({ product, onClose, onSaved }) {
                   <input className={styles.input} type="number" value={reviews} onChange={e => setReviews(e.target.value)} min="0" />
                 </label>
               </div>
+              <label className={styles.field}>
+                <span className={styles.label}>Stock Quantity (leave blank for made-to-order / unlimited)</span>
+                <input className={styles.input} type="number" value={stock} onChange={e => setStock(e.target.value)} min="0" placeholder="e.g. 10" />
+              </label>
               <div className={styles.toggleRow}>
                 <label className={styles.toggleLabel}>
                   <div className={`${styles.toggle} ${inStock ? styles.toggleOn : ''}`} onClick={() => setInStock(v => !v)}>
@@ -408,6 +492,7 @@ export default function AdminProducts() {
             <NavLink to="/admin/orders"    className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navActive : ''}`}>Orders</NavLink>
             <NavLink to="/admin/products"  className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navActive : ''}`}>Products</NavLink>
             <NavLink to="/admin/analytics" className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navActive : ''}`}>Analytics</NavLink>
+            <NavLink to="/admin/gallery"   className={({ isActive }) => `${styles.navLink} ${isActive ? styles.navActive : ''}`}>Gallery</NavLink>
           </nav>
           <div className={styles.topRight}>
             <button className={styles.addProductBtn} onClick={() => { setEditProduct(null); setDrawerOpen(true); }}>+ Add Product</button>
@@ -486,6 +571,16 @@ export default function AdminProducts() {
                         <span className={`${styles.stockBadge} ${p.inStock ? styles.inStock : styles.outStock}`}>
                           {p.inStock ? 'In Stock' : 'Out'}
                         </span>
+                        {typeof p.stock === 'number' && (
+                          <span
+                            style={{
+                              display: 'block', marginTop: 4, fontSize: '0.7rem',
+                              color: p.stock <= 5 ? '#f87171' : 'inherit', opacity: 0.85,
+                            }}
+                          >
+                            {p.stock} left{p.stock <= 5 ? ' · Low stock' : ''}
+                          </span>
+                        )}
                       </td>
                       <td>
                         <span className={`${styles.typeBadge} ${p._type === 'static' ? styles.typeStatic : styles.typeAdmin}`}>

@@ -1,17 +1,29 @@
-import { useState, useEffect, Fragment } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import toast from 'react-hot-toast';
+import OrderTimeline, { STATUSES, STATUS_LABELS, STATUS_COLORS } from '../../components/OrderTimeline/OrderTimeline';
 import styles from './AdminOrderDetail.module.css';
 
 function isAdminAuthed() {
   return sessionStorage.getItem('subwikha_admin') === '1';
 }
 
-const STATUSES = ['paid', 'processing', 'shipped', 'delivered'];
-const STATUS_LABELS = { paid: 'New Order', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
-const STATUS_COLORS = { paid: '#c9a84c', processing: '#6c8ebf', shipped: '#f5a623', delivered: '#4ade80', cancelled: '#ef4444' };
+const WHATSAPP_STATUS_MESSAGE = {
+  paid: 'Hi! We\'ve received your order at Subwikha\'s Hub and are getting it ready. Thank you for shopping with us! 💛',
+  processing: 'Your order at Subwikha\'s Hub is now being handcrafted! We\'ll let you know as soon as it ships. 🎁',
+  shipped: 'Great news — your order has shipped! It\'s on its way to you now. 🚚',
+  delivered: 'Your order has been delivered! We hope you love it — thank you for shopping with Subwikha\'s Hub. ✨',
+};
+
+function sendWhatsAppUpdate(order) {
+  const phone = (order.customer?.phone || '').replace(/\D/g, '');
+  if (!phone) { return; }
+  const msg = WHATSAPP_STATUS_MESSAGE[order.status] || `Update on your order ${order.orderId}: ${STATUS_LABELS[order.status]}`;
+  const fullPhone = phone.length === 10 ? `91${phone}` : phone;
+  window.open(`https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+}
 
 export default function AdminOrderDetail() {
   const { orderId } = useParams();
@@ -93,7 +105,6 @@ export default function AdminOrderDetail() {
   if (!order) return null;
 
   const hasPhotos = order.photos && Object.keys(order.photos).length > 0;
-  const currentIdx = STATUSES.indexOf(order.status);
 
   return (
     <div className={styles.page}>
@@ -153,6 +164,13 @@ export default function AdminOrderDetail() {
                   >
                     Cancel Order
                   </button>
+                  <button
+                    className={styles.restoreBtn}
+                    onClick={() => sendWhatsAppUpdate(order)}
+                    title="Opens WhatsApp with a pre-filled status update for the customer"
+                  >
+                    📲 Send WhatsApp Update
+                  </button>
                 </>
               )}
               {order.status === 'cancelled' && (
@@ -176,43 +194,7 @@ export default function AdminOrderDetail() {
             </div>
           </div>
 
-          {order.status === 'cancelled' && (
-            <div className={styles.cancelledBanner}>
-              <span className={styles.cancelledIcon}>✕</span>
-              <div>
-                <strong>Order Cancelled</strong>
-                <p>This order has been cancelled. Use "Restore Order" above to reactivate it.</p>
-              </div>
-            </div>
-          )}
-
-          {order.status !== 'cancelled' && <div className={styles.pipeline}>
-            {STATUSES.map((s, i) => (
-              <Fragment key={s}>
-                {i > 0 && (
-                  <div className={`${styles.pipeLine} ${i <= currentIdx ? styles.pipeLineDone : ''}`} />
-                )}
-                <div
-                  className={`${styles.pipeDot} ${i <= currentIdx ? styles.pipeDotDone : ''}`}
-                  style={i <= currentIdx ? { background: STATUS_COLORS[s], borderColor: STATUS_COLORS[s] } : {}}
-                >
-                  {i <= currentIdx ? '✓' : i + 1}
-                </div>
-              </Fragment>
-            ))}
-            {STATUSES.map((s, i) => (
-              <span
-                key={`lbl-${s}`}
-                className={`${styles.pipeLabel} ${i <= currentIdx ? styles.pipeLabelDone : ''}`}
-                style={{
-                  gridColumn: i * 2 + 1,
-                  ...(i === currentIdx ? { color: STATUS_COLORS[s] } : {}),
-                }}
-              >
-                {STATUS_LABELS[s]}
-              </span>
-            ))}
-          </div>}
+          <OrderTimeline status={order.status} />
         </div>
 
         {/* Main Grid */}

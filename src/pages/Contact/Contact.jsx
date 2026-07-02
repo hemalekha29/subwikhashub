@@ -2,17 +2,9 @@ import { useState, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
+import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../lib/emailjsConfig';
+import GiftReminder from '../../components/GiftReminder/GiftReminder';
 import styles from './Contact.module.css';
-
-// ── EmailJS config ──────────────────────────────────────────
-// 1. Go to https://www.emailjs.com and create a free account
-// 2. Add a Gmail service → copy the Service ID below
-// 3. Create an email template → copy the Template ID below
-// 4. Go to Account → API Keys → copy your Public Key below
-const EMAILJS_SERVICE_ID  = 'service_tq7y4u2';
-const EMAILJS_TEMPLATE_ID = 'template_wd6f6bw';
-const EMAILJS_PUBLIC_KEY  = 'kmmr3Ac8anXDDcvyn';
-// ────────────────────────────────────────────────────────────
 
 export default function Contact() {
   const formRef = useRef(null);
@@ -136,6 +128,10 @@ export default function Contact() {
             </form>
           )}
         </div>
+      </div>
+
+      <div style={{ marginTop: 64, paddingTop: 48, borderTop: '1px solid rgba(201,168,76,0.15)' }}>
+        <GiftReminder />
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { products, testimonials } from '../../data/products';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import UgcGallery from '../../components/UgcGallery/UgcGallery';
+import InstagramFeed from '../../components/InstagramFeed/InstagramFeed';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import styles from './Home.module.css';
 
@@ -273,6 +275,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <UgcGallery />
+      <InstagramFeed />
 
       {/* ── CTA ── */}
       <section className={styles.ctaSection}>

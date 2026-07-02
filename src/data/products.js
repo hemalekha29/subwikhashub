@@ -13,6 +13,17 @@ export const categories = [
   { id: "photo", label: "Photo Keychains" },
 ];
 
+export const occasions = [
+  "Birthday",
+  "Anniversary",
+  "Valentine's Day",
+  "Wedding",
+  "Rakhi",
+  "Housewarming",
+  "Friendship Day",
+  "Just Because",
+];
+
 export const products = [
   {
     id: 20,
@@ -37,6 +48,11 @@ export const products = [
       "Customizable colour & size",
     ],
     variants: ["Send colour preference & size via Instagram DM after ordering"],
+    customOptions: [
+      { key: "colour", label: "Flower Colour Preference", type: "text" },
+      { key: "size", label: "Bouquet Size", type: "select", choices: ["Small", "Medium", "Large"] },
+    ],
+    occasion: ["Anniversary", "Valentine's Day", "Birthday", "Just Because"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -65,6 +81,10 @@ export const products = [
       "Gift-ready packaging",
     ],
     variants: ["Send your photo, date & name via Instagram DM after ordering"],
+    customOptions: [
+      { key: "engraveText", label: "Name / Date to Engrave", type: "text" },
+    ],
+    occasion: ["Housewarming", "Anniversary", "Birthday"],
     deliveryDays: "5-7",
     inStock: true,
     customizable: true,
@@ -95,6 +115,7 @@ export const products = [
       "Available in Gold, Silver & Bronze",
     ],
     variants: ["Gold", "Silver", "Bronze"],
+    occasion: ["Rakhi", "Birthday", "Just Because"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: false,
@@ -123,6 +144,10 @@ export const products = [
     variants: [
       "Send couple photo, background photos & names via Instagram DM after ordering",
     ],
+    customOptions: [
+      { key: "names", label: "Names to Print", type: "text" },
+    ],
+    occasion: ["Wedding", "Anniversary"],
     deliveryDays: "5-7",
     inStock: true,
     customizable: true,
@@ -148,6 +173,10 @@ export const products = [
       "Sticks to fridge, lockers & metal surfaces",
     ],
     variants: ["Send your photo via Instagram DM after ordering"],
+    customOptions: [
+      { key: "caption", label: "Caption (optional)", type: "text" },
+    ],
+    occasion: ["Housewarming", "Birthday", "Just Because"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -173,6 +202,7 @@ export const products = [
       "USB rechargeable",
       "Gift-ready packaging",
     ],
+    occasion: ["Birthday", "Just Because"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: false,
@@ -205,6 +235,7 @@ export const products = [
       "Gift-ready packaging",
     ],
     variants: ["Panda", "Bear", "Unicorn"],
+    occasion: ["Birthday", "Just Because"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: false,
@@ -237,6 +268,10 @@ export const products = [
       "Pastel theme (soft light background)",
       "Send photos, date & message via Instagram DM after ordering",
     ],
+    customOptions: [
+      { key: "message", label: "Birthday Message", type: "text" },
+    ],
+    occasion: ["Birthday"],
     deliveryDays: "5-7",
     inStock: true,
     customizable: true,
@@ -264,6 +299,10 @@ export const products = [
     variants: [
       "Send your photo, design, or text via Instagram DM after ordering",
     ],
+    customOptions: [
+      { key: "text", label: "Quote / Text Overlay", type: "text" },
+    ],
+    occasion: ["Housewarming", "Just Because"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -294,6 +333,11 @@ export const products = [
     variants: [
       "Send photos, name, quote & Spotify link via Instagram DM after ordering",
     ],
+    customOptions: [
+      { key: "quote", label: "Personal Quote", type: "text" },
+      { key: "spotify", label: "Spotify Song Link", type: "text" },
+    ],
+    occasion: ["Anniversary", "Valentine's Day", "Birthday"],
     deliveryDays: "5-7",
     inStock: true,
     customizable: true,
@@ -319,6 +363,10 @@ export const products = [
       "Green textured pot rim detail",
       "Ready to gift: no packaging needed",
     ],
+    customOptions: [
+      { key: "ribbonColor", label: "Ribbon Colour", type: "select", choices: ["Red", "Gold", "Pink", "White"] },
+    ],
+    occasion: ["Just Because", "Friendship Day"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -363,6 +411,10 @@ export const products = [
       },
     ],
     variants: ["DM us on Instagram with your size & chocolate preference for exact pricing"],
+    customOptions: [
+      { key: "chocolatePref", label: "Chocolate Preference", type: "text" },
+    ],
+    occasion: ["Anniversary", "Valentine's Day", "Birthday"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -392,6 +444,10 @@ export const products = [
       "Gift wrapped with love",
     ],
     variants: ["Send your photo at checkout via Instagram DM or WhatsApp"],
+    customOptions: [
+      { key: "note", label: "Special Note (optional)", type: "text" },
+    ],
+    occasion: ["Anniversary", "Friendship Day", "Valentine's Day"],
     deliveryDays: "5-7",
     inStock: true,
     customizable: true,
@@ -426,6 +482,7 @@ export const products = [
       "Letter S",
       "Any letter: just mention at checkout",
     ],
+    occasion: ["Birthday", "Friendship Day"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: true,
@@ -450,6 +507,7 @@ export const products = [
       "Silver keyring",
       "Gift wrapped with love",
     ],
+    occasion: ["Valentine's Day", "Anniversary"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: false,
@@ -474,6 +532,7 @@ export const products = [
       "Silver keyring",
       "Gift wrapped with love",
     ],
+    occasion: ["Just Because", "Birthday"],
     deliveryDays: "3-5",
     inStock: true,
     customizable: false,
@@ -499,6 +558,7 @@ export const products = [
       "Silver keyring",
     ],
     variants: ["Pink Daisy", "Orange Bloom", "Red Rose"],
+    occasion: ["Friendship Day", "Birthday"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: true,
@@ -523,6 +583,7 @@ export const products = [
       "Yellow sunflower bouquet",
       "Silver keyring",
     ],
+    occasion: ["Friendship Day", "Just Because"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: false,
@@ -547,6 +608,7 @@ export const products = [
       "Yellow sunflower bouquet",
       "Silver keyring",
     ],
+    occasion: ["Valentine's Day", "Anniversary"],
     deliveryDays: "2-4",
     inStock: true,
     customizable: false,

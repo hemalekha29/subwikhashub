@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { categories } from '../../data/products';
+import { categories, occasions } from '../../data/products';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import styles from './Shop.module.css';
@@ -26,6 +26,7 @@ export default function Shop() {
   const products = useAllProducts();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeCat, setActiveCat] = useState(searchParams.get('cat') || 'all');
+  const [activeOcc, setActiveOcc] = useState(searchParams.get('occ') || 'all');
   const [sort, setSort] = useState('default');
   const [search, setSearch] = useState(searchParams.get('q') || '');
   const [priceRange, setPriceRange] = useState(0);
@@ -35,8 +36,10 @@ export default function Shop() {
 
   useEffect(() => {
     const cat = searchParams.get('cat');
+    const occ = searchParams.get('occ');
     const q = searchParams.get('q');
     if (cat) setActiveCat(cat);
+    if (occ) setActiveOcc(occ);
     if (q) setSearch(q);
   }, [searchParams]);
 
@@ -48,8 +51,17 @@ export default function Shop() {
     setSearchParams(next);
   };
 
+  const handleOcc = (occ) => {
+    setActiveOcc(occ);
+    const next = new URLSearchParams(searchParams);
+    if (occ === 'all') next.delete('occ');
+    else next.set('occ', occ);
+    setSearchParams(next);
+  };
+
   const clearAll = () => {
     setActiveCat('all');
+    setActiveOcc('all');
     setSearch('');
     setPriceRange(0);
     setSort('default');
@@ -91,6 +103,10 @@ export default function Shop() {
     );
   }
 
+  if (activeOcc !== 'all') {
+    filtered = filtered.filter(p => p.occasion?.includes(activeOcc));
+  }
+
   const range = PRICE_RANGES[priceRange];
   if (priceRange > 0) {
     filtered = filtered.filter(p => p.price >= range.min && p.price <= range.max);
@@ -105,7 +121,7 @@ export default function Shop() {
     return bT - aT;
   });
 
-  const hasFilters = activeCat !== 'all' || search || priceRange > 0 || sort !== 'default';
+  const hasFilters = activeCat !== 'all' || activeOcc !== 'all' || search || priceRange > 0 || sort !== 'default';
 
   return (
     <div className={styles.shop}>
@@ -165,6 +181,29 @@ export default function Shop() {
                     : cat.id === 'keychains' ? products.filter(p => ['resin','pipe','photo','metal'].includes(p.category)).length
                     : products.filter(p => p.category === cat.id).length}
                 </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Occasion chips */}
+      <div className={styles.filterBar}>
+        <div className={styles.filterBarInner}>
+          <div className={styles.catChips}>
+            <button
+              className={`${styles.chip} ${activeOcc === 'all' ? styles.chipActive : ''}`}
+              onClick={() => handleOcc('all')}
+            >
+              Shop by Occasion
+            </button>
+            {occasions.map(occ => (
+              <button
+                key={occ}
+                className={`${styles.chip} ${activeOcc === occ ? styles.chipActive : ''}`}
+                onClick={() => handleOcc(occ)}
+              >
+                {occ}
               </button>
             ))}
           </div>

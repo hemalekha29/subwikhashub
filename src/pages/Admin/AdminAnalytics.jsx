@@ -38,6 +38,21 @@ function getStatusDist(orders) {
   return dist;
 }
 
+function getWishlistDemand(wishlistEvents, orders) {
+  const orderedNames = new Set();
+  orders.forEach(o => (o.items || []).forEach(i => orderedNames.add(i.name)));
+  const counts = {};
+  wishlistEvents.forEach(e => {
+    const key = e.slug || e.name;
+    if (!counts[key]) counts[key] = { name: e.name, count: 0 };
+    counts[key].count += 1;
+  });
+  return Object.values(counts)
+    .map(c => ({ ...c, everOrdered: orderedNames.has(c.name) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 8);
+}
+
 function getTopProducts(orders) {
   const map = {};
   orders.forEach(o => {
@@ -177,12 +192,14 @@ function TopProducts({ products }) {
 export default function AdminAnalytics() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [wishlistEvents, setWishlistEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState(30);
 
   useEffect(() => {
     if (!isAdminAuthed()) { navigate('/admin/login'); return; }
     fetchOrders();
+    fetchWishlistEvents();
   }, []);
 
   const fetchOrders = async () => {
@@ -203,6 +220,15 @@ export default function AdminAnalytics() {
     }
   };
 
+  const fetchWishlistEvents = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'wishlistEvents'));
+      setWishlistEvents(snap.docs.map(d => d.data()));
+    } catch (err) {
+      console.error('Wishlist analytics fetch error:', err);
+    }
+  };
+
   const logout = () => {
     sessionStorage.removeItem('subwikha_admin');
     navigate('/admin/login');
@@ -220,6 +246,7 @@ export default function AdminAnalytics() {
 
   const statusDist = getStatusDist(orders);
   const topProducts = getTopProducts(orders);
+  const wishlistDemand = getWishlistDemand(wishlistEvents, orders);
 
   if (loading) {
     return (
@@ -244,6 +271,7 @@ export default function AdminAnalytics() {
           <Link to="/admin/orders"    className={styles.navLink}>Orders</Link>
           <Link to="/admin/products"  className={styles.navLink}>Products</Link>
           <Link to="/admin/analytics" className={`${styles.navLink} ${styles.navActive}`}>Analytics</Link>
+          <Link to="/admin/gallery"   className={styles.navLink}>Gallery</Link>
         </nav>
         <div className={styles.topRight}>
           <button className={styles.logoutBtn} onClick={logout}>Logout</button>
@@ -307,6 +335,31 @@ export default function AdminAnalytics() {
         <div className={styles.productsCard}>
           <h3 className={styles.cardTitle}>Top Products by Revenue</h3>
           <TopProducts products={topProducts} />
+        </div>
+
+        {/* Wishlist Demand */}
+        <div className={styles.productsCard}>
+          <h3 className={styles.cardTitle}>Most Wishlisted Products</h3>
+          {wishlistDemand.length === 0 ? (
+            <p className={styles.noData}>No wishlist activity yet.</p>
+          ) : (
+            <div className={styles.productsTable}>
+              {wishlistDemand.map((p, i) => (
+                <div key={p.name} className={styles.productRow}>
+                  <span className={styles.productRank}>#{i + 1}</span>
+                  <div className={styles.productInfo}>
+                    <span className={styles.productName}>{p.name}</span>
+                  </div>
+                  <div className={styles.productMeta}>
+                    <span className={styles.productRevenue}>{p.count} saves</span>
+                    <span className={styles.productQty} style={{ color: p.everOrdered ? '#4ade80' : '#f5a623' }}>
+                      {p.everOrdered ? 'Has been ordered' : 'Never ordered — consider a promo'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

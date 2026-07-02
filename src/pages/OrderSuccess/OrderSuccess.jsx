@@ -1,11 +1,43 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+import ReferralShare from '../../components/ReferralShare/ReferralShare';
 import styles from './OrderSuccess.module.css';
+
+function makeReferralCode(firstName) {
+  const namePart = (firstName || 'GIFT').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 8) || 'GIFT';
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `SUBW-${namePart}-${rand}`;
+}
 
 export default function OrderSuccess() {
   const { state } = useLocation();
   const navigate = useNavigate();
   const canvasRef = useRef(null);
+  const [referralCode, setReferralCode] = useState(null);
+
+  useEffect(() => {
+    if (!state) return;
+    let code = localStorage.getItem('subwikha_my_referral_code');
+    if (code) {
+      setReferralCode(code);
+      return;
+    }
+    code = makeReferralCode(state.address?.firstName);
+    addDoc(collection(db, 'referrals'), {
+      code,
+      ownerName: `${state.address?.firstName || ''} ${state.address?.lastName || ''}`.trim(),
+      ownerEmail: state.address?.email || '',
+      uses: 0,
+      createdAt: serverTimestamp(),
+    })
+      .then(() => {
+        localStorage.setItem('subwikha_my_referral_code', code);
+        setReferralCode(code);
+      })
+      .catch(() => {});
+  }, [state]);
 
   useEffect(() => {
     if (!state) {
@@ -115,10 +147,15 @@ export default function OrderSuccess() {
           A confirmation email has been sent to <strong>{state.address?.email}</strong>
         </p>
 
+        {referralCode && <ReferralShare code={referralCode} />}
+
         <div className={styles.actions}>
           <Link to="/shop" className="btn-gold">Continue Shopping</Link>
           <Link to="/" className="btn-outline">Back to Home</Link>
         </div>
+        <p style={{ marginTop: 16 }}>
+          <Link to="/track-order" style={{ fontSize: '0.82rem', opacity: 0.7 }}>Track this order →</Link>
+        </p>
       </div>
     </div>
   );

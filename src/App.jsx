@@ -13,9 +13,11 @@ import Loader from './components/Loader/Loader';
 import FloatingInstagram from './components/FloatingInstagram/FloatingInstagram';
 import Home from './pages/Home/Home';
 import Shop from './pages/Shop/Shop';
+import HamperBuilder from './pages/Hamper/HamperBuilder';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
 import Checkout from './pages/Checkout/Checkout';
 import OrderSuccess from './pages/OrderSuccess/OrderSuccess';
+import TrackOrder from './pages/TrackOrder/TrackOrder';
 import About from './pages/About/About';
 import Contact from './pages/Contact/Contact';
 import { ShippingPage, ReturnsPage, PrivacyPage, TermsPage } from './pages/Policy/PolicyPage';
@@ -26,6 +28,7 @@ import AdminOrders from './pages/Admin/AdminOrders';
 import AdminOrderDetail from './pages/Admin/AdminOrderDetail';
 import AdminAnalytics from './pages/Admin/AdminAnalytics';
 import AdminProducts from './pages/Admin/AdminProducts';
+import AdminGallery from './pages/Admin/AdminGallery';
 
 const pageVariants = {
   initial: { opacity: 0, y: 18 },
@@ -39,6 +42,15 @@ function ScrollToTop() {
   return null;
 }
 
+function ReferralCapture() {
+  const location = useLocation();
+  useEffect(() => {
+    const ref = new URLSearchParams(location.search).get('ref');
+    if (ref) localStorage.setItem('subwikha_referral', ref);
+  }, [location]);
+  return null;
+}
+
 function AnimatedRoutes() {
   const location = useLocation();
   return (
@@ -47,9 +59,11 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/shop" element={<Shop />} />
+          <Route path="/hamper" element={<HamperBuilder />} />
           <Route path="/product/:slug" element={<ProductDetail />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/order-success" element={<OrderSuccess />} />
+          <Route path="/track-order" element={<TrackOrder />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/shipping" element={<ShippingPage />} />
@@ -74,6 +88,7 @@ function AdminRoutes() {
       <Route path="/admin/orders/:orderId" element={<AdminOrderDetail />} />
       <Route path="/admin/analytics" element={<AdminAnalytics />} />
       <Route path="/admin/products"  element={<AdminProducts />} />
+      <Route path="/admin/gallery"   element={<AdminGallery />} />
     </Routes>
   );
 }
@@ -87,6 +102,7 @@ function AppContent() {
   return (
     <>
       <ScrollToTop />
+      <ReferralCapture />
       <Cursor />
       <AnnouncementBar />
       <Navbar />

@@ -1,32 +1,19 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { products } from '../../data/products';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../hooks/useWishlist';
 import toast from 'react-hot-toast';
 import styles from './Wishlist.module.css';
 
-function getWishlist() {
-  try { return JSON.parse(localStorage.getItem('subwikha_wishlist') || '[]'); }
-  catch { return []; }
-}
-
 export default function Wishlist() {
-  const [ids, setIds] = useState(getWishlist);
+  const { ids, toggle } = useWishlist();
   const { dispatch } = useCart();
-
-  useEffect(() => {
-    const onStorage = () => setIds(getWishlist());
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
-  }, []);
 
   const wishlistProducts = products.filter(p => ids.includes(p.id));
 
-  const remove = (id) => {
-    const next = ids.filter(i => i !== id);
-    localStorage.setItem('subwikha_wishlist', JSON.stringify(next));
-    setIds(next);
+  const remove = (product) => {
+    toggle(product);
     toast('Removed from wishlist', { style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.2)', fontSize: '0.82rem' } });
   };
 
@@ -111,7 +98,7 @@ export default function Wishlist() {
                     <button className={styles.addBtn} onClick={() => addToCart(product)}>
                       Add to Cart
                     </button>
-                    <button className={styles.removeBtn} onClick={() => remove(product.id)} aria-label="Remove from wishlist">
+                    <button className={styles.removeBtn} onClick={() => remove(product)} aria-label="Remove from wishlist">
                       <TrashIcon />
                     </button>
                   </div>

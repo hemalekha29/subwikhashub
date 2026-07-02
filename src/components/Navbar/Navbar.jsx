@@ -1,19 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useMatch } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useWishlist } from '../../hooks/useWishlist';
 import styles from './Navbar.module.css';
-
-function getWishlistCount() {
-  try { return JSON.parse(localStorage.getItem('subwikha_wishlist') || '[]').length; }
-  catch { return 0; }
-}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const [wishlistCount, setWishlistCount] = useState(getWishlistCount);
+  const { ids: wishlistIds } = useWishlist();
+  const wishlistCount = wishlistIds.length;
   const { count, dispatch } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -35,14 +32,6 @@ export default function Navbar() {
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);
 
-  useEffect(() => {
-    const onStorage = () => setWishlistCount(getWishlistCount());
-    window.addEventListener('storage', onStorage);
-    // Also poll since localStorage events don't fire in same tab
-    const interval = setInterval(() => setWishlistCount(getWishlistCount()), 500);
-    return () => { window.removeEventListener('storage', onStorage); clearInterval(interval); };
-  }, []);
-
   const handleSearch = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -57,6 +46,7 @@ export default function Navbar() {
     { to: '/shop', label: 'Shop' },
     { to: '/about', label: 'Our Story' },
     { to: '/contact', label: 'Contact' },
+    { to: '/hamper', label: '🎁 Build a Hamper' },
     { to: '/game', label: '✦ Play & Win', highlight: true },
   ];
 

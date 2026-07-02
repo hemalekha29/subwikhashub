@@ -8,6 +8,12 @@ import ShareStrip from '../../components/ShareStrip/ShareStrip';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h).toString(36);
+}
+
 export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -20,6 +26,7 @@ export default function ProductDetail() {
     () => product?.priceVariants?.[1] ?? null
   );
   const [selectedOption, setSelectedOption] = useState(null);
+  const [customValues, setCustomValues] = useState({});
 
   const activePrice = selectedVariant ? selectedVariant.price : product?.price;
 
@@ -38,9 +45,21 @@ export default function ProductDetail() {
   const related = products.filter(p => p.id !== product.id && p.category === product.category).slice(0, 4);
   const discount = product.originalPrice ? Math.round((1 - activePrice / product.originalPrice) * 100) : 0;
 
-  const cartPayload = selectedVariant
+  const filledCustomization = (product.customOptions ?? []).reduce((acc, opt) => {
+    const v = customValues[opt.key];
+    if (v && String(v).trim()) acc[opt.label] = v;
+    return acc;
+  }, {});
+  const hasCustomization = Object.keys(filledCustomization).length > 0;
+
+  let cartPayload = selectedVariant
     ? { ...product, price: selectedVariant.price, variant: selectedVariant.label, id: `${product.id}_${selectedVariant.label}` }
     : product;
+
+  if (hasCustomization) {
+    const suffix = hashStr(JSON.stringify(filledCustomization));
+    cartPayload = { ...cartPayload, customization: filledCustomization, id: `${cartPayload.id}_c${suffix}` };
+  }
 
   const cartItem = items.find(i => i.id === cartPayload.id);
   const inCart = !!cartItem;
@@ -240,6 +259,37 @@ export default function ProductDetail() {
                     <span className={styles.variantPrice}>₹{v.price}</span>
                     <span className={styles.variantDesc}>{v.desc}</span>
                   </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {product.customOptions?.length > 0 && (
+            <div className={styles.optionSection}>
+              <h4 className={styles.optionTitle}>Personalize This Gift</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                {product.customOptions.map(opt => (
+                  <div key={opt.key} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <label style={{ fontSize: '0.78rem', color: 'var(--gold)', letterSpacing: '0.03em' }}>{opt.label}</label>
+                    {opt.type === 'select' ? (
+                      <select
+                        value={customValues[opt.key] || ''}
+                        onChange={e => setCustomValues(v => ({ ...v, [opt.key]: e.target.value }))}
+                        style={{ background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', padding: '10px 12px', fontSize: '0.85rem' }}
+                      >
+                        <option value="">Select...</option>
+                        {opt.choices.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={customValues[opt.key] || ''}
+                        onChange={e => setCustomValues(v => ({ ...v, [opt.key]: e.target.value }))}
+                        placeholder={`Enter ${opt.label.toLowerCase()}`}
+                        style={{ background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', padding: '10px 12px', fontSize: '0.85rem' }}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             </div>
