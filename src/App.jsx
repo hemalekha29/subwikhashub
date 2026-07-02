@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Lenis from 'lenis';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -11,24 +11,38 @@ import Cursor from './components/Cursor/Cursor';
 import Footer from './components/Footer/Footer';
 import Loader from './components/Loader/Loader';
 import FloatingInstagram from './components/FloatingInstagram/FloatingInstagram';
-import Home from './pages/Home/Home';
-import Shop from './pages/Shop/Shop';
-import HamperBuilder from './pages/Hamper/HamperBuilder';
-import ProductDetail from './pages/ProductDetail/ProductDetail';
-import Checkout from './pages/Checkout/Checkout';
-import OrderSuccess from './pages/OrderSuccess/OrderSuccess';
-import TrackOrder from './pages/TrackOrder/TrackOrder';
-import About from './pages/About/About';
-import Contact from './pages/Contact/Contact';
-import { ShippingPage, ReturnsPage, PrivacyPage, TermsPage } from './pages/Policy/PolicyPage';
-import Game from './pages/Game/Game';
-import Wishlist from './pages/Wishlist/Wishlist';
-import AdminLogin from './pages/Admin/AdminLogin';
-import AdminOrders from './pages/Admin/AdminOrders';
-import AdminOrderDetail from './pages/Admin/AdminOrderDetail';
-import AdminAnalytics from './pages/Admin/AdminAnalytics';
-import AdminProducts from './pages/Admin/AdminProducts';
-import AdminGallery from './pages/Admin/AdminGallery';
+
+// Every route is code-split so a visit to one page (e.g. Home) doesn't download
+// the JS for every other page (Admin panel, all 9 games, Checkout, etc).
+const Home = lazy(() => import('./pages/Home/Home'));
+const Shop = lazy(() => import('./pages/Shop/Shop'));
+const HamperBuilder = lazy(() => import('./pages/Hamper/HamperBuilder'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail/ProductDetail'));
+const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess/OrderSuccess'));
+const TrackOrder = lazy(() => import('./pages/TrackOrder/TrackOrder'));
+const About = lazy(() => import('./pages/About/About'));
+const Contact = lazy(() => import('./pages/Contact/Contact'));
+const ShippingPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.ShippingPage })));
+const ReturnsPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.ReturnsPage })));
+const PrivacyPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.TermsPage })));
+const Game = lazy(() => import('./pages/Game/Game'));
+const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
+const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
+const AdminOrders = lazy(() => import('./pages/Admin/AdminOrders'));
+const AdminOrderDetail = lazy(() => import('./pages/Admin/AdminOrderDetail'));
+const AdminAnalytics = lazy(() => import('./pages/Admin/AdminAnalytics'));
+const AdminProducts = lazy(() => import('./pages/Admin/AdminProducts'));
+const AdminGallery = lazy(() => import('./pages/Admin/AdminGallery'));
+
+function PageFallback() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 36, height: 36, border: '2px solid rgba(201,168,76,0.25)', borderTopColor: 'var(--gold)', borderRadius: '50%', animation: 'rotate 0.8s linear infinite' }} />
+    </div>
+  );
+}
 
 const pageVariants = {
   initial: { opacity: 0, y: 18 },
@@ -56,24 +70,26 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="animate" exit="exit">
-        <Routes location={location}>
-          <Route path="/" element={<Home />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/hamper" element={<HamperBuilder />} />
-          <Route path="/product/:slug" element={<ProductDetail />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/order-success" element={<OrderSuccess />} />
-          <Route path="/track-order" element={<TrackOrder />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/shipping" element={<ShippingPage />} />
-          <Route path="/returns" element={<ReturnsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageFallback />}>
+          <Routes location={location}>
+            <Route path="/" element={<Home />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/hamper" element={<HamperBuilder />} />
+            <Route path="/product/:slug" element={<ProductDetail />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/order-success" element={<OrderSuccess />} />
+            <Route path="/track-order" element={<TrackOrder />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/shipping" element={<ShippingPage />} />
+            <Route path="/returns" element={<ReturnsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/game" element={<Game />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
@@ -81,15 +97,17 @@ function AnimatedRoutes() {
 
 function AdminRoutes() {
   return (
-    <Routes>
-      <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/orders" element={<AdminOrders />} />
-      <Route path="/admin/orders/:orderId" element={<AdminOrderDetail />} />
-      <Route path="/admin/analytics" element={<AdminAnalytics />} />
-      <Route path="/admin/products"  element={<AdminProducts />} />
-      <Route path="/admin/gallery"   element={<AdminGallery />} />
-    </Routes>
+    <Suspense fallback={<PageFallback />}>
+      <Routes>
+        <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/orders" element={<AdminOrders />} />
+        <Route path="/admin/orders/:orderId" element={<AdminOrderDetail />} />
+        <Route path="/admin/analytics" element={<AdminAnalytics />} />
+        <Route path="/admin/products"  element={<AdminProducts />} />
+        <Route path="/admin/gallery"   element={<AdminGallery />} />
+      </Routes>
+    </Suspense>
   );
 }
 

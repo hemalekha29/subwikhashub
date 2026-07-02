@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
@@ -7,26 +7,18 @@ import { getActiveSeason } from "./seasons";
 import Leaderboard from "./Leaderboard";
 import styles from "./Game.module.css";
 
-import MemoryMatch from "./games/MemoryMatch";
-import GiftQuiz from "./games/GiftQuiz";
-import WordScramble from "./games/WordScramble";
-import PatternEcho from "./games/PatternEcho";
-import OddOneOut from "./games/OddOneOut";
-import EmojiDecode from "./games/EmojiDecode";
-import SpeedCount from "./games/SpeedCount";
-import LuckyWheel from "./games/LuckyWheel";
-import TapRush from "./games/TapRush";
-
+// Lazy-loaded: only the one game active this week is ever downloaded, instead
+// of shipping the code for all 9 mini-games to every visitor of /game.
 const GAMES = [
-  MemoryMatch,
-  GiftQuiz,
-  WordScramble,
-  PatternEcho,
-  OddOneOut,
-  EmojiDecode,
-  SpeedCount,
-  LuckyWheel,
-  TapRush,
+  lazy(() => import("./games/MemoryMatch")),
+  lazy(() => import("./games/GiftQuiz")),
+  lazy(() => import("./games/WordScramble")),
+  lazy(() => import("./games/PatternEcho")),
+  lazy(() => import("./games/OddOneOut")),
+  lazy(() => import("./games/EmojiDecode")),
+  lazy(() => import("./games/SpeedCount")),
+  lazy(() => import("./games/LuckyWheel")),
+  lazy(() => import("./games/TapRush")),
 ];
 
 const GAME_TITLES = [
@@ -253,7 +245,9 @@ export default function Game() {
       </div>
 
       {result === null ? (
-        <ActiveGame key={playKey} onComplete={handleComplete} />
+        <Suspense fallback={<div style={{ minHeight: 200 }} />}>
+          <ActiveGame key={playKey} onComplete={handleComplete} />
+        </Suspense>
       ) : (
         <div className={styles.result}>
           <div className={styles.resultGlow} />
