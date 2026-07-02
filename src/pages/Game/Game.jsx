@@ -100,8 +100,31 @@ async function recordLeaderboardEntry(gameTitle, percent) {
 
 const activeSeason = getActiveSeason();
 
+function getActiveDiscount() {
+  try {
+    const raw = localStorage.getItem('subwikha_discount');
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (d.used || Date.now() > d.expires) return null;
+    return d;
+  } catch {
+    return null;
+  }
+}
+
+function formatTimeLeft(ms) {
+  const totalMinutes = Math.max(0, Math.ceil(ms / 60000));
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
 export default function Game() {
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(() => {
+    const active = getActiveDiscount();
+    return active ? { percent: active.percent, restored: true, expires: active.expires } : null;
+  });
   const [playKey, setPlayKey] = useState(0);
   const [streak] = useState(() => {
     try { return JSON.parse(localStorage.getItem('subwikha_streak') || 'null'); } catch { return null; }
@@ -171,15 +194,21 @@ export default function Game() {
         <div className={styles.result}>
           <div className={styles.resultGlow} />
           <div className={styles.resultBadge}>{result.percent}%</div>
-          <h2 className={styles.resultTitle}>You won {result.percent}% off!</h2>
+          <h2 className={styles.resultTitle}>
+            {result.restored ? `You already won ${result.percent}% off!` : `You won ${result.percent}% off!`}
+          </h2>
           <p className={styles.resultNote}>
-            {result.bonus > 0
-              ? `Includes a +${result.bonus}% streak bonus (day ${result.streakCount}). Auto-applied at checkout. Valid for 24 hours.`
-              : 'Discount auto-applied at checkout. Valid for 24 hours.'}
+            {result.restored
+              ? `Your discount is already active — valid for another ${formatTimeLeft(result.expires - Date.now())}. Auto-applied at checkout.`
+              : result.bonus > 0
+                ? `Includes a +${result.bonus}% streak bonus (day ${result.streakCount}). Auto-applied at checkout. Valid for 24 hours.`
+                : 'Discount auto-applied at checkout. Valid for 24 hours.'}
           </p>
           <div className={styles.resultActions}>
             <Link to="/shop" className="btn-gold">Shop Now</Link>
-            <button className="btn-outline" onClick={playAgain}>Play Again</button>
+            {!result.restored && (
+              <button className="btn-outline" onClick={playAgain}>Play Again</button>
+            )}
           </div>
         </div>
       )}
