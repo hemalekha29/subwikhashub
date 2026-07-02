@@ -1,19 +1,50 @@
 import { useState, useEffect, useRef } from 'react';
 import { scoreToDiscount } from '../Game';
 
-const TIME_PER_ROUND = 12;
+const TIME_PER_ROUND = 8;
+const ROUNDS_PER_GAME = 8;
 
-const ROUNDS = [
-  { clue: ['🌹','🍫','🎀'], options: ['Chocolate Bouquet','Resin Keychain','Night Light','Photo Frame'], answer: 0 },
-  { clue: ['📸','✨','💎'], options: ['Wedding Frame','Resin Photo Keychain','Fridge Magnet','Birthday Bouquet'], answer: 1 },
-  { clue: ['🐼','🌙','💡'], options: ['Pipe Cleaner Pot','Chocolate Bouquet','Panda Night Lamp','Evil Eye Keychain'], answer: 2 },
-  { clue: ['💑','🖼️','💒'], options: ['Birthday Frame','Wedding & Couple Frame','Fridge Magnet','Photo Keychain'], answer: 1 },
-  { clue: ['🌻','🌿','🪴'], options: ['Resin Keychain','Sunflower Pot','Chocolate Bouquet','Night Light'], answer: 1 },
-  { clue: ['🔑','💎','🌸'], options: ['Metal Keychain','Resin Keychain','Pipe Bouquet','Photo Frame'], answer: 1 },
-  { clue: ['🧲','🖼️','🏠'], options: ['Photo Frame','Custom Fridge Magnet','Chocolate Box','Night Lamp'], answer: 1 },
+// A larger pool than what's actually played each round — rounds are picked and
+// shuffled per playthrough (and each round's options are shuffled too) so the
+// game can't be memorized by position, and near-identical decoys raise difficulty.
+const ROUND_POOL = [
+  { clue: ['🌹','🍫','🎀'], options: ['Chocolate Bouquet', 'Pipe Cleaner Flower Bouquet', 'Resin Heart Keychain', 'Custom Photo Frame'], answer: 0 },
+  { clue: ['📸','✨','💎'], options: ['A4 Wedding & Couple Frame', 'Resin Photo Keychain', 'Custom Fridge Magnet', 'Custom A4 Birthday Frame'], answer: 1 },
+  { clue: ['🐼','🌙','💡'], options: ['Pipe Cleaner Sunflower Pot', 'Cute Animal Night Light', 'Panda Colour-Changing Lamp', 'Evil Eye Bell Keychain'], answer: 2 },
+  { clue: ['💑','🖼️','💒'], options: ['Custom A4 Birthday Frame', 'A4 Wedding & Couple Frame', 'Custom Fridge Magnet', 'Resin Photo Keychain'], answer: 1 },
+  { clue: ['🌻','🌿','🪴'], options: ['Resin Letter Keychain', 'Pipe Cleaner Sunflower Pot', 'Chocolate Bouquet', 'Cute Animal Night Light'], answer: 1 },
+  { clue: ['🔑','💎','🌸'], options: ['Evil Eye Bell Keychain', 'Resin Heart Keychain', 'Pipe Cleaner Flower Keychain', 'Custom 4×4 Frame'], answer: 1 },
+  { clue: ['🧲','🖼️','🏠'], options: ['Custom Photo Frame', 'Custom Fridge Magnet', 'Chocolate Bouquet', 'Cute Animal Night Light'], answer: 1 },
+  { clue: ['🌍','🔮','🌸'], options: ['Resin Globe Keychain', 'Resin Letter Keychain', 'Pink Daisy Keychain', 'Custom Resin Photo Coaster'], answer: 0 },
+  { clue: ['🐰🐻','🌙','😴'], options: ['Panda Colour-Changing Lamp', 'Cute Animal Night Light', 'Pipe Cleaner Sunflower Pot', 'A4 Wedding & Couple Frame'], answer: 1 },
+  { clue: ['👁️','🔔','🧿'], options: ['Resin Heart Keychain', 'Evil Eye Bell Keychain', 'Resin Globe Keychain', 'Custom 4×4 Frame'], answer: 1 },
+  { clue: ['🌹','🔴','🔑'], options: ['Red Rose Keychain', 'Pink Daisy Keychain', 'Pipe Cleaner Flower Keychain', 'Resin Heart Keychain'], answer: 0 },
+  { clue: ['🌼','🩷','🔑'], options: ['Pink Daisy Keychain', 'Red Rose Keychain', 'Resin Letter Keychain', 'Pipe Cleaner Sunflower Pot'], answer: 0 },
+  { clue: ['🥇','☀️','🖼️'], options: ['Custom Resin Photo Coaster', 'Custom A4 Birthday Frame', 'Custom Photo Frame', 'Custom 4×4 Frame'], answer: 0 },
+  { clue: ['🔲','⬜','🖼️'], options: ['Custom Photo Frame', 'Custom 4×4 Frame', 'A4 Wedding & Couple Frame', 'Custom A4 Birthday Frame'], answer: 1 },
 ];
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildSession() {
+  return shuffle(ROUND_POOL)
+    .slice(0, ROUNDS_PER_GAME)
+    .map(round => {
+      const correctText = round.options[round.answer];
+      const options = shuffle(round.options);
+      return { clue: round.clue, options, answer: options.indexOf(correctText) };
+    });
+}
+
 export default function EmojiDecode({ onComplete }) {
+  const [rounds] = useState(buildSession);
   const [round, setRound] = useState(0);
   const [score, setScore] = useState(0);
   const [flash, setFlash] = useState(null);
@@ -56,7 +87,7 @@ export default function EmojiDecode({ onComplete }) {
     lockedRef.current = true;
     clearInterval(timerRef.current);
     setLocked(true);
-    const current = ROUNDS[round];
+    const current = rounds[round];
     const isCorrect = idx === current.answer;
     setFlash({ chosen: idx, correct: isCorrect });
     if (isCorrect) {
@@ -68,8 +99,8 @@ export default function EmojiDecode({ onComplete }) {
 
   function advance(currentScore) {
     const nextRound = round + 1;
-    if (nextRound >= ROUNDS.length) {
-      onComplete(scoreToDiscount(currentScore, ROUNDS.length));
+    if (nextRound >= rounds.length) {
+      onComplete(scoreToDiscount(currentScore, rounds.length));
       return;
     }
     setRound(nextRound);
@@ -77,7 +108,7 @@ export default function EmojiDecode({ onComplete }) {
     setLocked(false);
   }
 
-  const current = ROUNDS[round];
+  const current = rounds[round];
 
   function getOptionStyle(idx) {
     const base = {
@@ -106,7 +137,7 @@ export default function EmojiDecode({ onComplete }) {
     <div style={{ maxWidth: '520px', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ fontSize: '0.75rem', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--text-secondary)' }}>
-          Round {round + 1} / {ROUNDS.length}
+          Round {round + 1} / {rounds.length}
         </span>
         <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.1rem', color: 'var(--gold)' }}>
           Score: {score}
@@ -160,7 +191,7 @@ export default function EmojiDecode({ onComplete }) {
       </div>
 
       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
-        {ROUNDS.map((_, i) => (
+        {rounds.map((_, i) => (
           <div key={i} style={{
             width: '8px', height: '8px', borderRadius: '50%',
             background: i < round ? 'var(--gold)' : i === round ? 'var(--gold-light)' : 'var(--black-border)',
