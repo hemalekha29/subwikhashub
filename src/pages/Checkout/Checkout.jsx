@@ -8,6 +8,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
 import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../lib/emailjsConfig';
+import { isValidEmail, isValidPhone } from '../../lib/validators';
 import styles from './Checkout.module.css';
 
 const RAZORPAY_KEY = 'rzp_live_T3PKJRpVYTxbOi';
@@ -15,6 +16,18 @@ const RAZORPAY_KEY = 'rzp_live_T3PKJRpVYTxbOi';
 function getGameDiscount() {
   try {
     const raw = localStorage.getItem('subwikha_discount');
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (d.used || Date.now() > d.expires) return null;
+    return d.percent;
+  } catch {
+    return null;
+  }
+}
+
+function getWelcomeDiscount() {
+  try {
+    const raw = localStorage.getItem('subwikha_welcome_discount');
     if (!raw) return null;
     const d = JSON.parse(raw);
     if (d.used || Date.now() > d.expires) return null;
@@ -42,27 +55,42 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [photoFiles, setPhotoFiles] = useState({});
   const [referralInfo, setReferralInfo] = useState(null);
+  const [allOrders, setAllOrders] = useState([]);
   const fileInputRefs = useRef({});
 
   useEffect(() => {
     const refCode = localStorage.getItem('subwikha_referral');
     const myCode = localStorage.getItem('subwikha_my_referral_code');
-    if (!refCode || refCode === myCode) return;
-    getDocs(collection(db, 'referrals'))
-      .then(snap => {
-        const match = snap.docs.find(d => d.data().code === refCode);
-        if (match) setReferralInfo({ firestoreId: match.id, code: refCode });
-      })
+    if (refCode && refCode !== myCode) {
+      getDocs(collection(db, 'referrals'))
+        .then(snap => {
+          const match = snap.docs.find(d => d.data().code === refCode);
+          if (match) setReferralInfo({ firestoreId: match.id, code: refCode });
+        })
+        .catch(() => {});
+    }
+    // Used to detect a returning customer (by phone) for loyalty free shipping
+    getDocs(collection(db, 'orders'))
+      .then(snap => setAllOrders(snap.docs.map(d => d.data())))
       .catch(() => {});
   }, []);
 
   const gameDiscount = getGameDiscount();
-  const REFERRAL_DISCOUNT_PERCENT = 5;
-  const referralPercent = referralInfo ? REFERRAL_DISCOUNT_PERCENT : 0;
-  const usingReferral = referralPercent > (gameDiscount || 0);
-  const appliedDiscountPercent = usingReferral ? referralPercent : gameDiscount;
+  const welcomeDiscount = getWelcomeDiscount();
+  const usingWelcome = (welcomeDiscount || 0) > (gameDiscount || 0);
+  const appliedDiscountPercent = usingWelcome ? welcomeDiscount : gameDiscount;
   const discountAmount = appliedDiscountPercent ? Math.floor(total * appliedDiscountPercent / 100) : 0;
-  const shipping = (total - discountAmount) >= 500 ? 0 : 80;
+
+  const isReturningCustomer = /^\d{10}$/.test(form.phone) && allOrders.some(o => o.customer?.phone === form.phone);
+  const qualifiesByAmount = (total - discountAmount) >= 500;
+  const freeShippingReason = qualifiesByAmount
+    ? 'amount'
+    : referralInfo
+      ? 'referral'
+      : isReturningCustomer
+        ? 'loyalty'
+        : null;
+  const shipping = freeShippingReason ? 0 : 80;
   const grandTotal = total - discountAmount + shipping;
 
   // Flatten bundle components so each product needing a photo (custom or hamper) gets its own upload slot
@@ -86,7 +114,12 @@ export default function Checkout() {
   };
 
   function handlePhotoChange(itemId, files) {
-    const arr = Array.from(files).filter(f => f.size <= 15 * 1024 * 1024).slice(0, 5);
+    const all = Array.from(files);
+    const arr = all.filter(f => f.size <= 15 * 1024 * 1024).slice(0, 5);
+    const oversized = all.filter(f => f.size > 15 * 1024 * 1024);
+    if (oversized.length > 0) {
+      toast.error(`${oversized.length > 1 ? `${oversized.length} photos are` : '1 photo is'} over 15 MB and won't be uploaded`);
+    }
     setPhotoFiles(prev => ({ ...prev, [itemId]: [...(prev[itemId] || []), ...arr].slice(0, 5) }));
     setErrors(prev => ({ ...prev, [`photo_${itemId}`]: '' }));
   }
@@ -118,13 +151,13 @@ export default function Checkout() {
 
   const validate = () => {
     const errs = {};
-    if (!form.firstName.trim()) errs.firstName = 'Required';
-    if (!form.lastName.trim()) errs.lastName = 'Required';
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Valid email required';
-    if (!form.phone.trim() || !/^\d{10}$/.test(form.phone)) errs.phone = '10-digit phone required';
-    if (!form.address.trim()) errs.address = 'Required';
-    if (!form.city.trim()) errs.city = 'Required';
-    if (!form.state.trim()) errs.state = 'Required';
+    if (!form.firstName.trim()) errs.firstName = 'First name is required';
+    if (!form.lastName.trim()) errs.lastName = 'Last name is required';
+    if (!isValidEmail(form.email)) errs.email = 'Valid email required';
+    if (!isValidPhone(form.phone)) errs.phone = '10-digit phone required';
+    if (!form.address.trim()) errs.address = 'Street address is required';
+    if (!form.city.trim()) errs.city = 'City is required';
+    if (!form.state.trim()) errs.state = 'State is required';
     if (!form.pincode.trim() || !/^\d{6}$/.test(form.pincode)) errs.pincode = '6-digit pincode required';
     photoItems.forEach(item => {
       if (!photoFiles[item.id]?.length) {
@@ -139,7 +172,10 @@ export default function Checkout() {
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
-      toast.error('Please fix the errors below');
+      // Surface each specific problem as its own toast (not just the small
+      // inline text under a field) so it's obvious what to fix without hunting.
+      const messages = [...new Set(Object.values(errs))];
+      messages.slice(0, 4).forEach(msg => toast.error(msg));
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -241,13 +277,20 @@ export default function Checkout() {
           console.error('Email notification failed:', err);
         }
 
-        if (usingReferral && referralInfo) {
+        if (referralInfo) {
           try {
             await updateDoc(doc(db, 'referrals', referralInfo.firestoreId), { uses: increment(1) });
           } catch (err) {
             console.error('Referral update failed:', err);
           }
           localStorage.removeItem('subwikha_referral');
+        }
+        if (usingWelcome) {
+          const raw = localStorage.getItem('subwikha_welcome_discount');
+          if (raw) {
+            const d = JSON.parse(raw);
+            localStorage.setItem('subwikha_welcome_discount', JSON.stringify({ ...d, used: true }));
+          }
         } else if (gameDiscount) {
           const raw = localStorage.getItem('subwikha_discount');
           if (raw) {
@@ -320,6 +363,7 @@ export default function Checkout() {
       <div className={styles.header}>
         <span className="section-label">Secure Checkout</span>
         <h1 className={styles.title}>Complete Your Order</h1>
+        <p className={styles.codNotice}>⚡ We accept online payments only: no Cash on Delivery</p>
       </div>
 
       <div className={styles.inner}>
@@ -468,10 +512,6 @@ export default function Checkout() {
               `Pay ₹${grandTotal.toLocaleString('en-IN')} Securely`
             )}
           </button>
-
-          <p className={styles.noCod}>
-            ⚡ We accept online payments only: no Cash on Delivery
-          </p>
         </form>
 
         {/* Order Summary */}
@@ -505,10 +545,22 @@ export default function Checkout() {
           <div className={styles.summaryTotals}>
             {appliedDiscountPercent > 0 && (
               <div className={styles.discountBanner}>
-                {usingReferral
-                  ? `🎉 Referral discount (${appliedDiscountPercent}%) applied!`
-                  : `🎮 Game discount (${appliedDiscountPercent}%) applied!`}
+                {usingWelcome
+                  ? `🎉 Welcome discount: ${appliedDiscountPercent}% off applied (your best available offer)`
+                  : `🎮 Game discount: ${appliedDiscountPercent}% off applied (your best available offer)`}
+                {usingWelcome && gameDiscount > 0 && (
+                  <><br /><span style={{ opacity: 0.75 }}>Your {gameDiscount}% game discount is saved for a future order.</span></>
+                )}
+                {!usingWelcome && welcomeDiscount > 0 && (
+                  <><br /><span style={{ opacity: 0.75 }}>Your {welcomeDiscount}% welcome discount is saved for a future order.</span></>
+                )}
               </div>
+            )}
+            {freeShippingReason === 'referral' && (
+              <div className={styles.discountBanner}>🤝 Referral perk: Free shipping applied!</div>
+            )}
+            {freeShippingReason === 'loyalty' && (
+              <div className={styles.discountBanner}>💛 Welcome back! Free shipping for returning customers.</div>
             )}
             <div className={styles.summaryRow}>
               <span>Subtotal</span>

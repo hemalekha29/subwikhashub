@@ -179,11 +179,16 @@
   animation: rotate 0.8s linear infinite;
 }
 
-.noCod {
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.05em;
+.codNotice {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--gold);
+  letter-spacing: 0.03em;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 20px;
+  padding: 8px 18px;
 }
 
 /* Summary */

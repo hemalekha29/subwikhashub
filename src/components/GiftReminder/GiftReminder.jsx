@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { isValidEmail } from '../../lib/validators';
 import toast from 'react-hot-toast';
 
 const OCCASIONS = ['Birthday', 'Anniversary', "Valentine's Day", 'Wedding', 'Rakhi', 'Just Because'];
@@ -14,6 +15,10 @@ export default function GiftReminder() {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.date) {
       toast.error('Please fill in your name, email and the date');
+      return;
+    }
+    if (!isValidEmail(form.email)) {
+      toast.error('Please enter a valid email address');
       return;
     }
     setSaving(true);

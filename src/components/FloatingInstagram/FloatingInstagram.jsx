@@ -1,6 +1,18 @@
+import { useState, useEffect } from 'react';
 import styles from './FloatingInstagram.module.css';
 
 export default function FloatingInstagram() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Delay so this doesn't stack with the announcement bar and welcome
+    // popup all fighting for attention the instant the page loads.
+    const timer = setTimeout(() => setVisible(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (!visible) return null;
+
   return (
     <a
       href="https://www.instagram.com/subwikhahub"

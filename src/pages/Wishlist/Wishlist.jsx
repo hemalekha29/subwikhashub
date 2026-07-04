@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { products } from '../../data/products';
+import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import toast from 'react-hot-toast';
@@ -9,6 +9,7 @@ import styles from './Wishlist.module.css';
 export default function Wishlist() {
   const { ids, toggle } = useWishlist();
   const { dispatch } = useCart();
+  const products = useAllProducts();
 
   const wishlistProducts = products.filter(p => ids.includes(p.id));
 

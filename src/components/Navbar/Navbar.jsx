@@ -46,6 +46,7 @@ export default function Navbar() {
     { to: '/shop', label: 'Shop' },
     { to: '/about', label: 'Our Story' },
     { to: '/contact', label: 'Contact' },
+    { to: '/track-order', label: 'Track Order' },
     { to: '/hamper', label: '🎁 Build a Hamper' },
     { to: '/game', label: '✦ Play & Win', highlight: true },
   ];

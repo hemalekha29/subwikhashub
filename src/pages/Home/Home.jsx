@@ -5,6 +5,7 @@ import { products, testimonials } from '../../data/products';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import UgcGallery from '../../components/UgcGallery/UgcGallery';
 import InstagramFeed from '../../components/InstagramFeed/InstagramFeed';
+import HeroShowcase from '../../components/HeroShowcase/HeroShowcase';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import styles from './Home.module.css';
 
@@ -80,6 +81,7 @@ export default function Home() {
       {/* ── HERO ── */}
       <section className={styles.hero}>
         <div ref={heroBgRef} className={styles.heroBg} />
+        <HeroShowcase />
         <div className={styles.heroBgOverlay} />
 
         {/* Sparkles */}
@@ -217,6 +219,24 @@ export default function Home() {
         </RevealSection>
       </section>
 
+      {/* ── GIFT FINDER CTA ── */}
+      <RevealSection>
+        <section
+          style={{
+            margin: '0 24px 24px', padding: '48px 24px', textAlign: 'center', borderRadius: 12,
+            background: 'linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02))',
+            border: '1px solid rgba(201,168,76,0.2)',
+          }}
+        >
+          <span style={{ fontSize: '1.8rem' }}>🎁</span>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.7rem', margin: '10px 0' }}>Not Sure What to Gift?</h2>
+          <p style={{ opacity: 0.75, maxWidth: 480, margin: '0 auto 20px' }}>
+            Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget.
+          </p>
+          <Link to="/gift-finder" className="btn-gold">Take the Gift Finder Quiz →</Link>
+        </section>
+      </RevealSection>
+
       {/* ── USP STRIP ── */}
       <div className={styles.uspStrip}>
         {[
@@ -253,13 +273,18 @@ export default function Home() {
               <div className={styles.stars}>{'★'.repeat(t.rating)}</div>
               <div className={styles.testimonialMeta}>
                 {t.photo && (
-                  <img
-                    src={t.photo}
-                    alt={t.name}
-                    className={styles.testimonialAvatar}
+                  <button
+                    type="button"
+                    className={styles.testimonialAvatarBtn}
                     onClick={() => setLightboxImg(t.photo)}
-                    title="Click to view"
-                  />
+                    aria-label={`View ${t.name}'s review photo`}
+                  >
+                    <img
+                      src={t.photo}
+                      alt=""
+                      className={styles.testimonialAvatar}
+                    />
+                  </button>
                 )}
                 <div>
                   <span className={styles.testimonialName}>{t.name}</span>
@@ -270,7 +295,13 @@ export default function Home() {
           ))}
           <div className={styles.testimonialDots}>
             {testimonials.map((_, i) => (
-              <button key={i} className={`${styles.dot} ${i === activeTestimonial ? styles.dotActive : ''}`} onClick={() => setActiveTestimonial(i)} />
+              <button
+                key={i}
+                className={`${styles.dot} ${i === activeTestimonial ? styles.dotActive : ''}`}
+                onClick={() => setActiveTestimonial(i)}
+                aria-label={`Show testimonial ${i + 1} of ${testimonials.length}`}
+                aria-current={i === activeTestimonial}
+              />
             ))}
           </div>
         </div>

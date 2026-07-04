@@ -11,12 +11,14 @@ import Cursor from './components/Cursor/Cursor';
 import Footer from './components/Footer/Footer';
 import Loader from './components/Loader/Loader';
 import FloatingInstagram from './components/FloatingInstagram/FloatingInstagram';
+import WelcomePopup from './components/WelcomePopup/WelcomePopup';
 
 // Every route is code-split so a visit to one page (e.g. Home) doesn't download
 // the JS for every other page (Admin panel, all 9 games, Checkout, etc).
 const Home = lazy(() => import('./pages/Home/Home'));
 const Shop = lazy(() => import('./pages/Shop/Shop'));
 const HamperBuilder = lazy(() => import('./pages/Hamper/HamperBuilder'));
+const GiftFinder = lazy(() => import('./pages/GiftFinder/GiftFinder'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail/ProductDetail'));
 const Checkout = lazy(() => import('./pages/Checkout/Checkout'));
 const OrderSuccess = lazy(() => import('./pages/OrderSuccess/OrderSuccess'));
@@ -50,9 +52,26 @@ const pageVariants = {
   exit:    { opacity: 0, y: -12, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] } },
 };
 
+// Lenis takes over scroll with its own internal position, so a plain
+// window.scrollTo(0,0) on route change gets overridden on the next Lenis
+// frame and the new page renders still scrolled to the old offset.
+let lenisInstance = null;
+
+function resetScroll() {
+  if (lenisInstance) lenisInstance.scrollTo(0, { immediate: true });
+  else window.scrollTo(0, 0);
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
-  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  useEffect(() => {
+    resetScroll();
+    // Lazy-loaded route chunks (Suspense) can finish loading and change the
+    // page height a moment after this effect runs, which re-triggers Lenis's
+    // scroll clamping — re-assert once more on the next frame to be safe.
+    const raf = requestAnimationFrame(resetScroll);
+    return () => cancelAnimationFrame(raf);
+  }, [pathname]);
   return null;
 }
 
@@ -75,6 +94,7 @@ function AnimatedRoutes() {
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/hamper" element={<HamperBuilder />} />
+            <Route path="/gift-finder" element={<GiftFinder />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
@@ -128,6 +148,7 @@ function AppContent() {
       <AnimatedRoutes />
       <Footer />
       <FloatingInstagram />
+      <WelcomePopup />
     </>
   );
 }
@@ -136,12 +157,17 @@ export default function App() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
+    // Prevent the browser's own scroll-position memory from fighting with
+    // Lenis/ScrollToTop on SPA navigation.
+    if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
       wheelMultiplier: 0.9,
     });
+    lenisInstance = lenis;
 
     function raf(time) {
       lenis.raf(time);
@@ -149,7 +175,10 @@ export default function App() {
     }
     requestAnimationFrame(raf);
 
-    return () => lenis.destroy();
+    return () => {
+      lenisInstance = null;
+      lenis.destroy();
+    };
   }, []);
 
   return (
@@ -161,7 +190,23 @@ export default function App() {
           <Toaster
             position="top-right"
             toastOptions={{
-              style: { background: 'transparent', boxShadow: 'none', padding: 0 },
+              style: {
+                background: 'var(--black-card)',
+                color: 'var(--white)',
+                border: '1px solid rgba(201,168,76,0.3)',
+                borderRadius: '8px',
+                padding: '12px 16px',
+                fontSize: '0.85rem',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.45)',
+              },
+              success: {
+                iconTheme: { primary: '#4ade80', secondary: '#111' },
+                style: { border: '1px solid rgba(74,222,128,0.35)' },
+              },
+              error: {
+                iconTheme: { primary: '#f87171', secondary: '#111' },
+                style: { border: '1px solid rgba(248,113,113,0.35)' },
+              },
             }}
           />
         </CartProvider>

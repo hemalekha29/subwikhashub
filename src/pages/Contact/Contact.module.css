@@ -94,6 +94,13 @@
 .input:focus, .textarea:focus { border-color: var(--gold-dark); }
 .textarea { resize: vertical; }
 
+.inputError { border-color: #ef4444 !important; }
+
+.errorMsg {
+  font-size: 0.72rem;
+  color: #ef4444;
+}
+
 .thankYou {
   display: flex;
   flex-direction: column;

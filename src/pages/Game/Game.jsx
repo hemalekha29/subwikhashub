@@ -139,7 +139,6 @@ export default function Game() {
       ? { percent: active.percent, restored: true, expires: active.expires }
       : null;
   });
-  const [playKey, setPlayKey] = useState(0);
   const [streak] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("subwikha_streak") || "null");
@@ -164,11 +163,6 @@ export default function Game() {
       }),
     );
     recordLeaderboardEntry(GAME_TITLES[gameIndex], finalPercent);
-  }
-
-  function playAgain() {
-    setResult(null);
-    setPlayKey((k) => k + 1);
   }
 
   return (
@@ -246,7 +240,7 @@ export default function Game() {
 
       {result === null ? (
         <Suspense fallback={<div style={{ minHeight: 200 }} />}>
-          <ActiveGame key={playKey} onComplete={handleComplete} />
+          <ActiveGame onComplete={handleComplete} />
         </Suspense>
       ) : (
         <div className={styles.result}>
@@ -268,11 +262,6 @@ export default function Game() {
             <Link to="/shop" className="btn-gold">
               Shop Now
             </Link>
-            {!result.restored && (
-              <button className="btn-outline" onClick={playAgain}>
-                Play Again
-              </button>
-            )}
           </div>
         </div>
       )}

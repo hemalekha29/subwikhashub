@@ -2,9 +2,11 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAllProducts } from '../../hooks/useAllProducts';
+import { useProductSalesCount } from '../../hooks/useProductSales';
 import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import ShareStrip from '../../components/ShareStrip/ShareStrip';
+import PlayNudge from '../../components/PlayNudge/PlayNudge';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
@@ -27,6 +29,7 @@ export default function ProductDetail() {
   );
   const [selectedOption, setSelectedOption] = useState(null);
   const [customValues, setCustomValues] = useState({});
+  const salesCount = useProductSalesCount(product?.name);
 
   const activePrice = selectedVariant ? selectedVariant.price : product?.price;
 
@@ -167,6 +170,8 @@ export default function ProductDetail() {
         <span>{product.name}</span>
       </div>
 
+      <PlayNudge />
+
       {/* Main */}
       <div className={styles.main}>
         {/* Images */}
@@ -197,6 +202,11 @@ export default function ProductDetail() {
           <div className={styles.ratingRow}>
             <span className={styles.stars}>{'★'.repeat(Math.floor(product.rating))}</span>
             <span className={styles.ratingText}>{product.rating} · {product.reviews} reviews</span>
+            {salesCount > 0 && (
+              <span style={{ color: '#f5a623', fontSize: '0.8rem', marginLeft: 8 }}>
+                🔥 {salesCount} sold this month
+              </span>
+            )}
           </div>
 
           <div className={styles.priceBlock}>

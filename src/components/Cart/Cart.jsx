@@ -9,6 +9,10 @@ export default function Cart() {
   const { items, total, isOpen, dispatch } = useCart();
   const progress = Math.min((total / FREE_SHIP) * 100, 100);
   const remaining = FREE_SHIP - total;
+  // Referral-based free shipping is confirmed against Firestore at Checkout,
+  // but we can tell the shopper it's likely to apply as soon as they have a
+  // referral code, so it isn't a surprise discovered deep in checkout.
+  const hasReferralCode = !!localStorage.getItem('subwikha_referral');
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
@@ -61,16 +65,22 @@ export default function Cart() {
             {/* Free shipping progress */}
             <div className={styles.shipProgress}>
               {remaining > 0 ? (
-                <p className={styles.shipText}>
-                  Add <strong className={styles.shipAmt}>₹{remaining.toLocaleString('en-IN')}</strong> more for <span className={styles.shipFree}>FREE shipping</span>
-                </p>
+                hasReferralCode ? (
+                  <p className={styles.shipText}>
+                    <span className={styles.shipCheck}>🤝</span> Referral code applied — <span className={styles.shipFree}>free shipping</span> at checkout
+                  </p>
+                ) : (
+                  <p className={styles.shipText}>
+                    Add <strong className={styles.shipAmt}>₹{remaining.toLocaleString('en-IN')}</strong> more for <span className={styles.shipFree}>FREE shipping</span>
+                  </p>
+                )
               ) : (
                 <p className={styles.shipText}>
                   <span className={styles.shipCheck}>✓</span> You've unlocked <span className={styles.shipFree}>free shipping!</span>
                 </p>
               )}
               <div className={styles.progressBar}>
-                <div className={styles.progressFill} style={{ width: `${progress}%` }}>
+                <div className={styles.progressFill} style={{ width: `${hasReferralCode ? 100 : progress}%` }}>
                   <div className={styles.progressGlow} />
                 </div>
               </div>

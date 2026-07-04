@@ -3,23 +3,37 @@ import { Helmet } from 'react-helmet-async';
 import emailjs from '@emailjs/browser';
 import toast from 'react-hot-toast';
 import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../lib/emailjsConfig';
+import { isValidEmail } from '../../lib/validators';
 import GiftReminder from '../../components/GiftReminder/GiftReminder';
 import styles from './Contact.module.css';
 
 export default function Contact() {
   const formRef = useRef(null);
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [errors, setErrors] = useState({});
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm(f => ({ ...f, [name]: value }));
+    if (errors[name]) setErrors(err => ({ ...err, [name]: '' }));
+  };
+
+  const validate = () => {
+    const errs = {};
+    if (!form.name.trim()) errs.name = 'Please enter your name';
+    if (!form.email.trim()) errs.email = 'Please enter your email';
+    else if (!isValidEmail(form.email)) errs.email = 'Please enter a valid email address';
+    if (!form.message.trim()) errs.message = 'Please enter a message';
+    return errs;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.message) {
-      toast.error('Please fill all required fields');
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
       return;
     }
     setLoading(true);
@@ -107,11 +121,13 @@ export default function Contact() {
               <div className={styles.formGrid}>
                 <div className={styles.field}>
                   <label>Name *</label>
-                  <input name="name" value={form.name} onChange={handleChange} placeholder="Your name" className={styles.input} />
+                  <input name="name" value={form.name} onChange={handleChange} placeholder="Your name" className={`${styles.input} ${errors.name ? styles.inputError : ''}`} />
+                  {errors.name && <span className={styles.errorMsg}>{errors.name}</span>}
                 </div>
                 <div className={styles.field}>
                   <label>Email *</label>
-                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className={styles.input} />
+                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} />
+                  {errors.email && <span className={styles.errorMsg}>{errors.email}</span>}
                 </div>
               </div>
               <div className={styles.field}>
@@ -120,7 +136,8 @@ export default function Contact() {
               </div>
               <div className={styles.field}>
                 <label>Message *</label>
-                <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Tell us about your gifting needs..." className={styles.textarea} />
+                <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Tell us about your gifting needs..." className={`${styles.textarea} ${errors.message ? styles.inputError : ''}`} />
+                {errors.message && <span className={styles.errorMsg}>{errors.message}</span>}
               </div>
               <button type="submit" className="btn-gold" style={{ width: '100%', padding: '16px' }} disabled={loading}>
                 {loading ? 'Sending...' : 'Send Message'}

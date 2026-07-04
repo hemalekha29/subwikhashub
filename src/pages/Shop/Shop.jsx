@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { categories, occasions } from '../../data/products';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
+import PlayNudge from '../../components/PlayNudge/PlayNudge';
 import styles from './Shop.module.css';
 
 const SORT_OPTIONS = [
@@ -267,6 +268,7 @@ export default function Shop() {
 
       {/* Product Grid */}
       <div className={styles.main}>
+        <PlayNudge />
         {filtered.length === 0 ? (
           <div className={styles.empty}>
             <span className={styles.emptyIcon}>◇</span>
