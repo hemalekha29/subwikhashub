@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Deploy with: firebase deploy --only storage
+// (or paste into Firebase Console → Storage → Rules → Publish)
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.email == 'dreamcraftersevents@gmail.com';
+    }
+
+    // Product photos — public read (storefront images), admin-only upload/replace.
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // UGC/testimonial gallery photos — same shape as products.
+    match /gallery/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Customer personalization photos uploaded during checkout. Unauthenticated
+    // shoppers can only write into a folder for an order the server already created
+    // (api/create-order.js writes the matching pendingOrders doc first) — this stops
+    // someone uploading arbitrary files under a made-up path. Note: once a URL is
+    // handed back by getDownloadURL(), that specific URL keeps working via its
+    // embedded token regardless of the `read` rule below (this is a Firebase Storage
+    // platform behavior, not something these rules control) — `read: isAdmin()` here
+    // exists to stop *listing/enumerating* the bucket, not to revoke already-issued URLs.
+    match /orders/{orderId}/{allPaths=**} {
+      allow read: if isAdmin();
+      allow write: if firestore.exists(/databases/(default)/documents/pendingOrders/$(orderId))
+        && request.resource.size < 15 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

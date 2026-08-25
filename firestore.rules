@@ -1,0 +1,89 @@
+rules_version = '2';
+
+// Deploy with: firebase deploy --only firestore:rules
+// (requires firebase-tools: npm i -g firebase-tools, then `firebase login` and
+// `firebase use <your-project-id>` once — or paste this file's contents directly into
+// Firebase Console → Firestore Database → Rules → Publish.)
+//
+// ── Why these collections are shaped the way they are ──────────────────────────
+// `orders` and `pendingOrders` are written ONLY by api/create-order.js and
+// api/verify-payment.js using the Firebase Admin SDK, which authenticates with a
+// service account and always bypasses these rules entirely — so "deny everything"
+// below does not break checkout or Track Order (api/track-order.js), it just makes
+// sure NOTHING else (i.e. any random visitor's browser) can read or write them
+// directly. See api/create-order.js for the full explanation of why this replaced
+// direct client writes.
+//
+// isAdmin() is a single hardcoded email rather than "any authenticated user" because
+// this project has no public sign-up flow in the app UI, but Firebase's public client
+// config would still let anyone call createUserWithEmailAndPassword() from a browser
+// console if we didn't pin this down — see src/pages/Admin/AdminLogin.jsx.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email == 'dreamcraftersevents@gmail.com';
+    }
+
+    // Orders contain full customer PII (name, phone, email, address, gift messages,
+    // payment IDs) and must never be readable/writable directly by the browser.
+    // Reads go through api/track-order.js (customer, by orderId+phone) or the admin
+    // panel (see below); writes go through api/verify-payment.js only.
+    match /orders/{orderId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if false; // Only api/verify-payment.js (Admin SDK, bypasses rules) ever creates an order.
+    }
+
+    // Only api/create-order.js (Admin SDK) ever touches this collection.
+    match /pendingOrders/{orderId} {
+      allow read, write: if false;
+    }
+
+    // Product catalog: public read (needed for the storefront), admin-only write.
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Customer-submitted gift reminders (name/email/date) — anyone can create one
+    // (that's the point of the feature), nobody can read/list them back except the
+    // admin/cron job (which uses the Admin SDK and bypasses this anyway).
+    match /reminders/{reminderId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Referral codes: publicly readable so a referral link can be validated
+    // client-side pre-checkout; only the server (Admin SDK) or admin creates/updates them.
+    match /referrals/{referralId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // UGC gallery: public reads only for approved photos; admin manages everything.
+    match /gallery/{itemId} {
+      allow read: if resource.data.approved == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Wishlist analytics events: write-only from any visitor (fire-and-forget
+    // tracking beacon), readable only by the admin analytics dashboard.
+    match /wishlistEvents/{eventId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Game leaderboard: public read (it's a leaderboard), anyone can submit a score.
+    match /leaderboard/{entryId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

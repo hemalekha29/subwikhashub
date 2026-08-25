@@ -100,6 +100,11 @@ export default function GiftFinder() {
       <Helmet>
         <title>Gift Finder | Subwikha's Hub</title>
         <meta name="description" content="Not sure what to gift? Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/gift-finder" />
+        <meta property="og:title" content="Gift Finder | Subwikha's Hub" />
+        <meta property="og:description" content="Not sure what to gift? Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/gift-finder" />
       </Helmet>
 
       <div className={styles.header}>

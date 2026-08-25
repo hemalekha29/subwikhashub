@@ -1,17 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../firebase';
+import { db } from '../../firebase';
+import { uploadToCloudinary } from '../../lib/cloudinary';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
 import toast from 'react-hot-toast';
 import styles from './AdminProducts.module.css';
 
-function isAdminAuthed() {
-  return sessionStorage.getItem('subwikha_admin') === '1';
-}
-
 export default function AdminGallery() {
-  const navigate = useNavigate();
+  const { checking, authed, logout } = useAdminAuth();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -20,9 +17,8 @@ export default function AdminGallery() {
   const fileRef = useRef(null);
 
   useEffect(() => {
-    if (!isAdminAuthed()) { navigate('/admin/login'); return; }
-    fetchItems();
-  }, []);
+    if (authed) fetchItems();
+  }, [authed]);
 
   const fetchItems = async () => {
     setLoading(true);
@@ -36,20 +32,12 @@ export default function AdminGallery() {
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('subwikha_admin');
-    navigate('/admin/login');
-  };
-
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
     try {
-      const path = `gallery/${Date.now()}_${Math.random().toString(36).slice(2)}_${file.name}`;
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const imageUrl = await getDownloadURL(storageRef);
+      const imageUrl = await uploadToCloudinary(file, 'gallery');
       await addDoc(collection(db, 'gallery'), {
         imageUrl,
         caption: caption.trim(),
@@ -88,6 +76,15 @@ export default function AdminGallery() {
       toast.error('Delete failed');
     }
   };
+
+  if (checking || !authed) {
+    return (
+      <div className={styles.loadingState}>
+        <div className={styles.spinner} />
+        <p>Checking admin session...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

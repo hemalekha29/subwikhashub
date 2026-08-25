@@ -309,11 +309,13 @@
 
 .drawerClose:hover { color: #fff; }
 
-.drawerForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.drawerForm { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 
 .drawerBody {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;

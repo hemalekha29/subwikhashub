@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
+import { isOutOfStock } from '../../lib/stock';
 import toast from 'react-hot-toast';
 import styles from './Wishlist.module.css';
 
@@ -19,13 +20,19 @@ export default function Wishlist() {
   };
 
   const addToCart = (product) => {
+    if (isOutOfStock(product)) return;
     dispatch({ type: 'ADD_ITEM', payload: product });
     toast.success(`${product.name} added to cart`, { style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } });
   };
 
   const addAllToCart = () => {
-    wishlistProducts.forEach(p => dispatch({ type: 'ADD_ITEM', payload: p }));
-    toast.success(`${wishlistProducts.length} gifts added to cart!`, { style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } });
+    const available = wishlistProducts.filter(p => !isOutOfStock(p));
+    available.forEach(p => dispatch({ type: 'ADD_ITEM', payload: p }));
+    const skipped = wishlistProducts.length - available.length;
+    toast.success(
+      `${available.length} gift${available.length !== 1 ? 's' : ''} added to cart!${skipped ? ` (${skipped} out of stock, skipped)` : ''}`,
+      { style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } }
+    );
   };
 
   return (
@@ -70,21 +77,20 @@ export default function Wishlist() {
           )}
 
           <div className={styles.grid}>
-            {wishlistProducts.map(product => (
+            {wishlistProducts.map(product => {
+              const outOfStock = isOutOfStock(product);
+              return (
               <div key={product.id} className={styles.card}>
                 <Link to={`/product/${product.slug}`} className={styles.imgWrap}>
                   <img src={product.images[0]} alt={product.name} loading="lazy" className={styles.img} />
-                  {product.badge && <span className={styles.badge}>{product.badge}</span>}
+                  {outOfStock
+                    ? <span className={styles.badge} style={{ background: '#3a3a3a' }}>Out of Stock</span>
+                    : product.badge && <span className={styles.badge}>{product.badge}</span>}
                 </Link>
 
                 <div className={styles.info}>
                   <p className={styles.tagline}>{product.tagline}</p>
                   <Link to={`/product/${product.slug}`} className={styles.name}>{product.name}</Link>
-
-                  <div className={styles.stars}>
-                    <span>{'★'.repeat(Math.floor(product.rating))}</span>
-                    <span className={styles.ratingNum}>{product.rating} ({product.reviews})</span>
-                  </div>
 
                   <div className={styles.priceRow}>
                     <span className={styles.price}>₹{product.price.toLocaleString('en-IN')}</span>
@@ -96,16 +102,23 @@ export default function Wishlist() {
                   <p className={styles.delivery}>📦 Delivery in {product.deliveryDays} business days</p>
 
                   <div className={styles.actions}>
-                    <button className={styles.addBtn} onClick={() => addToCart(product)}>
-                      Add to Cart
-                    </button>
+                    {outOfStock ? (
+                      <button className={styles.addBtn} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                        Out of Stock
+                      </button>
+                    ) : (
+                      <button className={styles.addBtn} onClick={() => addToCart(product)}>
+                        Add to Cart
+                      </button>
+                    )}
                     <button className={styles.removeBtn} onClick={() => remove(product)} aria-label="Remove from wishlist">
                       <TrashIcon />
                     </button>
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </>
       )}

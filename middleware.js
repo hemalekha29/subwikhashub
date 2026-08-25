@@ -28,12 +28,10 @@ const PRODUCTS = {
     desc: 'A timeless A4 frame with your couple photo set against a vintage black & white memory collage. A deeply personal wedding gift.',
     price: '499',
   },
-  'custom-fridge-magnet': {
-    name: 'Custom Fridge Magnet',
-    image: '/images/magnet-1.webp',
-    desc: 'Your favourite memory on your fridge — crystal clear custom photo printed on a flexible magnet. A sweet little keepsake.',
-    price: '89',
-  },
+  // 'custom-fridge-magnet' intentionally omitted: its image (/images/magnet-1.webp)
+  // doesn't exist in public/images (see src/data/products.js, marked out of stock for
+  // the same reason). Bots hitting this product page fall through to the default
+  // site-wide preview instead of a broken image — re-add here once a real photo exists.
   'panda-colour-changing-lamp': {
     name: 'Panda Colour-Changing Lamp',
     image: '/images/cute-panda-7-1.webp',
@@ -120,48 +118,122 @@ const PRODUCTS = {
   },
 };
 
-export const config = { matcher: '/product/:slug*' };
+// Non-product static routes. `/` is deliberately NOT listed here — the root already
+// serves index.html's own homepage meta tags to every request (bot or not), so there's
+// no gap there. These are the routes where a bot that doesn't execute JS (WhatsApp,
+// Facebook, Twitter/X, LinkedIn, Slack, Telegram, Discord link-preview scrapers — none
+// of them run the SPA's React Helmet) would otherwise see that same generic homepage
+// card instead of the page it actually shared. Copy is kept identical to each page's
+// own <Helmet> block (see src/pages/**/*.jsx) — if you change one, change both.
+const PAGES = {
+  '/shop': {
+    title: "Shop Handcrafted Gifts | Subwikha's Hub",
+    desc: "Shop handcrafted gifts from Coimbatore — custom resin keychains, chocolate bouquets, personalized photo frames, night lights & pipe cleaner flowers. Free shipping above ₹500 across India.",
+  },
+  '/about': {
+    title: "Our Story | Subwikha's Hub",
+    desc: "Learn the story behind Subwikha's Hub — a handcrafted gift brand based in Coimbatore, Tamil Nadu, creating personalized keepsakes and unique gifts with love since 2024.",
+  },
+  '/contact': {
+    title: "Contact Us | Subwikha's Hub",
+    desc: "Contact Subwikha's Hub — Coimbatore's handcrafted gift brand. Reach us for custom gift orders, personalized keepsakes, or any queries via the contact form or Instagram DM.",
+  },
+  '/game': {
+    title: "Play & Win Discounts | Subwikha's Hub Game Zone",
+    desc: "Win up to 10% OFF by playing mini-games — Memory Match, Word Scramble, Gift Quiz and more!",
+  },
+  '/shipping': {
+    title: "Shipping Info | Subwikha's Hub",
+    desc: "Learn about Subwikha's Hub shipping and delivery timelines. Free shipping on orders above ₹500. Handmade items dispatched across India.",
+  },
+  '/returns': {
+    title: "Returns & Exchange | Subwikha's Hub",
+    desc: "Read Subwikha's Hub return and exchange policy. Custom handmade orders are non-returnable. Damaged items are replaced within 48 hours of delivery.",
+  },
+  '/privacy': {
+    title: "Privacy Policy | Subwikha's Hub",
+    desc: "Subwikha's Hub privacy policy — how we collect, use and protect your personal information. Payments secured by Razorpay.",
+  },
+  '/terms': {
+    title: "Terms of Service | Subwikha's Hub",
+    desc: "Read the terms of service for Subwikha's Hub. All orders are handmade to order, paid via Razorpay, and non-refundable for custom items.",
+  },
+  '/hamper': {
+    title: "Build a Hamper | Subwikha's Hub",
+    desc: "Build your own custom gift hamper — pick 2 to 4 handcrafted gifts and get 10% off the bundle.",
+  },
+  '/gift-finder': {
+    title: "Gift Finder | Subwikha's Hub",
+    desc: "Not sure what to gift? Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget.",
+  },
+};
+
+export const config = {
+  matcher: [
+    '/product/:slug*',
+    '/shop', '/about', '/contact', '/game',
+    '/shipping', '/returns', '/privacy', '/terms',
+    '/hamper', '/gift-finder',
+  ],
+};
 
 export default function middleware(request) {
   const ua = request.headers.get('user-agent') || '';
-  if (!BOT_UA.test(ua)) return; // real browser → let SPA handle it
+  if (!BOT_UA.test(ua)) return; // real browser → let the SPA handle it
 
   const url = new URL(request.url);
-  const slug = url.pathname.replace('/product/', '').replace(/\/$/, '');
-  const p = PRODUCTS[slug];
-  if (!p) return;
+  const pathname = url.pathname.replace(/\/$/, '') || '/';
 
-  const title = `${p.name} | Subwikha's Hub`;
-  const image = `${BASE}${p.image}`;
-  const canonical = `${BASE}/product/${slug}`;
+  if (pathname.startsWith('/product/')) {
+    const slug = pathname.replace('/product/', '');
+    const p = PRODUCTS[slug];
+    if (!p) return;
+    return renderHtml({
+      title: `${p.name} | Subwikha's Hub`,
+      desc: p.desc,
+      image: `${BASE}${p.image}`,
+      canonical: `${BASE}/product/${slug}`,
+      ogType: 'product',
+      price: p.price,
+    });
+  }
 
+  const page = PAGES[pathname];
+  if (!page) return;
+  return renderHtml({
+    title: page.title,
+    desc: page.desc,
+    image: `${BASE}/logo.png`,
+    canonical: `${BASE}${pathname}`,
+    ogType: 'website',
+  });
+}
+
+function renderHtml({ title, desc, image, canonical, ogType, price }) {
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>${title}</title>
-  <meta name="description" content="${p.desc}" />
+  <meta name="description" content="${desc}" />
 
   <!-- Open Graph -->
-  <meta property="og:type" content="product" />
+  <meta property="og:type" content="${ogType}" />
   <meta property="og:site_name" content="Subwikha's Hub" />
   <meta property="og:title" content="${title}" />
-  <meta property="og:description" content="${p.desc}" />
+  <meta property="og:description" content="${desc}" />
   <meta property="og:image" content="${image}" />
   <meta property="og:image:width" content="800" />
   <meta property="og:image:height" content="800" />
-  <meta property="og:image:alt" content="${p.name}" />
   <meta property="og:url" content="${canonical}" />
   <meta property="og:locale" content="en_IN" />
-  <meta property="product:price:amount" content="${p.price}" />
-  <meta property="product:price:currency" content="INR" />
+  ${price ? `<meta property="product:price:amount" content="${price}" />\n  <meta property="product:price:currency" content="INR" />` : ''}
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
-  <meta name="twitter:description" content="${p.desc}" />
+  <meta name="twitter:description" content="${desc}" />
   <meta name="twitter:image" content="${image}" />
-  <meta name="twitter:image:alt" content="${p.name}" />
 
   <link rel="canonical" href="${canonical}" />
 </head>

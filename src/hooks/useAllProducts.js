@@ -15,9 +15,12 @@ export function useAllProducts() {
       .catch(() => {});
   }, []);
 
-  // Firestore products take priority; static products fill the rest
+  // Firestore products take priority; static products fill the rest. A Firestore doc
+  // with `hidden: true` is how the admin panel "deletes" a built-in product it can't
+  // actually remove from source — it must still block the static fallback below (that's
+  // the whole point), it just doesn't get rendered itself. See AdminProducts.jsx.
   return [
-    ...fsProducts,
-    ...staticProducts.filter(sp => !fsProducts.find(fp => fp.slug === sp.slug)),
+    ...fsProducts.filter(p => !p.hidden),
+    ...staticProducts.filter(sp => !fsProducts.some(fp => fp.slug === sp.slug)),
   ];
 }

@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
 import styles from './AdminAnalytics.module.css';
-
-function isAdminAuthed() {
-  return sessionStorage.getItem('subwikha_admin') === '1';
-}
 
 const STATUS_COLORS = { paid: '#c9a84c', processing: '#6c8ebf', shipped: '#f5a623', delivered: '#4ade80' };
 const STATUS_LABELS = { paid: 'New Order', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered' };
@@ -190,17 +187,17 @@ function TopProducts({ products }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AdminAnalytics() {
-  const navigate = useNavigate();
+  const { checking, authed, logout } = useAdminAuth();
   const [orders, setOrders] = useState([]);
   const [wishlistEvents, setWishlistEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [range, setRange] = useState(30);
 
   useEffect(() => {
-    if (!isAdminAuthed()) { navigate('/admin/login'); return; }
+    if (!authed) return;
     fetchOrders();
     fetchWishlistEvents();
-  }, []);
+  }, [authed]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -229,11 +226,6 @@ export default function AdminAnalytics() {
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('subwikha_admin');
-    navigate('/admin/login');
-  };
-
   const totalRevenue = orders.reduce((s, o) => s + (o.grandTotal || 0), 0);
   const totalOrders = orders.length;
   const avgOrderValue = totalOrders ? Math.round(totalRevenue / totalOrders) : 0;
@@ -248,11 +240,11 @@ export default function AdminAnalytics() {
   const topProducts = getTopProducts(orders);
   const wishlistDemand = getWishlistDemand(wishlistEvents, orders);
 
-  if (loading) {
+  if (checking || !authed || loading) {
     return (
       <div className={styles.loadingPage}>
         <div className={styles.spinner} />
-        <p>Loading analytics...</p>
+        <p>{checking || !authed ? 'Checking admin session...' : 'Loading analytics...'}</p>
       </div>
     );
   }

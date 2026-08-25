@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../../firebase';
 import OrderTimeline, { STATUS_LABELS } from '../../components/OrderTimeline/OrderTimeline';
 import { isValidPhone } from '../../lib/validators';
 import toast from 'react-hot-toast';
@@ -29,12 +27,16 @@ export default function TrackOrder() {
     setOrder(null);
     setNotFound(false);
     try {
-      const snap = await getDocs(collection(db, 'orders'));
-      const match = snap.docs
-        .map(d => d.data())
-        .find(o => o.orderId === orderId.trim() && o.customer?.phone === phone.trim());
-      if (!match) setNotFound(true);
-      else setOrder(match);
+      // Looked up server-side (api/track-order.js) via the trusted Admin SDK — the
+      // browser never fetches other customers' orders to find this one.
+      const res = await fetch('/api/track-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: orderId.trim(), phone: phone.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.found) setNotFound(true);
+      else setOrder(data);
     } catch {
       setNotFound(true);
     } finally {

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
+import { isOutOfStock, stockRemaining } from '../../lib/stock';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
 
@@ -17,6 +18,9 @@ export default function ProductCard({ product }) {
 
   const cartItem = items.find(i => i.id === product.id);
   const inCart = !!cartItem;
+  const outOfStock = isOutOfStock(product);
+  const remaining = stockRemaining(product);
+  const atStockLimit = remaining !== null && inCart && cartItem.qty >= remaining;
 
   const handleMouseMove = (e) => {
     const r = cardRef.current?.getBoundingClientRect();
@@ -47,6 +51,7 @@ export default function ProductCard({ product }) {
 
   const handleAddToCart = (e) => {
     e.preventDefault(); e.stopPropagation();
+    if (outOfStock) return;
     dispatch({ type: 'ADD_ITEM', payload: product });
     toast.custom(t => (
       <div className={`${styles.toast} ${t.visible ? styles.toastIn : styles.toastOut}`}>
@@ -58,6 +63,10 @@ export default function ProductCard({ product }) {
 
   const increaseQty = (e) => {
     e.preventDefault(); e.stopPropagation();
+    if (remaining !== null && cartItem.qty >= remaining) {
+      toast.error(`Only ${remaining} left in stock`);
+      return;
+    }
     dispatch({ type: 'UPDATE_QTY', payload: { id: product.id, qty: cartItem.qty + 1 } });
   };
 
@@ -113,8 +122,10 @@ export default function ProductCard({ product }) {
 
         {/* Top badges */}
         <div className={styles.topLeft}>
-          {product.badge && <span className={styles.badge}>{product.badge}</span>}
-          {discount > 0 && <span className={styles.discBadge}>−{discount}%</span>}
+          {outOfStock
+            ? <span className={styles.discBadge} style={{ background: '#3a3a3a' }}>Out of Stock</span>
+            : product.badge && <span className={styles.badge}>{product.badge}</span>}
+          {!outOfStock && discount > 0 && <span className={styles.discBadge}>−{discount}%</span>}
         </div>
 
         {/* Top right actions */}
@@ -137,7 +148,7 @@ export default function ProductCard({ product }) {
         )}
 
         {/* Quick add overlay */}
-        {!inCart && (
+        {!inCart && !outOfStock && (
           <div className={`${styles.quickOverlay} ${hovered ? styles.quickVisible : ''}`}>
             <button className={styles.quickBtn} onClick={handleAddToCart}>
               <CartPlusIcon />
@@ -151,12 +162,6 @@ export default function ProductCard({ product }) {
       <div className={styles.info}>
         <p className={styles.tagline}>{product.tagline}</p>
         <h3 className={styles.name}>{product.name}</h3>
-
-        <div className={styles.ratingRow}>
-          <span className={styles.stars}>{'★'.repeat(Math.floor(product.rating))}</span>
-          <span className={styles.ratingNum}>{product.rating}</span>
-          <span className={styles.reviewCnt}>({product.reviews} reviews)</span>
-        </div>
 
         <div className={styles.priceRow}>
           <span className={styles.price}>₹{product.price.toLocaleString('en-IN')}</span>
@@ -179,13 +184,17 @@ export default function ProductCard({ product }) {
             <div className={styles.qtyPill}>
               <button className={styles.qtyBtn} onClick={decreaseQty}>−</button>
               <span className={styles.qtyNum}>{cartItem.qty}</span>
-              <button className={styles.qtyBtn} onClick={increaseQty}>+</button>
+              <button className={styles.qtyBtn} onClick={increaseQty} disabled={atStockLimit} style={atStockLimit ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>+</button>
             </div>
             <button className={styles.removeBtn} onClick={removeFromCart} aria-label="Remove from cart">
               <TrashIcon />
               Remove
             </button>
           </div>
+        ) : outOfStock ? (
+          <button className={styles.addBtn} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+            Out of Stock
+          </button>
         ) : (
           <button className={styles.addBtn} onClick={handleAddToCart}>
             Add to Cart

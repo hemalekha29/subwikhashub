@@ -7,6 +7,7 @@ import { useCart } from '../../context/CartContext';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import ShareStrip from '../../components/ShareStrip/ShareStrip';
 import PlayNudge from '../../components/PlayNudge/PlayNudge';
+import { isOutOfStock, stockRemaining } from '../../lib/stock';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
@@ -24,8 +25,12 @@ export default function ProductDetail() {
   const product = products.find(p => p.slug === slug) ?? products.find(p => p.id === Number(slug));
   const [activeImg, setActiveImg] = useState(0);
   const [qty, setQty] = useState(1);
+  // Defaults to the first price tier so the price shown here always matches the base
+  // `price` a customer just saw on the Shop grid card / ProductCard — previously this
+  // defaulted to index 1 ("Medium", ₹499), so clicking through from a ₹299 card landed
+  // on a page already showing ₹499, which read as a bait-and-switch.
   const [selectedVariant, setSelectedVariant] = useState(
-    () => product?.priceVariants?.[1] ?? null
+    () => product?.priceVariants?.[0] ?? null
   );
   const [selectedOption, setSelectedOption] = useState(null);
   const [customValues, setCustomValues] = useState({});
@@ -66,8 +71,12 @@ export default function ProductDetail() {
 
   const cartItem = items.find(i => i.id === cartPayload.id);
   const inCart = !!cartItem;
+  const outOfStock = isOutOfStock(product);
+  const remaining = stockRemaining(product);
+  const atStockLimit = remaining !== null && inCart && cartItem.qty >= remaining;
 
   const handleAddToCart = () => {
+    if (outOfStock) return;
     for (let i = 0; i < qty; i++) {
       dispatch({ type: 'ADD_ITEM', payload: cartPayload });
     }
@@ -84,6 +93,7 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
+    if (outOfStock) return;
     if (!inCart) {
       for (let i = 0; i < qty; i++) {
         dispatch({ type: 'ADD_ITEM', payload: cartPayload });
@@ -93,6 +103,10 @@ export default function ProductDetail() {
   };
 
   const handleIncrease = () => {
+    if (remaining !== null && cartItem.qty >= remaining) {
+      toast.error(`Only ${remaining} left in stock`);
+      return;
+    }
     dispatch({ type: 'UPDATE_QTY', payload: { id: cartPayload.id, qty: cartItem.qty + 1 } });
   };
 
@@ -131,11 +145,6 @@ export default function ProductDetail() {
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
       seller: { "@type": "Organization", name: "Subwikha's Hub" },
-    },
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: String(product.rating),
-      reviewCount: String(product.reviews),
     },
   };
 
@@ -199,15 +208,13 @@ export default function ProductDetail() {
           <p className={styles.tagline}>{product.tagline}</p>
           <h1 className={styles.name}>{product.name}</h1>
 
-          <div className={styles.ratingRow}>
-            <span className={styles.stars}>{'★'.repeat(Math.floor(product.rating))}</span>
-            <span className={styles.ratingText}>{product.rating} · {product.reviews} reviews</span>
-            {salesCount > 0 && (
-              <span style={{ color: '#f5a623', fontSize: '0.8rem', marginLeft: 8 }}>
+          {salesCount > 0 && (
+            <div className={styles.ratingRow}>
+              <span style={{ color: '#f5a623', fontSize: '0.8rem' }}>
                 🔥 {salesCount} sold this month
               </span>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className={styles.priceBlock}>
             <span className={styles.price}>₹{activePrice.toLocaleString('en-IN')}</span>
@@ -323,35 +330,47 @@ export default function ProductDetail() {
           </div>
 
           {/* Quantity — only show when not yet in cart */}
-          {!inCart && (
+          {!inCart && !outOfStock && (
             <div className={styles.qtyRow}>
               <span className={styles.qtyLabel}>Quantity</span>
               <div className={styles.qtyControl}>
                 <button className={styles.qtyBtn} onClick={() => setQty(q => Math.max(1, q - 1))}>−</button>
                 <span className={styles.qtyNum}>{qty}</span>
-                <button className={styles.qtyBtn} onClick={() => setQty(q => q + 1)}>+</button>
+                <button
+                  className={styles.qtyBtn}
+                  onClick={() => setQty(q => remaining !== null && q >= remaining ? q : q + 1)}
+                >+</button>
               </div>
+              {remaining !== null && remaining <= 5 && (
+                <span style={{ color: '#f5a623', fontSize: '0.78rem', marginLeft: 10 }}>Only {remaining} left</span>
+              )}
             </div>
           )}
 
           {/* Actions */}
           <div className={styles.actions}>
-            <button className={`btn-gold ${styles.buyBtn}`} onClick={handleBuyNow}>
-              Buy Now
-            </button>
+            {outOfStock ? (
+              <button className={`btn-gold ${styles.buyBtn}`} disabled style={{ opacity: 0.5, cursor: 'not-allowed' }}>
+                Out of Stock
+              </button>
+            ) : (
+              <button className={`btn-gold ${styles.buyBtn}`} onClick={handleBuyNow}>
+                Buy Now
+              </button>
+            )}
 
             {inCart ? (
               <div className={styles.cartInlineControls}>
                 <div className={styles.cartQtyPill}>
                   <button className={styles.cartQtyBtn} onClick={handleDecrease}>−</button>
                   <span className={styles.cartQtyNum}>{cartItem.qty}</span>
-                  <button className={styles.cartQtyBtn} onClick={handleIncrease}>+</button>
+                  <button className={styles.cartQtyBtn} onClick={handleIncrease} disabled={atStockLimit} style={atStockLimit ? { opacity: 0.4, cursor: 'not-allowed' } : undefined}>+</button>
                 </div>
                 <button className={styles.removeCartBtn} onClick={handleRemove}>
                   🗑 Remove
                 </button>
               </div>
-            ) : (
+            ) : !outOfStock && (
               <button className={`btn-outline ${styles.cartBtn}`} onClick={handleAddToCart}>
                 Add to Cart
               </button>

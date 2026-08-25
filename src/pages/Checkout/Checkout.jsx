@@ -1,17 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAllProducts } from '../../hooks/useAllProducts';
-import { db, storage } from '../../firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import emailjs from '@emailjs/browser';
+import { uploadToCloudinary } from '../../lib/cloudinary';
 import toast from 'react-hot-toast';
-import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../../lib/emailjsConfig';
 import { isValidEmail, isValidPhone } from '../../lib/validators';
 import styles from './Checkout.module.css';
-
-const RAZORPAY_KEY = 'rzp_live_T3PKJRpVYTxbOi';
 
 function getGameDiscount() {
   try {
@@ -54,26 +48,16 @@ export default function Checkout() {
   });
   const [errors, setErrors] = useState({});
   const [photoFiles, setPhotoFiles] = useState({});
-  const [referralInfo, setReferralInfo] = useState(null);
-  const [allOrders, setAllOrders] = useState([]);
   const fileInputRefs = useRef({});
 
-  useEffect(() => {
-    const refCode = localStorage.getItem('subwikha_referral');
-    const myCode = localStorage.getItem('subwikha_my_referral_code');
-    if (refCode && refCode !== myCode) {
-      getDocs(collection(db, 'referrals'))
-        .then(snap => {
-          const match = snap.docs.find(d => d.data().code === refCode);
-          if (match) setReferralInfo({ firestoreId: match.id, code: refCode });
-        })
-        .catch(() => {});
-    }
-    // Used to detect a returning customer (by phone) for loyalty free shipping
-    getDocs(collection(db, 'orders'))
-      .then(snap => setAllOrders(snap.docs.map(d => d.data())))
-      .catch(() => {});
-  }, []);
+  // Referral code (if any) came from a shared link and was stashed in localStorage by
+  // ReferralCapture in App.jsx. We only echo it back to the server to validate — the
+  // client never queries the `referrals` collection itself (that used to mean fetching
+  // every referral/order in Firestore just to render one banner; see api/create-order.js
+  // for where this is actually verified now).
+  const refCode = localStorage.getItem('subwikha_referral');
+  const myCode = localStorage.getItem('subwikha_my_referral_code');
+  const hasReferral = Boolean(refCode && refCode !== myCode);
 
   const gameDiscount = getGameDiscount();
   const welcomeDiscount = getWelcomeDiscount();
@@ -81,15 +65,13 @@ export default function Checkout() {
   const appliedDiscountPercent = usingWelcome ? welcomeDiscount : gameDiscount;
   const discountAmount = appliedDiscountPercent ? Math.floor(total * appliedDiscountPercent / 100) : 0;
 
-  const isReturningCustomer = /^\d{10}$/.test(form.phone) && allOrders.some(o => o.customer?.phone === form.phone);
+  // These are *display estimates only*, computed from data already in the browser
+  // (cart total, this device's own saved discount) so the order summary doesn't sit
+  // blank while typing. The authoritative price, discount, and shipping fee are always
+  // recomputed from trusted server-side data in api/create-order.js — nothing here is
+  // trusted for the actual charge.
   const qualifiesByAmount = (total - discountAmount) >= 500;
-  const freeShippingReason = qualifiesByAmount
-    ? 'amount'
-    : referralInfo
-      ? 'referral'
-      : isReturningCustomer
-        ? 'loyalty'
-        : null;
+  const freeShippingReason = qualifiesByAmount ? 'amount' : hasReferral ? 'referral' : null;
   const shipping = freeShippingReason ? 0 : 80;
   const grandTotal = total - discountAmount + shipping;
 
@@ -138,11 +120,7 @@ export default function Checkout() {
       if (!files.length) continue;
       const urls = [];
       for (const file of files) {
-        const path = `orders/${orderId}/${item.id}/${Date.now()}_${file.name}`;
-        const storageRef = ref(storage, path);
-        await uploadBytes(storageRef, file);
-        const url = await getDownloadURL(storageRef);
-        urls.push(url);
+        urls.push(await uploadToCloudinary(file, `orders/${orderId}/${item.id}`));
       }
       links[item.name] = urls;
     }
@@ -167,6 +145,17 @@ export default function Checkout() {
     return errs;
   };
 
+  // Builds the minimal, identifying-only payload for api/create-order.js — slugs and
+  // quantities, never prices. The server looks up the real price for every item itself;
+  // anything price-shaped sent from here is ignored server-side.
+  function buildOrderItems() {
+    return items.map(i =>
+      i.isBundle
+        ? { isBundle: true, qty: i.qty, components: i.components.map(c => ({ slug: c.slug, qty: c.qty })) }
+        : { slug: i.slug, id: i.id, qty: i.qty, variant: i.variant || null, customization: i.customization || null }
+    );
+  }
+
   const handlePayment = async (e) => {
     e.preventDefault();
     const errs = validate();
@@ -187,121 +176,107 @@ export default function Checkout() {
 
     setLoading(true);
 
+    let created;
+    try {
+      const res = await fetch('/api/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: buildOrderItems(),
+          phone: form.phone,
+          referralCode: hasReferral ? refCode : null,
+          discountPercent: appliedDiscountPercent || 0,
+        }),
+      });
+      created = await res.json();
+      if (!res.ok || !created.ok) {
+        toast.error(created.error || 'Could not start payment. Please try again.');
+        setLoading(false);
+        return;
+      }
+    } catch {
+      toast.error('Could not reach the server. Check your connection and try again.');
+      setLoading(false);
+      return;
+    }
+
     const options = {
-      key: RAZORPAY_KEY,
-      amount: grandTotal * 100,
-      currency: 'INR',
+      key: created.keyId,
+      amount: created.amount,
+      currency: created.currency,
+      order_id: created.razorpayOrderId,
       name: "Subwikha's Hub",
       description: `${items.length} Gift${items.length > 1 ? 's' : ''}: Where Memories Become Gifts`,
       image: '/logo.png',
       handler: async function (response) {
-        const orderId = response.razorpay_order_id || `ORD${Date.now()}`;
-        const paymentId = response.razorpay_payment_id;
-
-        // Upload photos
+        // Photos are keyed by the server-issued Razorpay order id, so this is always
+        // the same id verify-payment will look up — no more locally-guessed order ids.
         let photoLinks = {};
         if (photoItems.length > 0) {
           setUploading(true);
           try {
-            photoLinks = await uploadOrderPhotos(orderId);
+            photoLinks = await uploadOrderPhotos(response.razorpay_order_id);
           } catch (err) {
             console.error('Photo upload failed:', err);
           }
           setUploading(false);
         }
 
-        const orderData = {
-          orderId,
-          paymentId,
-          customer: {
-            name: `${form.firstName} ${form.lastName}`,
-            email: form.email,
-            phone: form.phone,
-            address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
-          },
-          items: items.flatMap(i =>
-            i.isBundle
-              ? i.components.map(c => ({ name: c.name, qty: c.qty, price: c.price, variant: null, fromHamper: i.name }))
-              : [{ name: i.name, qty: i.qty, price: i.price, variant: i.variant || null, customization: i.customization || null }]
-          ),
-          subtotal: total,
-          discount: discountAmount,
-          shipping,
-          grandTotal,
-          giftMessage: form.giftMessage || '',
-          photos: photoLinks,
-          status: 'paid',
-          createdAt: serverTimestamp(),
-        };
-
         try {
-          await addDoc(collection(db, 'orders'), orderData);
-        } catch (err) {
-          console.error('Firebase save failed:', err);
-        }
+          const verifyRes = await fetch('/api/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              customer: {
+                firstName: form.firstName,
+                lastName: form.lastName,
+                email: form.email,
+                phone: form.phone,
+                address: `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`,
+              },
+              giftMessage: form.giftMessage || '',
+              photos: photoLinks,
+            }),
+          });
+          const verified = await verifyRes.json();
+          if (!verifyRes.ok || !verified.ok) {
+            setLoading(false);
+            toast.error(verified.error || 'We could not confirm your payment. Please contact us with your payment ID.');
+            return;
+          }
 
-        try {
-          const decrementTargets = items.flatMap(i =>
-            i.isBundle
-              ? i.components.map(c => ({ slug: c.slug, qty: c.qty }))
-              : [{ slug: i.slug, qty: i.qty }]
-          );
-          for (const t of decrementTargets) {
-            const full = allProducts.find(p => p.slug === t.slug);
-            if (full?.firestoreId && typeof full.stock === 'number') {
-              await updateDoc(doc(db, 'products', full.firestoreId), { stock: increment(-t.qty) });
+          if (usingWelcome) {
+            const raw = localStorage.getItem('subwikha_welcome_discount');
+            if (raw) {
+              const d = JSON.parse(raw);
+              localStorage.setItem('subwikha_welcome_discount', JSON.stringify({ ...d, used: true }));
+            }
+          } else if (gameDiscount) {
+            const raw = localStorage.getItem('subwikha_discount');
+            if (raw) {
+              const d = JSON.parse(raw);
+              localStorage.setItem('subwikha_discount', JSON.stringify({ ...d, used: true }));
             }
           }
-        } catch (err) {
-          console.error('Stock decrement failed:', err);
-        }
+          if (hasReferral) localStorage.removeItem('subwikha_referral');
 
-        try {
-          const itemsList = items.map(i => `${i.name}${i.variant ? ` (${i.variant})` : ''} × ${i.qty} = ₹${i.price * i.qty}`).join('\n');
-          const photoSection = Object.entries(photoLinks).length > 0
-            ? '\n\n━━━ CUSTOMER PHOTOS ━━━\n' + Object.entries(photoLinks).map(([name, urls]) => `📎 ${name}:\n${urls.join('\n')}`).join('\n\n')
-            : '';
-
-          await emailjs.send(
-            EMAILJS_SERVICE_ID,
-            EMAILJS_TEMPLATE_ID,
-            {
-              name: 'Order Alert',
-              email: 'enistechteam@gmail.com',
-              subject: `New Order ${orderId}: ₹${grandTotal}`,
-              message: `New order received!\n\nOrder ID: ${orderId}\nPayment ID: ${paymentId}\n\nCustomer: ${form.firstName} ${form.lastName}\nEmail: ${form.email}\nPhone: ${form.phone}\nAddress: ${form.address}, ${form.city}, ${form.state} - ${form.pincode}\n\nItems:\n${itemsList}\n\nSubtotal: ₹${total}\nDiscount: ₹${discountAmount}\nShipping: ₹${shipping}\nTotal: ₹${grandTotal}\n\nGift Message: ${form.giftMessage || 'None'}${photoSection}`,
+          dispatch({ type: 'CLEAR_CART' });
+          navigate('/order-success', {
+            state: {
+              paymentId: verified.paymentId,
+              orderId: verified.orderId,
+              items,
+              total: verified.grandTotal,
+              address: form,
             },
-            EMAILJS_PUBLIC_KEY
-          );
-        } catch (err) {
-          console.error('Email notification failed:', err);
+          });
+        } catch {
+          setLoading(false);
+          toast.error('Payment succeeded but we could not confirm your order. Please contact us with your payment ID.');
         }
-
-        if (referralInfo) {
-          try {
-            await updateDoc(doc(db, 'referrals', referralInfo.firestoreId), { uses: increment(1) });
-          } catch (err) {
-            console.error('Referral update failed:', err);
-          }
-          localStorage.removeItem('subwikha_referral');
-        }
-        if (usingWelcome) {
-          const raw = localStorage.getItem('subwikha_welcome_discount');
-          if (raw) {
-            const d = JSON.parse(raw);
-            localStorage.setItem('subwikha_welcome_discount', JSON.stringify({ ...d, used: true }));
-          }
-        } else if (gameDiscount) {
-          const raw = localStorage.getItem('subwikha_discount');
-          if (raw) {
-            const d = JSON.parse(raw);
-            localStorage.setItem('subwikha_discount', JSON.stringify({ ...d, used: true }));
-          }
-        }
-        dispatch({ type: 'CLEAR_CART' });
-        navigate('/order-success', {
-          state: { paymentId, orderId, items, total: grandTotal, address: form },
-        });
       },
       prefill: {
         name: `${form.firstName} ${form.lastName}`,
@@ -485,6 +460,7 @@ export default function Checkout() {
                 onChange={handleChange}
                 placeholder="Write a heartfelt message for the recipient..."
                 rows={3}
+                maxLength={1000}
               />
             </div>
           </div>
@@ -559,9 +535,6 @@ export default function Checkout() {
             {freeShippingReason === 'referral' && (
               <div className={styles.discountBanner}>🤝 Referral perk: Free shipping applied!</div>
             )}
-            {freeShippingReason === 'loyalty' && (
-              <div className={styles.discountBanner}>💛 Welcome back! Free shipping for returning customers.</div>
-            )}
             <div className={styles.summaryRow}>
               <span>Subtotal</span>
               <span>₹{total.toLocaleString('en-IN')}</span>
@@ -580,6 +553,9 @@ export default function Checkout() {
               <span>Total</span>
               <span className={styles.grandTotal}>₹{grandTotal.toLocaleString('en-IN')}</span>
             </div>
+            <p className={styles.optional} style={{ marginTop: 8 }}>
+              Final total (including any loyalty or referral shipping perks) is confirmed at payment.
+            </p>
           </div>
 
           <div className={styles.razorpayBadge}>

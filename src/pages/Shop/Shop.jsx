@@ -11,7 +11,6 @@ const SORT_OPTIONS = [
   { value: 'default', label: 'Featured' },
   { value: 'price-asc', label: 'Price: Low → High' },
   { value: 'price-desc', label: 'Price: High → Low' },
-  { value: 'rating', label: 'Highest Rated' },
   { value: 'newest', label: 'Newest First' },
 ];
 
@@ -115,7 +114,6 @@ export default function Shop() {
 
   if (sort === 'price-asc') filtered = [...filtered].sort((a, b) => a.price - b.price);
   else if (sort === 'price-desc') filtered = [...filtered].sort((a, b) => b.price - a.price);
-  else if (sort === 'rating') filtered = [...filtered].sort((a, b) => b.rating - a.rating);
   else if (sort === 'newest') filtered = [...filtered].sort((a, b) => {
     const aT = a.createdAt ? (a.createdAt.toDate?.() ?? new Date(a.createdAt)).getTime() : (a.id || 0) * 1000;
     const bT = b.createdAt ? (b.createdAt.toDate?.() ?? new Date(b.createdAt)).getTime() : (b.id || 0) * 1000;

@@ -87,7 +87,10 @@ export default function Cart() {
             </div>
 
             {/* Items */}
-            <ul className={styles.items}>
+            {/* data-lenis-prevent: site-wide Lenis smooth-scroll otherwise hijacks
+                mouse-wheel input here and scrolls the page behind the cart instead
+                of this list — see the same fix/explanation in AdminProducts.jsx. */}
+            <ul className={styles.items} data-lenis-prevent>
               {items.map((item, idx) => (
                 <li key={item.id} className={styles.item} style={{ animationDelay: `${idx * 0.06}s` }}>
                   <div className={styles.itemAccent} />

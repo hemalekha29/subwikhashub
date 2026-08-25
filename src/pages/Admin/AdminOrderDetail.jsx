@@ -4,11 +4,8 @@ import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/fir
 import { db } from '../../firebase';
 import toast from 'react-hot-toast';
 import OrderTimeline, { STATUSES, STATUS_LABELS, STATUS_COLORS } from '../../components/OrderTimeline/OrderTimeline';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
 import styles from './AdminOrderDetail.module.css';
-
-function isAdminAuthed() {
-  return sessionStorage.getItem('subwikha_admin') === '1';
-}
 
 const WHATSAPP_STATUS_MESSAGE = {
   paid: 'Hi! We\'ve received your order at Subwikha\'s Hub and are getting it ready. Thank you for shopping with us! 💛',
@@ -28,15 +25,15 @@ function sendWhatsAppUpdate(order) {
 export default function AdminOrderDetail() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { checking, authed, logout } = useAdminAuth();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [newStatus, setNewStatus] = useState('');
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
-    if (!isAdminAuthed()) { navigate('/admin/login'); return; }
-    fetchOrder();
-  }, [orderId]);
+    if (authed) fetchOrder();
+  }, [authed, orderId]);
 
   const fetchOrder = async () => {
     try {
@@ -93,11 +90,11 @@ export default function AdminOrderDetail() {
     return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
-  if (loading) {
+  if (checking || !authed || loading) {
     return (
       <div className={styles.loadingPage}>
         <div className={styles.spinner} />
-        <p>Loading order...</p>
+        <p>{checking || !authed ? 'Checking admin session...' : 'Loading order...'}</p>
       </div>
     );
   }
@@ -121,6 +118,7 @@ export default function AdminOrderDetail() {
         >
           {STATUS_LABELS[order.status] || order.status}
         </span>
+        <button className={styles.backBtn} onClick={logout} style={{ marginLeft: 12 }}>Logout</button>
       </header>
 
       <div className={styles.content}>

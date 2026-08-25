@@ -178,7 +178,11 @@ export const products = [
     ],
     occasion: ["Housewarming", "Birthday", "Just Because"],
     deliveryDays: "3-5",
-    inStock: true,
+    // TEMPORARILY marked out of stock: images point at /images/magnet-1.webp, which
+    // doesn't exist in public/images (confirmed missing during audit — also referenced
+    // in middleware.js's PRODUCTS map for social-share previews, same fix needed there).
+    // Flip back to true and swap in a real photo once one's uploaded.
+    inStock: false,
     customizable: true,
   },
   {

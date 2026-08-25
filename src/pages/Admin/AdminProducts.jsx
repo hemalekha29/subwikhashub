@@ -1,18 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 import {
   collection, getDocs, addDoc, updateDoc, deleteDoc,
   doc, serverTimestamp,
 } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '../../firebase';
+import { db } from '../../firebase';
+import { uploadToCloudinary } from '../../lib/cloudinary';
 import { products as staticProducts, occasions as OCCASION_OPTIONS } from '../../data/products';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
 import toast from 'react-hot-toast';
 import styles from './AdminProducts.module.css';
-
-function isAdminAuthed() {
-  return sessionStorage.getItem('subwikha_admin') === '1';
-}
 
 const CATEGORY_OPTIONS = [
   { id: 'bouquets',  label: 'Bouquets' },
@@ -103,6 +100,15 @@ function ProductDrawer({ product, onClose, onSaved }) {
   const [saving, setSaving] = useState(false);
   const fileRef = useRef(null);
 
+  // Without this, scrolling the mouse wheel over the drawer (especially once it hits
+  // the top/bottom of the drawer's own content) "chains" through to the page behind
+  // the fixed overlay instead of staying inside the drawer.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
   const [name, setName]             = useState(product?.name || '');
   const [slug, setSlug]             = useState(product?.slug || '');
   const [tagline, setTagline]       = useState(product?.tagline || '');
@@ -114,8 +120,6 @@ function ProductDrawer({ product, onClose, onSaved }) {
   const [description, setDesc]      = useState(product?.description || '');
   const [inStock, setInStock]       = useState(product?.inStock ?? true);
   const [customizable, setCustom]   = useState(product?.customizable ?? false);
-  const [rating, setRating]         = useState(product?.rating || 4.5);
-  const [reviews, setReviews]       = useState(product?.reviews || 0);
   const [includes, setIncludes]     = useState(
     product?.includes?.length > 0 ? product.includes : ['']
   );
@@ -169,12 +173,9 @@ function ProductDrawer({ product, onClose, onSaved }) {
     }
     setSaving(true);
     try {
-      const uploaded = await Promise.all(newFiles.map(async file => {
-        const ext = file.name.split('.').pop();
-        const storageRef = ref(storage, `products/${slug}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`);
-        const snap = await uploadBytes(storageRef, file);
-        return getDownloadURL(snap.ref);
-      }));
+      const uploaded = await Promise.all(
+        newFiles.map(file => uploadToCloudinary(file, `products/${slug}`))
+      );
 
       const data = {
         name: name.trim(),
@@ -188,8 +189,6 @@ function ProductDrawer({ product, onClose, onSaved }) {
         description: description.trim(),
         inStock,
         customizable,
-        rating: Number(rating),
-        reviews: Number(reviews),
         images: [...existingImgs, ...uploaded],
         includes: includes.filter(x => x.trim()),
         variants: variants.filter(x => x.trim()),
@@ -207,13 +206,19 @@ function ProductDrawer({ product, onClose, onSaved }) {
         updatedAt: serverTimestamp(),
       };
 
-      if (isEdit) {
+      if (product?.firestoreId) {
         await updateDoc(doc(db, 'products', product.firestoreId), data);
         toast.success('Product updated!');
       } else {
+        // No firestoreId means this is either a brand-new product, or a built-in
+        // product (from src/data/products.js) being edited for the first time — in
+        // both cases we create a new Firestore doc. For a built-in product, giving
+        // this doc the SAME slug makes it override the static one everywhere
+        // (useAllProducts.js gives Firestore products priority by slug), which is
+        // what makes it actually editable/deletable from here on.
         data.createdAt = serverTimestamp();
         await addDoc(collection(db, 'products'), data);
-        toast.success('Product added!');
+        toast.success(isEdit ? 'Product updated!' : 'Product added!');
       }
       onSaved();
       onClose();
@@ -234,7 +239,14 @@ function ProductDrawer({ product, onClose, onSaved }) {
         </div>
 
         <form className={styles.drawerForm} onSubmit={handleSave}>
-          <div className={styles.drawerBody}>
+          {/* data-lenis-prevent: the site-wide Lenis smooth-scroll (initialized once
+              in App.jsx, active on every route including /admin) hijacks mouse-wheel
+              scrolling for the whole page and has no concept of nested scrollable
+              elements — without this, wheel input here scrolls the page behind the
+              drawer instead of the drawer itself (keyboard arrow-key scroll was
+              already fine, since that's native browser focus-scroll, not wheel-driven). */}
+          <div className={styles.drawerBody} data-lenis-prevent>
+
 
             {/* Basic Info */}
             <div className={styles.section}>
@@ -361,16 +373,6 @@ function ProductDrawer({ product, onClose, onSaved }) {
             {/* Settings */}
             <div className={styles.section}>
               <p className={styles.sectionTitle}>Settings</p>
-              <div className={styles.row2}>
-                <label className={styles.field}>
-                  <span className={styles.label}>Rating (0–5)</span>
-                  <input className={styles.input} type="number" value={rating} onChange={e => setRating(e.target.value)} step="0.1" min="0" max="5" />
-                </label>
-                <label className={styles.field}>
-                  <span className={styles.label}>Review Count</span>
-                  <input className={styles.input} type="number" value={reviews} onChange={e => setReviews(e.target.value)} min="0" />
-                </label>
-              </div>
               <label className={styles.field}>
                 <span className={styles.label}>Stock Quantity (leave blank for made-to-order / unlimited)</span>
                 <input className={styles.input} type="number" value={stock} onChange={e => setStock(e.target.value)} min="0" placeholder="e.g. 10" />
@@ -406,17 +408,19 @@ function ProductDrawer({ product, onClose, onSaved }) {
 
 // ── Delete Confirm Modal ──────────────────────────────────────────────────────
 
-function DeleteModal({ name, onCancel, onConfirm }) {
+function DeleteModal({ name, reversible, onCancel, onConfirm }) {
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modal}>
-        <h3 className={styles.modalTitle}>Delete Product?</h3>
+        <h3 className={styles.modalTitle}>{reversible ? 'Hide Product?' : 'Delete Product?'}</h3>
         <p className={styles.modalText}>
-          Are you sure you want to delete <strong>"{name}"</strong>? This cannot be undone.
+          {reversible
+            ? <>Are you sure you want to hide <strong>"{name}"</strong> from the store? You can restore it anytime from this page.</>
+            : <>Are you sure you want to delete <strong>"{name}"</strong>? This cannot be undone.</>}
         </p>
         <div className={styles.modalBtns}>
           <button className={styles.modalCancel} onClick={onCancel}>Cancel</button>
-          <button className={styles.modalDelete} onClick={onConfirm}>Delete</button>
+          <button className={styles.modalDelete} onClick={onConfirm}>{reversible ? 'Hide' : 'Delete'}</button>
         </div>
       </div>
     </div>
@@ -426,7 +430,7 @@ function DeleteModal({ name, onCancel, onConfirm }) {
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AdminProducts() {
-  const navigate = useNavigate();
+  const { checking, authed, logout } = useAdminAuth();
   const [fsProducts, setFsProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -435,9 +439,8 @@ export default function AdminProducts() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (!isAdminAuthed()) { navigate('/admin/login'); return; }
-    fetchProducts();
-  }, []);
+    if (authed) fetchProducts();
+  }, [authed]);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -451,17 +454,27 @@ export default function AdminProducts() {
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem('subwikha_admin');
-    navigate('/admin/login');
-  };
-
   const confirmDelete = async () => {
     if (!deleteTarget) return;
     try {
-      await deleteDoc(doc(db, 'products', deleteTarget.firestoreId));
-      setFsProducts(p => p.filter(x => x.firestoreId !== deleteTarget.firestoreId));
-      toast.success('Product deleted');
+      const isStaticBacked = staticProducts.some(sp => sp.slug === deleteTarget.slug);
+      if (deleteTarget._type === 'static') {
+        // Built-in products live in src/data/products.js — there's no doc to delete.
+        // A minimal `{ slug, hidden: true }` doc is enough to make useAllProducts.js
+        // stop showing it anywhere, without touching source code.
+        await addDoc(collection(db, 'products'), { slug: deleteTarget.slug, hidden: true, minimal: true, createdAt: serverTimestamp() });
+        toast.success('Product hidden from the store');
+      } else if (isStaticBacked) {
+        // This admin doc overrides a built-in product's slug — hide it rather than
+        // hard-deleting, otherwise the stale built-in version would reappear the
+        // moment this doc is gone.
+        await updateDoc(doc(db, 'products', deleteTarget.firestoreId), { hidden: true, updatedAt: serverTimestamp() });
+        toast.success('Product hidden from the store');
+      } else {
+        await deleteDoc(doc(db, 'products', deleteTarget.firestoreId));
+        toast.success('Product deleted');
+      }
+      fetchProducts();
     } catch (err) {
       toast.error('Delete failed: ' + err.message);
     } finally {
@@ -469,13 +482,48 @@ export default function AdminProducts() {
     }
   };
 
-  const q = search.toLowerCase();
-  const allRows = [
-    ...fsProducts.map(p => ({ ...p, _type: 'admin' })),
+  const restoreProduct = async (p) => {
+    try {
+      if (p.minimal) {
+        // Was only ever a hide-marker for a built-in product — removing it lets the
+        // original static definition show through again.
+        await deleteDoc(doc(db, 'products', p.firestoreId));
+      } else {
+        // Had real overridden data before being hidden — keep it, just un-hide.
+        await updateDoc(doc(db, 'products', p.firestoreId), { hidden: false, updatedAt: serverTimestamp() });
+      }
+      toast.success('Product restored');
+      fetchProducts();
+    } catch (err) {
+      toast.error('Restore failed: ' + err.message);
+    }
+  };
+
+  const fsBySlug = new Map(fsProducts.map(p => [p.slug, p]));
+  const unfilteredRows = [
+    ...fsProducts.filter(p => !p.hidden).map(p => ({ ...p, _type: 'admin' })),
+    ...fsProducts.filter(p => p.hidden && staticProducts.some(sp => sp.slug === p.slug))
+      .map(p => {
+        // Display built-in data for a hidden static override so the row doesn't show
+        // blank fields (a minimal hide-marker doc only has slug/hidden/minimal).
+        const base = staticProducts.find(sp => sp.slug === p.slug);
+        return { ...base, ...p, _type: 'hidden' };
+      }),
     ...staticProducts
-      .filter(p => !fsProducts.find(fp => fp.slug === p.slug))
+      .filter(p => !fsBySlug.has(p.slug))
       .map(p => ({ ...p, _type: 'static' })),
-  ].filter(p => !q || p.name?.toLowerCase().includes(q) || p.category?.includes(q));
+  ];
+  const q = search.toLowerCase();
+  const allRows = unfilteredRows.filter(p => !q || p.name?.toLowerCase().includes(q) || p.category?.includes(q));
+
+  if (checking || !authed) {
+    return (
+      <div className={styles.loadingState}>
+        <div className={styles.spinner} />
+        <p>Checking admin session...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -504,16 +552,20 @@ export default function AdminProducts() {
           {/* Summary */}
           <div className={styles.summaryRow}>
             <div className={styles.summaryCard}>
-              <span className={styles.summaryVal}>{staticProducts.length}</span>
+              <span className={styles.summaryVal}>{unfilteredRows.filter(p => p._type === 'static').length}</span>
               <span className={styles.summaryLbl}>Built-in Products</span>
             </div>
             <div className={`${styles.summaryCard} ${styles.summaryGold}`}>
-              <span className={styles.summaryVal}>{fsProducts.length}</span>
-              <span className={styles.summaryLbl}>Admin-Added</span>
+              <span className={styles.summaryVal}>{unfilteredRows.filter(p => p._type === 'admin').length}</span>
+              <span className={styles.summaryLbl}>Admin-Added / Edited</span>
             </div>
             <div className={styles.summaryCard}>
-              <span className={styles.summaryVal}>{staticProducts.length + fsProducts.length}</span>
-              <span className={styles.summaryLbl}>Total on Site</span>
+              <span className={styles.summaryVal}>{unfilteredRows.filter(p => p._type !== 'hidden').length}</span>
+              <span className={styles.summaryLbl}>Live on Site</span>
+            </div>
+            <div className={styles.summaryCard}>
+              <span className={styles.summaryVal}>{unfilteredRows.filter(p => p._type === 'hidden').length}</span>
+              <span className={styles.summaryLbl}>Hidden</span>
             </div>
           </div>
 
@@ -584,18 +636,18 @@ export default function AdminProducts() {
                       </td>
                       <td>
                         <span className={`${styles.typeBadge} ${p._type === 'static' ? styles.typeStatic : styles.typeAdmin}`}>
-                          {p._type === 'static' ? 'Built-in' : 'Admin'}
+                          {p._type === 'static' ? 'Built-in' : p._type === 'hidden' ? 'Hidden' : 'Admin'}
                         </span>
                       </td>
                       <td>
                         <div className={styles.actionBtns}>
-                          {p._type === 'admin' ? (
+                          {p._type === 'hidden' ? (
+                            <button className={styles.editBtn} onClick={() => restoreProduct(p)}>Restore</button>
+                          ) : (
                             <>
                               <button className={styles.editBtn} onClick={() => { setEditProduct(p); setDrawerOpen(true); }}>Edit</button>
                               <button className={styles.deleteBtn} onClick={() => setDeleteTarget(p)}>Delete</button>
                             </>
-                          ) : (
-                            <span className={styles.codeOnly}>Code only</span>
                           )}
                         </div>
                       </td>
@@ -620,6 +672,7 @@ export default function AdminProducts() {
       {deleteTarget && (
         <DeleteModal
           name={deleteTarget.name}
+          reversible={deleteTarget._type === 'static' || staticProducts.some(sp => sp.slug === deleteTarget.slug)}
           onCancel={() => setDeleteTarget(null)}
           onConfirm={confirmDelete}
         />

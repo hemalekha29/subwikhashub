@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
+import { isOutOfStock } from '../../lib/stock';
 import toast from 'react-hot-toast';
 import styles from './HamperBuilder.module.css';
 
@@ -24,7 +25,8 @@ export default function HamperBuilder() {
   const bundlePrice = Math.round(subtotal * (1 - BUNDLE_DISCOUNT));
   const savings = subtotal - bundlePrice;
 
-  const toggle = (id) => {
+  const toggle = (id, outOfStock) => {
+    if (outOfStock) return;
     setSelectedIds(ids => {
       if (ids.includes(id)) return ids.filter(i => i !== id);
       if (ids.length >= MAX_ITEMS) {
@@ -61,6 +63,11 @@ export default function HamperBuilder() {
       <Helmet>
         <title>Build a Hamper | Subwikha's Hub</title>
         <meta name="description" content="Build your own custom gift hamper — pick 2 to 4 handcrafted gifts and get 10% off the bundle." />
+        <link rel="canonical" href="https://subwikhahub.vercel.app/hamper" />
+        <meta property="og:title" content="Build a Hamper | Subwikha's Hub" />
+        <meta property="og:description" content="Build your own custom gift hamper — pick 2 to 4 handcrafted gifts and get 10% off the bundle." />
+        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
+        <meta property="og:url" content="https://subwikhahub.vercel.app/hamper" />
       </Helmet>
 
       <div className={styles.header}>
@@ -75,16 +82,19 @@ export default function HamperBuilder() {
       <div className={styles.grid}>
         {products.map(p => {
           const isSelected = selectedIds.includes(p.id);
+          const outOfStock = isOutOfStock(p);
           return (
             <button
               key={p.id}
-              onClick={() => toggle(p.id)}
+              onClick={() => toggle(p.id, outOfStock)}
+              disabled={outOfStock}
               className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
+              style={outOfStock ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
             >
               <img src={p.images[0]} alt={p.name} className={`${styles.cardImg} ${isSelected ? styles.cardImgSelected : ''}`} />
               <div className={styles.cardInfo}>
                 <p className={styles.cardName}>{p.name}</p>
-                <p className={styles.cardPrice}>₹{p.price}</p>
+                <p className={styles.cardPrice}>{outOfStock ? 'Out of Stock' : `₹${p.price}`}</p>
               </div>
               {isSelected && <span className={styles.checkBadge}>✓</span>}
             </button>

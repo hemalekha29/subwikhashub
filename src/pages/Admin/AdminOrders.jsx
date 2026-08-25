@@ -1,19 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import toast from 'react-hot-toast';
 import { db } from '../../firebase';
+import { useAdminAuth } from '../../hooks/useAdminAuth';
 import styles from './AdminOrders.module.css';
-
-function isAdminAuthed() {
-  return sessionStorage.getItem('subwikha_admin') === '1';
-}
 
 const STATUS_LABELS = { paid: 'New Order', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', cancelled: 'Cancelled' };
 const STATUS_COLORS = { paid: '#c9a84c', processing: '#6c8ebf', shipped: '#f5a623', delivered: '#4ade80', cancelled: '#ef4444' };
 
 export default function AdminOrders() {
-  const navigate = useNavigate();
+  const { checking, authed, logout } = useAdminAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState('');
@@ -21,9 +18,8 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (!isAdminAuthed()) { navigate('/admin/login'); return; }
-    fetchOrders();
-  }, []);
+    if (authed) fetchOrders();
+  }, [authed]);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -57,11 +53,6 @@ export default function AdminOrders() {
     } catch (err) {
       toast.error('Delete failed: ' + err.message);
     }
-  };
-
-  const logout = () => {
-    sessionStorage.removeItem('subwikha_admin');
-    navigate('/admin/login');
   };
 
   const filtered = orders.filter(o => {
@@ -99,6 +90,15 @@ export default function AdminOrders() {
     { key: 'delivered', label: 'Delivered' },
     { key: 'cancelled', label: 'Cancelled' },
   ];
+
+  if (checking || !authed) {
+    return (
+      <div className={styles.loadingState}>
+        <div className={styles.loadingSpinner} />
+        <p>Checking admin session...</p>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
