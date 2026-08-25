@@ -60,7 +60,28 @@
       rel="stylesheet"
     />
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <!-- Preloads the homepage hero's background image (src/components/HeroShowcase/HeroShowcase.jsx
+         slide 0 = product id 8's first photo) so the browser starts fetching it immediately
+         instead of waiting for React to hydrate and set the inline background-image style —
+         this is the page's LCP element, so this directly improves LCP (a Core Web Vital /
+         Google ranking signal). Harmless on other routes; browsers only act on it if it's
+         actually used within a few seconds. Update this path if HeroShowcase's SLIDE_IDS[0]
+         or that product's first image ever changes. -->
+    <link rel="preload" as="image" href="/images/bouquet-1.webp" fetchpriority="high" />
+
+    <!-- Razorpay's checkout.js was previously loaded here in <head> on every single page —
+         it's now loaded on-demand only on /checkout (see src/pages/Checkout/Checkout.jsx),
+         so Home/Shop/About/etc. don't pay for a third-party payment script they never use. -->
+
+    <!-- Google Analytics 4 (measurement ID matches the one already configured on this
+         Firebase project — see src/firebase.js). Loaded async so it never blocks rendering. -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-1C7MSJXVCN"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag() { dataLayer.push(arguments); }
+      gtag('js', new Date());
+      gtag('config', 'G-1C7MSJXVCN');
+    </script>
   </head>
   <body>
     <div id="root"></div>

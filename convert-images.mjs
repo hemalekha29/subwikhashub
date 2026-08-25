@@ -30,6 +30,13 @@ for (const file of files) {
     const output = join(DIR, basename(file, ext) + '.webp');
     try {
       await sharp(input)
+        // .rotate() with no args bakes the EXIF Orientation tag into the actual pixel
+        // data before resizing/re-encoding. Without this, a photo taken sideways (very
+        // common — phone cameras almost always store landscape-orientation pixels plus
+        // an EXIF flag telling the viewer to rotate it) converts to a genuinely-sideways
+        // WebP, because WebP output doesn't reliably carry that EXIF correction forward
+        // the way JPEG does. This bit us for real — see the "Resin Letter Keychain" fix.
+        .rotate()
         .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 85 })
         .toFile(output);
@@ -53,6 +60,7 @@ for (const file of files) {
     const tmp = input + '.tmp';
     try {
       await sharp(input)
+        .rotate() // see the identical comment in the CONVERT_EXTS branch above
         .resize({ width: MAX_DIMENSION, height: MAX_DIMENSION, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 85 })
         .toFile(tmp);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { trackEvent } from '../../lib/analytics';
 import styles from './FloatingInstagram.module.css';
 
 export default function FloatingInstagram() {
@@ -20,6 +21,7 @@ export default function FloatingInstagram() {
       rel="noopener noreferrer"
       className={styles.btn}
       aria-label="Follow on Instagram"
+      onClick={() => trackEvent('instagram_click', { location: 'floating_button' })}
     >
       <div className={styles.pulse} />
       <div className={styles.pulse2} />

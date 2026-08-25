@@ -1,11 +1,30 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { uploadToCloudinary } from '../../lib/cloudinary';
+import { trackEvent, toGaItem } from '../../lib/analytics';
 import toast from 'react-hot-toast';
 import { isValidEmail, isValidPhone } from '../../lib/validators';
 import styles from './Checkout.module.css';
+
+// Razorpay's checkout.js used to sit in index.html's <head> and load on every page —
+// now it's only fetched here, the one page that actually needs it (see index.html for
+// the rest of that change). Cached so re-opening the payment modal doesn't re-fetch it.
+let razorpayScriptPromise = null;
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve();
+  if (!razorpayScriptPromise) {
+    razorpayScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = resolve;
+      script.onerror = () => { razorpayScriptPromise = null; reject(new Error('Failed to load Razorpay')); };
+      document.head.appendChild(script);
+    });
+  }
+  return razorpayScriptPromise;
+}
 
 function getGameDiscount() {
   try {
@@ -49,6 +68,17 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [photoFiles, setPhotoFiles] = useState({});
   const fileInputRefs = useRef({});
+
+  useEffect(() => {
+    loadRazorpayScript().catch(() => {}); // start fetching early so it's ready by submit time
+    if (items.length > 0) {
+      trackEvent('begin_checkout', {
+        currency: 'INR',
+        value: total,
+        items: items.map(i => toGaItem(i)),
+      });
+    }
+  }, []);
 
   // Referral code (if any) came from a shared link and was stashed in localStorage by
   // ReferralCapture in App.jsx. We only echo it back to the server to validate — the
@@ -200,6 +230,14 @@ export default function Checkout() {
       return;
     }
 
+    try {
+      await loadRazorpayScript(); // usually already loaded by now (kicked off on page mount)
+    } catch {
+      toast.error('Could not load the payment gateway. Please check your connection and try again.');
+      setLoading(false);
+      return;
+    }
+
     const options = {
       key: created.keyId,
       amount: created.amount,
@@ -262,6 +300,13 @@ export default function Checkout() {
             }
           }
           if (hasReferral) localStorage.removeItem('subwikha_referral');
+
+          trackEvent('purchase', {
+            transaction_id: verified.orderId,
+            currency: 'INR',
+            value: verified.grandTotal,
+            items: items.map(i => toGaItem(i)),
+          });
 
           dispatch({ type: 'CLEAR_CART' });
           navigate('/order-success', {

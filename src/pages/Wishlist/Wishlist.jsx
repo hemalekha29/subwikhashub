@@ -4,6 +4,7 @@ import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { isOutOfStock } from '../../lib/stock';
+import { trackEvent, toGaItem } from '../../lib/analytics';
 import toast from 'react-hot-toast';
 import styles from './Wishlist.module.css';
 
@@ -22,12 +23,20 @@ export default function Wishlist() {
   const addToCart = (product) => {
     if (isOutOfStock(product)) return;
     dispatch({ type: 'ADD_ITEM', payload: product });
+    trackEvent('add_to_cart', { currency: 'INR', value: product.price, items: [toGaItem(product)] });
     toast.success(`${product.name} added to cart`, { style: { background: 'var(--black-card)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', fontSize: '0.82rem' } });
   };
 
   const addAllToCart = () => {
     const available = wishlistProducts.filter(p => !isOutOfStock(p));
     available.forEach(p => dispatch({ type: 'ADD_ITEM', payload: p }));
+    if (available.length > 0) {
+      trackEvent('add_to_cart', {
+        currency: 'INR',
+        value: available.reduce((s, p) => s + p.price, 0),
+        items: available.map(p => toGaItem(p)),
+      });
+    }
     const skipped = wishlistProducts.length - available.length;
     toast.success(
       `${available.length} gift${available.length !== 1 ? 's' : ''} added to cart!${skipped ? ` (${skipped} out of stock, skipped)` : ''}`,

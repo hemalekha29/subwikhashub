@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { isOutOfStock, stockRemaining } from '../../lib/stock';
+import { trackEvent, toGaItem } from '../../lib/analytics';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
 
@@ -53,6 +54,7 @@ export default function ProductCard({ product }) {
     e.preventDefault(); e.stopPropagation();
     if (outOfStock) return;
     dispatch({ type: 'ADD_ITEM', payload: product });
+    trackEvent('add_to_cart', { currency: 'INR', value: product.price, items: [toGaItem(product)] });
     toast.custom(t => (
       <div className={`${styles.toast} ${t.visible ? styles.toastIn : styles.toastOut}`}>
         <span className={styles.toastCheck}>✓</span>

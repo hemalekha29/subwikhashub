@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useAllProducts } from '../../hooks/useAllProducts';
@@ -8,6 +8,7 @@ import ProductCard from '../../components/ProductCard/ProductCard';
 import ShareStrip from '../../components/ShareStrip/ShareStrip';
 import PlayNudge from '../../components/PlayNudge/PlayNudge';
 import { isOutOfStock, stockRemaining } from '../../lib/stock';
+import { trackEvent, toGaItem } from '../../lib/analytics';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
@@ -35,6 +36,11 @@ export default function ProductDetail() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [customValues, setCustomValues] = useState({});
   const salesCount = useProductSalesCount(product?.name);
+
+  useEffect(() => {
+    if (!product) return;
+    trackEvent('view_item', { currency: 'INR', value: product.price, items: [toGaItem(product)] });
+  }, [product?.slug]);
 
   const activePrice = selectedVariant ? selectedVariant.price : product?.price;
 
@@ -80,6 +86,7 @@ export default function ProductDetail() {
     for (let i = 0; i < qty; i++) {
       dispatch({ type: 'ADD_ITEM', payload: cartPayload });
     }
+    trackEvent('add_to_cart', { currency: 'INR', value: activePrice * qty, items: [toGaItem(cartPayload, { quantity: qty })] });
     toast.custom((t) => (
       <div style={{
         background: 'var(--black-soft)', border: '1px solid var(--gold-dark)',
@@ -98,6 +105,7 @@ export default function ProductDetail() {
       for (let i = 0; i < qty; i++) {
         dispatch({ type: 'ADD_ITEM', payload: cartPayload });
       }
+      trackEvent('add_to_cart', { currency: 'INR', value: activePrice * qty, items: [toGaItem(cartPayload, { quantity: qty })] });
     }
     navigate('/checkout');
   };
@@ -141,11 +149,23 @@ export default function ProductDetail() {
       url: pageUrl,
       priceCurrency: "INR",
       price: String(activePrice),
-      availability: product.inStock
-        ? "https://schema.org/InStock"
-        : "https://schema.org/OutOfStock",
+      availability: outOfStock
+        ? "https://schema.org/OutOfStock"
+        : "https://schema.org/InStock",
       seller: { "@type": "Organization", name: "Subwikha's Hub" },
     },
+  };
+
+  // Matches the visible breadcrumb (Home > Shop > product) below — gives Google enough
+  // to show a breadcrumb trail in search results instead of the raw URL.
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: BASE },
+      { "@type": "ListItem", position: 2, name: "Shop", item: `${BASE}/shop` },
+      { "@type": "ListItem", position: 3, name: product.name, item: pageUrl },
+    ],
   };
 
   return (
@@ -168,6 +188,7 @@ export default function ProductDetail() {
         <meta name="twitter:description" content={pageDesc} />
         <meta name="twitter:image" content={pageImg} />
         <script type="application/ld+json">{JSON.stringify(schema)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       </Helmet>
 
       {/* Breadcrumb */}

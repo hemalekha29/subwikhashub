@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { trackEvent } from '../../lib/analytics';
 import styles from './Footer.module.css';
 
 export default function Footer() {
@@ -13,7 +14,7 @@ export default function Footer() {
             Crafting extraordinary gift experiences that transform precious moments into timeless keepsakes.
           </p>
           <div className={styles.socials}>
-            <a href="https://www.instagram.com/subwikhahub" target="_blank" rel="noopener noreferrer" className={styles.social} aria-label="Instagram">
+            <a href="https://www.instagram.com/subwikhahub" target="_blank" rel="noopener noreferrer" className={styles.social} aria-label="Instagram" onClick={() => trackEvent('instagram_click', { location: 'footer' })}>
               <InstagramIcon />
             </a>
           </div>

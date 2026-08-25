@@ -19,6 +19,12 @@ const GAMES = [
   lazy(() => import("./games/SpeedCount")),
   lazy(() => import("./games/LuckyWheel")),
   lazy(() => import("./games/TapRush")),
+  // Three genuinely harder additions — each tests a distinct cognitive skill the
+  // existing nine don't cover: rapid arithmetic under real time pressure, a true
+  // digit-span working-memory test, and Stroop-effect color/word interference.
+  lazy(() => import("./games/MathRush")),
+  lazy(() => import("./games/DigitSpan")),
+  lazy(() => import("./games/ColorTrap")),
 ];
 
 const GAME_TITLES = [
@@ -31,6 +37,9 @@ const GAME_TITLES = [
   "Speed Count",
   "Lucky Wheel",
   "Tap Rush",
+  "Math Rush",
+  "Digit Span",
+  "Color Trap",
 ];
 
 export function scoreToDiscount(score, max) {
