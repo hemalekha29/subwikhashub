@@ -1,4 +1,10 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /order-success
+Disallow: /track-order
+Disallow: /wishlist
+Disallow: /api/
 
 Sitemap: https://subwikhahub.vercel.app/sitemap.xml
