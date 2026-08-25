@@ -60,7 +60,11 @@ export default async function handler(req, res) {
     let subtotal = 0;
     const resolvedItems = [];
     const decrementTargets = [];
-    const outOfStock = [];
+    // Keyed by firestoreId so a product needed via more than one line item (bought
+    // standalone AND inside a hamper, or duplicated within one hamper) can be validated
+    // against its true combined requirement below, not per-entry against the same
+    // original stock value twice — see the consolidation step after this loop.
+    const stockInfoById = new Map();
 
     for (const raw of items) {
       const qty = Math.max(1, Math.min(MAX_QTY_PER_ITEM, parseInt(raw?.qty, 10) || 0));
@@ -87,7 +91,7 @@ export default async function handler(req, res) {
           componentSum += cp.price * cQty;
           resolvedComponents.push({ name: cp.name, slug: cp.slug, qty: cQty, price: cp.price });
           if (cp.firestoreId && typeof cp.stock === 'number') {
-            if (cp.stock < cQty * qty) outOfStock.push(cp.name);
+            stockInfoById.set(cp.firestoreId, { name: cp.name, stock: cp.stock });
             decrementTargets.push({ firestoreId: cp.firestoreId, qty: cQty * qty });
           }
         }
@@ -117,11 +121,25 @@ export default async function handler(req, res) {
           customization: raw?.customization || null,
         });
         if (product.firestoreId && typeof product.stock === 'number') {
-          if (product.stock < qty) outOfStock.push(product.name);
+          stockInfoById.set(product.firestoreId, { name: product.name, stock: product.stock });
           decrementTargets.push({ firestoreId: product.firestoreId, qty });
         }
       }
     }
+
+    // Consolidate by firestoreId — a product needed via more than one line item must be
+    // checked against its true COMBINED requirement, not validated per-entry against the
+    // same original stock value twice (which would let two "need 3, have 5" checks both
+    // pass individually while the real combined need of 6 oversells past zero).
+    const mergedQtyById = new Map();
+    for (const t of decrementTargets) {
+      mergedQtyById.set(t.firestoreId, (mergedQtyById.get(t.firestoreId) || 0) + t.qty);
+    }
+    const consolidatedTargets = [...mergedQtyById.entries()].map(([firestoreId, qty]) => ({ firestoreId, qty }));
+
+    const outOfStock = consolidatedTargets
+      .filter(t => stockInfoById.get(t.firestoreId).stock < t.qty)
+      .map(t => stockInfoById.get(t.firestoreId).name);
 
     if (outOfStock.length > 0) {
       res.status(409).json({
@@ -177,7 +195,7 @@ export default async function handler(req, res) {
     // never anything the client sends after payment succeeds.
     await db.collection('pendingOrders').doc(rzpOrder.id).set({
       items: resolvedItems,
-      decrementTargets,
+      decrementTargets: consolidatedTargets,
       subtotal,
       discountPercent: clampedDiscountPercent,
       discountAmount,

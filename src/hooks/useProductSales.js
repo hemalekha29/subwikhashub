@@ -1,44 +1,37 @@
 import { useState, useEffect } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
 
-let cachedOrders = null;
+let cachedCounts = null;
 let cachedPromise = null;
 
-function fetchOrdersOnce() {
-  if (cachedOrders) return Promise.resolve(cachedOrders);
+function fetchCountsOnce() {
+  if (cachedCounts) return Promise.resolve(cachedCounts);
   if (!cachedPromise) {
-    cachedPromise = getDocs(collection(db, 'orders'))
-      .then(snap => {
-        cachedOrders = snap.docs.map(d => d.data());
-        return cachedOrders;
+    cachedPromise = fetch('/api/product-sales')
+      .then(res => res.json())
+      .then(data => {
+        cachedCounts = data.counts || {};
+        return cachedCounts;
       })
       .catch(() => {
-        cachedOrders = [];
-        return cachedOrders;
+        cachedCounts = {};
+        return cachedCounts;
       });
   }
   return cachedPromise;
 }
 
-// Real count of units sold in the last 30 days, matched by product name against order line items.
+// Real count of units sold in the last 30 days, matched by product name — computed
+// server-side by api/product-sales.js (see that file for why: this used to read the raw
+// `orders` collection directly from the browser, which broke once Firestore rules were
+// locked down to admin-only).
 export function useProductSalesCount(productName) {
   const [count, setCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
-    fetchOrdersOnce().then(orders => {
+    fetchCountsOnce().then(counts => {
       if (cancelled) return;
-      const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
-      let total = 0;
-      orders.forEach(o => {
-        const created = o.createdAt?.toDate ? o.createdAt.toDate().getTime() : null;
-        if (created && created < cutoff) return;
-        (o.items || []).forEach(item => {
-          if (item.name === productName) total += item.qty || 1;
-        });
-      });
-      setCount(total);
+      setCount(counts[productName] || 0);
     });
     return () => { cancelled = true; };
   }, [productName]);

@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 export default function UgcGallery() {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
-    getDocs(collection(db, 'gallery'))
-      .then(snap => {
-        const approved = snap.docs
-          .map(d => d.data())
-          .filter(d => d.approved);
-        setItems(approved);
-      })
+    // Must filter with where() here, not just client-side — Firestore rejects an
+    // unconstrained list query outright (not a per-document filter) unless the query's
+    // own shape provably satisfies the rule (firestore.rules: gallery reads require
+    // approved == true for non-admins). An anonymous getDocs(collection(db,'gallery'))
+    // with no where() can't be proven compliant and gets denied entirely.
+    getDocs(query(collection(db, 'gallery'), where('approved', '==', true)))
+      .then(snap => setItems(snap.docs.map(d => d.data())))
       .catch(() => {});
   }, []);
 
