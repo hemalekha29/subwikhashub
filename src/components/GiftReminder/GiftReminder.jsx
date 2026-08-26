@@ -21,6 +21,18 @@ export default function GiftReminder() {
       toast.error('Please enter a valid email address');
       return;
     }
+    // Only checked for one-time reminders — a recurring reminder's match logic
+    // (api/send-reminders.js) only ever compares month/day, ignoring the year, so a
+    // past year is completely normal there (that's just how you'd enter a birthday).
+    // For a one-time date, a past date can genuinely never fire.
+    if (!form.recurringYearly) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (new Date(form.date) < today) {
+        toast.error('That date has already passed — pick an upcoming date, or check "Remind me every year" for a recurring date like a birthday');
+        return;
+      }
+    }
     setSaving(true);
     try {
       await addDoc(collection(db, 'reminders'), {
@@ -55,8 +67,9 @@ export default function GiftReminder() {
       <p style={{ opacity: 0.75, fontSize: '0.88rem', marginBottom: 20 }}>
         Set a reminder for a birthday, anniversary or special date — we'll email you a week in advance.
       </p>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'left' }}>
+      <form onSubmit={handleSubmit} noValidate style={{ display: 'flex', flexDirection: 'column', gap: 12, textAlign: 'left' }}>
         <input
+          aria-label="Your name"
           value={form.name}
           onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
           placeholder="Your name"
@@ -64,6 +77,7 @@ export default function GiftReminder() {
         />
         <input
           type="email"
+          aria-label="Your email"
           value={form.email}
           onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
           placeholder="Your email"
@@ -71,6 +85,7 @@ export default function GiftReminder() {
         />
         <div style={{ display: 'flex', gap: 12 }}>
           <select
+            aria-label="Occasion"
             value={form.occasion}
             onChange={e => setForm(f => ({ ...f, occasion: e.target.value }))}
             style={{ flex: 1, background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', padding: '12px 14px' }}
@@ -79,6 +94,7 @@ export default function GiftReminder() {
           </select>
           <input
             type="date"
+            aria-label="Reminder date"
             value={form.date}
             onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
             style={{ flex: 1, background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(201,168,76,0.3)', padding: '12px 14px' }}

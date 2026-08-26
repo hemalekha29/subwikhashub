@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import styles from './Cart.module.css';
 
 const FREE_SHIP = 500;
+const FOCUSABLE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function Cart() {
   const { items, total, isOpen, dispatch } = useCart();
@@ -13,11 +14,51 @@ export default function Cart() {
   // but we can tell the shopper it's likely to apply as soon as they have a
   // referral code, so it isn't a surprise discovered deep in checkout.
   const hasReferralCode = !!localStorage.getItem('subwikha_referral');
+  const drawerRef = useRef(null);
+  const lastFocusedRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
+
+  // This is a modal-style overlay (it has its own backdrop and blocks the page behind
+  // it) but previously had no focus trap at all — a keyboard user tabbing while it was
+  // "open" could tab straight through the invisible page underneath, and there was no
+  // way to close it or reliably reach "Proceed to Checkout" via keyboard alone. This
+  // moves focus into the drawer on open, cycles Tab/Shift+Tab within it, restores focus
+  // to whatever opened it on close, and adds Escape-to-close.
+  useEffect(() => {
+    if (!isOpen) return;
+    lastFocusedRef.current = document.activeElement;
+    const closeBtn = drawerRef.current?.querySelector(`.${styles.closeBtn}`);
+    closeBtn?.focus();
+
+    function onKeyDown(e) {
+      if (e.key === 'Escape') {
+        dispatch({ type: 'CLOSE_CART' });
+        return;
+      }
+      if (e.key !== 'Tab' || !drawerRef.current) return;
+      const focusable = Array.from(drawerRef.current.querySelectorAll(FOCUSABLE_SELECTOR))
+        .filter(el => el.offsetParent !== null); // skip anything not actually visible
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      lastFocusedRef.current?.focus?.();
+    };
+  }, [isOpen, dispatch]);
 
   const close = () => dispatch({ type: 'CLOSE_CART' });
 
@@ -25,7 +66,13 @@ export default function Cart() {
     <>
       <div className={`${styles.overlay} ${isOpen ? styles.visible : ''}`} onClick={close} />
 
-      <aside className={`${styles.drawer} ${isOpen ? styles.open : ''}`}>
+      <aside
+        ref={drawerRef}
+        className={`${styles.drawer} ${isOpen ? styles.open : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Shopping cart"
+      >
 
         {/* Header */}
         <div className={styles.header}>

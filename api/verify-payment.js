@@ -59,71 +59,79 @@ export default async function handler(req, res) {
 
     const db = getDb();
     const pendingRef = db.collection('pendingOrders').doc(razorpay_order_id);
-    const pendingSnap = await pendingRef.get();
+    const orderRef = db.collection('orders').doc();
 
-    if (!pendingSnap.exists) {
-      res.status(400).json({ ok: false, error: 'This order could not be found. Please contact us with your payment ID.' });
-      return;
-    }
-    const pending = pendingSnap.data();
-    if (pending.consumed) {
-      // Already processed (e.g. a duplicate callback/retry) — return the existing
-      // order instead of creating a second one for the same payment.
-      const existing = await db.collection('orders').where('orderId', '==', razorpay_order_id).limit(1).get();
-      res.status(200).json({ ok: true, orderId: razorpay_order_id, paymentId: razorpay_payment_id, alreadyProcessed: true, grandTotal: existing.docs[0]?.data()?.grandTotal ?? pending.grandTotal });
-      return;
-    }
+    // The whole consumed-check -> stock-check -> order-create -> consumed-flip sequence
+    // runs as ONE transaction. Previously this was a plain read-then-branch outside any
+    // transaction (only the stock decrement itself was atomic) — two near-simultaneous
+    // calls for the same payment (a retried webhook + a client retry landing within the
+    // same window) could both observe consumed:false before either wrote it, and both
+    // create a separate order + double-decrement stock. A transaction makes Firestore
+    // serialize these instead: the second one always sees the first one's write.
+    let pending, stockIssue = false, alreadyProcessed = false, existingGrandTotal = null;
+    try {
+      await db.runTransaction(async (tx) => {
+        const pendingSnap = await tx.get(pendingRef);
+        if (!pendingSnap.exists) throw new Error('PENDING_NOT_FOUND');
+        pending = pendingSnap.data();
 
-    // Stock is re-checked and decremented atomically here (not at create-order time)
-    // to close the race window between two customers buying the last unit at once.
-    // Payment has already been captured by Razorpay at this point, so an oversell is
-    // recorded rather than silently dropped — the order is still created so the
-    // money is accounted for, flagged for a human to resolve.
-    let stockIssue = false;
-    if (pending.decrementTargets?.length) {
-      try {
-        await db.runTransaction(async (tx) => {
-          const refs = pending.decrementTargets.map(t => db.collection('products').doc(t.firestoreId));
-          const snaps = await Promise.all(refs.map(r => tx.get(r)));
-          snaps.forEach((snap, i) => {
-            const need = pending.decrementTargets[i].qty;
-            const have = snap.data()?.stock;
-            if (typeof have === 'number' && have < need) throw new Error('INSUFFICIENT_STOCK');
-          });
-          snaps.forEach((snap, i) => {
-            tx.update(refs[i], { stock: admin.firestore.FieldValue.increment(-pending.decrementTargets[i].qty) });
-          });
+        if (pending.consumed) {
+          alreadyProcessed = true;
+          existingGrandTotal = pending.grandTotal;
+          return; // no writes — nothing left to do, already processed by an earlier call
+        }
+
+        // All reads must happen before any writes in a Firestore transaction.
+        const targets = pending.decrementTargets || [];
+        const refs = targets.map(t => db.collection('products').doc(t.firestoreId));
+        const snaps = targets.length ? await Promise.all(refs.map(r => tx.get(r))) : [];
+        snaps.forEach((snap, i) => {
+          const have = snap.data()?.stock;
+          if (typeof have === 'number' && have < targets[i].qty) stockIssue = true;
         });
-      } catch (err) {
-        if (err.message === 'INSUFFICIENT_STOCK') stockIssue = true;
-        else throw err;
+
+        // Payment is already captured by Razorpay at this point, so an oversell is
+        // recorded rather than silently dropped — the order is still created so the
+        // money is accounted for, flagged for a human to resolve.
+        snaps.forEach((snap, i) => {
+          tx.update(refs[i], { stock: admin.firestore.FieldValue.increment(-targets[i].qty) });
+        });
+
+        tx.set(orderRef, {
+          orderId: razorpay_order_id,
+          paymentId: razorpay_payment_id,
+          customer: {
+            name: `${customer.firstName} ${customer.lastName}`,
+            email: customer.email,
+            phone: customer.phone,
+            address: customer.address,
+          },
+          items: pending.items,
+          subtotal: pending.subtotal,
+          discount: pending.discountAmount,
+          discountPercent: pending.discountPercent,
+          shipping: pending.shipping,
+          grandTotal: pending.grandTotal,
+          giftMessage: (giftMessage || '').slice(0, 1000),
+          photos: photos && typeof photos === 'object' ? photos : {},
+          status: 'paid',
+          stockIssue,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        tx.update(pendingRef, { consumed: true });
+      });
+    } catch (err) {
+      if (err.message === 'PENDING_NOT_FOUND') {
+        res.status(400).json({ ok: false, error: 'This order could not be found. Please contact us with your payment ID.' });
+        return;
       }
+      throw err;
     }
 
-    const orderData = {
-      orderId: razorpay_order_id,
-      paymentId: razorpay_payment_id,
-      customer: {
-        name: `${customer.firstName} ${customer.lastName}`,
-        email: customer.email,
-        phone: customer.phone,
-        address: customer.address,
-      },
-      items: pending.items,
-      subtotal: pending.subtotal,
-      discount: pending.discountAmount,
-      discountPercent: pending.discountPercent,
-      shipping: pending.shipping,
-      grandTotal: pending.grandTotal,
-      giftMessage: (giftMessage || '').slice(0, 1000),
-      photos: photos && typeof photos === 'object' ? photos : {},
-      status: 'paid',
-      stockIssue,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    };
-
-    await db.collection('orders').add(orderData);
-    await pendingRef.update({ consumed: true });
+    if (alreadyProcessed) {
+      res.status(200).json({ ok: true, orderId: razorpay_order_id, paymentId: razorpay_payment_id, alreadyProcessed: true, grandTotal: existingGrandTotal });
+      return;
+    }
 
     if (pending.referralCode) {
       const refSnap = await db.collection('referrals').where('code', '==', pending.referralCode).limit(1).get();

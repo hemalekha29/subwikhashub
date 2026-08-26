@@ -66,7 +66,14 @@ export default function ProductDetail() {
   }, {});
   const hasCustomization = Object.keys(filledCustomization).length > 0;
 
-  let cartPayload = selectedVariant
+  // Only tag the cart id with a variant suffix when the selected tier is genuinely
+  // different from the default (first) price tier — otherwise this product's cart
+  // identity differs depending on whether it was added from the Shop grid (which
+  // always uses the plain product id) or from this page (which defaults selectedVariant
+  // to priceVariants[0]), and the two never merge into one line even though the price
+  // is identical. Confirmed via live cart testing: this was creating duplicate lines.
+  const isDefaultVariant = selectedVariant && selectedVariant === product.priceVariants?.[0];
+  let cartPayload = selectedVariant && !isDefaultVariant
     ? { ...product, price: selectedVariant.price, variant: selectedVariant.label, id: `${product.id}_${selectedVariant.label}` }
     : product;
 
@@ -428,7 +435,7 @@ export default function ProductDetail() {
             <div className="divider" />
           </div>
           <div className={styles.relatedGrid}>
-            {related.map(p => <ProductCard key={p.id} product={p} />)}
+            {related.map(p => <ProductCard key={p.slug} product={p} />)}
           </div>
         </section>
       )}

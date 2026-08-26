@@ -28,6 +28,24 @@ export default function Navbar() {
     setQuery('');
   }, [location]);
 
+  // The welcome popup (WelcomePopup.jsx) is a separate sibling component with no
+  // shared state — it was found visually stacking on top of an already-open mobile
+  // menu, and its full-screen backdrop could intercept the very click meant to open
+  // the hamburger button in the first place. This event lets it defer/dismiss itself
+  // whenever the mobile menu is open, without wiring up a new global context just for
+  // this one coordination.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent('subwikha:mobilemenu', { detail: { open: menuOpen } }));
+  }, [menuOpen]);
+
+  // Escape closes the mobile menu (it previously only closed via re-clicking the burger).
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKeyDown = (e) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [menuOpen]);
+
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);

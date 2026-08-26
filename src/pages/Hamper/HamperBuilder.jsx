@@ -18,22 +18,28 @@ function makeId() {
 export default function HamperBuilder() {
   const products = useAllProducts();
   const { dispatch } = useCart();
-  const [selectedIds, setSelectedIds] = useState([]);
+  // Tracked by slug, not id — admin-added products (created via AdminProducts.jsx) never
+  // get a numeric `id` field, only `firestoreId` (and only once fetched back from
+  // Firestore). Using `id` here meant every admin product shared the same `undefined`
+  // "identity": selecting one made all of them appear selected, toggling was ambiguous,
+  // and React logged a duplicate/missing-key warning on this grid. `slug` is always
+  // present and unique for both static and admin products.
+  const [selectedSlugs, setSelectedSlugs] = useState([]);
 
-  const selected = products.filter(p => selectedIds.includes(p.id));
+  const selected = products.filter(p => selectedSlugs.includes(p.slug));
   const subtotal = selected.reduce((sum, p) => sum + p.price, 0);
   const bundlePrice = Math.round(subtotal * (1 - BUNDLE_DISCOUNT));
   const savings = subtotal - bundlePrice;
 
-  const toggle = (id, outOfStock) => {
+  const toggle = (slug, outOfStock) => {
     if (outOfStock) return;
-    setSelectedIds(ids => {
-      if (ids.includes(id)) return ids.filter(i => i !== id);
-      if (ids.length >= MAX_ITEMS) {
+    setSelectedSlugs(slugs => {
+      if (slugs.includes(slug)) return slugs.filter(s => s !== slug);
+      if (slugs.length >= MAX_ITEMS) {
         toast.error(`You can pick up to ${MAX_ITEMS} gifts per hamper`);
-        return ids;
+        return slugs;
       }
-      return [...ids, id];
+      return [...slugs, slug];
     });
   };
 
@@ -55,7 +61,7 @@ export default function HamperBuilder() {
       },
     });
     toast.success('Hamper added to cart!');
-    setSelectedIds([]);
+    setSelectedSlugs([]);
   };
 
   return (
@@ -81,12 +87,12 @@ export default function HamperBuilder() {
 
       <div className={styles.grid}>
         {products.map(p => {
-          const isSelected = selectedIds.includes(p.id);
+          const isSelected = selectedSlugs.includes(p.slug);
           const outOfStock = isOutOfStock(p);
           return (
             <button
-              key={p.id}
-              onClick={() => toggle(p.id, outOfStock)}
+              key={p.slug}
+              onClick={() => toggle(p.slug, outOfStock)}
               disabled={outOfStock}
               className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
               style={outOfStock ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}

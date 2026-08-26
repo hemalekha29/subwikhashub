@@ -117,26 +117,26 @@ export default function Contact() {
               </button>
             </div>
           ) : (
-            <form ref={formRef} className={styles.form} onSubmit={handleSubmit}>
+            <form ref={formRef} className={styles.form} onSubmit={handleSubmit} noValidate>
               <div className={styles.formGrid}>
                 <div className={styles.field}>
-                  <label>Name *</label>
-                  <input name="name" value={form.name} onChange={handleChange} placeholder="Your name" className={`${styles.input} ${errors.name ? styles.inputError : ''}`} />
+                  <label htmlFor="contact-name">Name *</label>
+                  <input id="contact-name" name="name" value={form.name} onChange={handleChange} placeholder="Your name" className={`${styles.input} ${errors.name ? styles.inputError : ''}`} aria-invalid={!!errors.name} />
                   {errors.name && <span className={styles.errorMsg}>{errors.name}</span>}
                 </div>
                 <div className={styles.field}>
-                  <label>Email *</label>
-                  <input name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} />
+                  <label htmlFor="contact-email">Email *</label>
+                  <input id="contact-email" name="email" type="email" value={form.email} onChange={handleChange} placeholder="your@email.com" className={`${styles.input} ${errors.email ? styles.inputError : ''}`} aria-invalid={!!errors.email} />
                   {errors.email && <span className={styles.errorMsg}>{errors.email}</span>}
                 </div>
               </div>
               <div className={styles.field}>
-                <label>Subject</label>
-                <input name="subject" value={form.subject} onChange={handleChange} placeholder="How can we help?" className={styles.input} />
+                <label htmlFor="contact-subject">Subject</label>
+                <input id="contact-subject" name="subject" value={form.subject} onChange={handleChange} placeholder="How can we help?" className={styles.input} />
               </div>
               <div className={styles.field}>
-                <label>Message *</label>
-                <textarea name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Tell us about your gifting needs..." className={`${styles.textarea} ${errors.message ? styles.inputError : ''}`} />
+                <label htmlFor="contact-message">Message *</label>
+                <textarea id="contact-message" name="message" value={form.message} onChange={handleChange} rows={5} placeholder="Tell us about your gifting needs..." className={`${styles.textarea} ${errors.message ? styles.inputError : ''}`} aria-invalid={!!errors.message} />
                 {errors.message && <span className={styles.errorMsg}>{errors.message}</span>}
               </div>
               <button type="submit" className="btn-gold" style={{ width: '100%', padding: '16px' }} disabled={loading}>

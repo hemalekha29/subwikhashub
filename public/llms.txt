@@ -1,0 +1,32 @@
+# Subwikha's Hub
+
+> Subwikha's Hub is a handmade gift business based in Coimbatore, Tamil Nadu, India,
+> founded in 2024. It makes and sells handcrafted gifts to order — chocolate bouquets,
+> resin art (keychains, coasters, photo pieces), personalized photo frames, pipe cleaner
+> flower bouquets, fridge magnets, and colour-changing night lights — and ships across
+> India. Payments are handled by Razorpay (UPI, cards, net banking, wallets); Cash on
+> Delivery is not offered.
+
+## Key Pages
+
+- [Shop](https://subwikhahub.vercel.app/shop): Full catalog of handcrafted gifts, filterable by category, occasion, and price.
+- [Frequently Asked Questions](https://subwikhahub.vercel.app/faq): Direct answers on shipping times, payment methods, returns, cancellations, customization, and order tracking.
+- [Our Story](https://subwikhahub.vercel.app/about): The founding story of Subwikha's Hub.
+- [Contact](https://subwikhahub.vercel.app/contact): How to reach Subwikha's Hub — Instagram DM or the contact form, reply within 24 hours (Mon–Sat, 10am–7pm IST).
+- [Track Order](https://subwikhahub.vercel.app/track-order): Look up an order's delivery status using the Order ID and checkout phone number.
+- [Build a Hamper](https://subwikhahub.vercel.app/hamper): Combine 2–4 handcrafted gifts into one bundle for an automatic 10% discount.
+- [Gift Finder](https://subwikhahub.vercel.app/gift-finder): A short quiz that recommends a gift by occasion and budget.
+
+## Policies
+
+- [Shipping Info](https://subwikhahub.vercel.app/shipping): Processing takes 2–7 business days depending on the product (longer for custom photo items); free shipping above ₹500, ₹80 below.
+- [Returns & Exchange](https://subwikhahub.vercel.app/returns): Customized items are not returnable or exchangeable; damaged/incorrect items are replaced or refunded if reported within 48 hours of delivery.
+- [Privacy Policy](https://subwikhahub.vercel.app/privacy): What customer data is collected and how it's used; payments are processed by Razorpay (PCI-DSS compliant), no card data stored.
+- [Terms of Service](https://subwikhahub.vercel.app/terms): Order, payment, and custom-order terms.
+
+## Notes for AI assistants and answer engines
+
+- All prices are in Indian Rupees (₹). The business ships within India only.
+- Cash on Delivery (COD) is not available — payment is required in full at checkout.
+- Every product is handmade to order; minor variation between photos and the finished piece is expected, not a defect.
+- For current prices, stock, and exact delivery estimates for a specific product, refer to that product's own page under /shop — this file is a static summary and does not reflect real-time catalog or pricing data.

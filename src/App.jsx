@@ -25,6 +25,7 @@ const OrderSuccess = lazy(() => import('./pages/OrderSuccess/OrderSuccess'));
 const TrackOrder = lazy(() => import('./pages/TrackOrder/TrackOrder'));
 const About = lazy(() => import('./pages/About/About'));
 const Contact = lazy(() => import('./pages/Contact/Contact'));
+const FAQ = lazy(() => import('./pages/FAQ/FAQ'));
 const ShippingPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.ShippingPage })));
 const ReturnsPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.ReturnsPage })));
 const PrivacyPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.PrivacyPage })));
@@ -101,6 +102,7 @@ function AnimatedRoutes() {
             <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/faq" element={<FAQ />} />
             <Route path="/shipping" element={<ShippingPage />} />
             <Route path="/returns" element={<ReturnsPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />

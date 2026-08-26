@@ -16,8 +16,25 @@ export default function WelcomePopup() {
     if (localStorage.getItem(SEEN_KEY)) return;
     // Give first-time visitors a moment to see the hero before interrupting
     // with a full-screen popup, instead of ambushing them at 1.8s.
-    const timer = setTimeout(() => setVisible(true), 4000);
+    const timer = setTimeout(() => {
+      // Don't ambush someone who's mid-tap on the hamburger menu, and don't show a
+      // full-screen backdrop on top of an already-open mobile menu.
+      if (document.body.dataset.mobileMenuOpen === '1') return;
+      setVisible(true);
+    }, 4000);
     return () => clearTimeout(timer);
+  }, []);
+
+  // If the mobile menu opens while this is already showing (or about to show), get out
+  // of the way instead of visually stacking on top of it / blocking the burger button —
+  // see the matching event dispatch in Navbar.jsx.
+  useEffect(() => {
+    const onMobileMenu = (e) => {
+      document.body.dataset.mobileMenuOpen = e.detail.open ? '1' : '0';
+      if (e.detail.open) setVisible(false);
+    };
+    window.addEventListener('subwikha:mobilemenu', onMobileMenu);
+    return () => window.removeEventListener('subwikha:mobilemenu', onMobileMenu);
   }, []);
 
   const dismiss = () => {

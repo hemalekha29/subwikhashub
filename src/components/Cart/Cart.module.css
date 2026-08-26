@@ -69,8 +69,8 @@
 }
 
 .closeBtn {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   border: 1px solid rgba(201, 168, 76, 0.2);
   border-radius: 50%;
   display: flex;
@@ -340,8 +340,8 @@
 }
 
 .qtyBtn {
-  width: 28px;
-  height: 26px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;

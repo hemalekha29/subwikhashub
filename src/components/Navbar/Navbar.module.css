@@ -131,6 +131,13 @@
   width: 200px;
 }
 .searchInput::placeholder { color: rgba(255,255,255,0.3); }
+/* Visible only for keyboard focus (not mouse clicks) — the wrapping .searchWrap
+   already has its own border, so this shows as a ring around the input itself. */
+.searchInput:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 .searchSubmit {
   padding: 8px 10px;
@@ -232,8 +239,8 @@
   display: none;
   flex-direction: column;
   gap: 5px;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
   cursor: pointer;

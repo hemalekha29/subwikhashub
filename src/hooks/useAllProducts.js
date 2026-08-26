@@ -9,7 +9,14 @@ export function useAllProducts() {
   useEffect(() => {
     getDocs(collection(db, 'products'))
       .then(snap => {
-        const data = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
+        // Admin-created products (AdminProducts.jsx) never write a numeric `id` field —
+        // only `firestoreId`, and only once already fetched back like this. Without a
+        // fallback, every admin product's `.id` is `undefined`, and every place that
+        // keys/tracks-by-id (React list keys, HamperBuilder selection, Cart line-item
+        // matching) treats every admin product as the same "identity". Falling back to
+        // the Firestore document id (always present, always unique) fixes this for every
+        // consumer at the source, instead of patching each one individually.
+        const data = snap.docs.map(d => ({ firestoreId: d.id, ...d.data(), id: d.data().id ?? d.id }));
         setFsProducts(data);
       })
       .catch(() => {});

@@ -483,6 +483,7 @@ export default function Checkout() {
                       type="file"
                       accept="image/*"
                       multiple
+                      aria-label={`Upload photos for ${item.name}`}
                       style={{ display: 'none' }}
                       ref={el => fileInputRefs.current[item.id] = el}
                       onChange={e => handlePhotoChange(item.id, e.target.files)}
@@ -496,10 +497,12 @@ export default function Checkout() {
 
           {/* Gift Message */}
           <div className={styles.formSection}>
-            <h3 className={styles.sectionTitle}>Gift Message <span className={styles.optional}>(Optional)</span></h3>
+            <h3 className={styles.sectionTitle} id="giftMessageLabel">Gift Message <span className={styles.optional}>(Optional)</span></h3>
             <div className={styles.fieldWrap}>
               <textarea
                 name="giftMessage"
+                id="giftMessage"
+                aria-labelledby="giftMessageLabel"
                 className={styles.textarea}
                 value={form.giftMessage}
                 onChange={handleChange}
@@ -616,8 +619,9 @@ export default function Checkout() {
 function Field({ label, name, type = 'text', value, onChange, error, placeholder }) {
   return (
     <div className={styles.fieldWrap}>
-      <label className={styles.label}>{label}</label>
+      <label className={styles.label} htmlFor={name}>{label}</label>
       <input
+        id={name}
         type={type}
         name={name}
         value={value}
@@ -625,8 +629,10 @@ function Field({ label, name, type = 'text', value, onChange, error, placeholder
         placeholder={placeholder}
         className={`${styles.input} ${error ? styles.inputError : ''}`}
         autoComplete="on"
+        aria-invalid={!!error}
+        aria-describedby={error ? `${name}-error` : undefined}
       />
-      {error && <span className={styles.errorMsg}>{error}</span>}
+      {error && <span id={`${name}-error`} className={styles.errorMsg}>{error}</span>}
     </div>
   );
 }

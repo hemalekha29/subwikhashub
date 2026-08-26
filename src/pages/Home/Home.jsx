@@ -206,7 +206,7 @@ export default function Home() {
 
         <div className={styles.productGrid}>
           {featured.map((p, i) => (
-            <RevealSection key={p.id} delay={i * 100}>
+            <RevealSection key={p.slug} delay={i * 100}>
               <ProductCard product={p} />
             </RevealSection>
           ))}
