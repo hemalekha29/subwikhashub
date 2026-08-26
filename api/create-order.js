@@ -20,10 +20,15 @@ function getDb() {
 async function getTrustedProducts(db) {
   const snap = await db.collection('products').get();
   const fsProducts = snap.docs.map(d => ({ firestoreId: d.id, ...d.data() }));
-  // Same precedence rule as src/hooks/useAllProducts.js: Firestore products win over
-  // the static catalog by slug, so price checks here can never disagree with what a
-  // shopper actually saw on the site.
-  return [...fsProducts, ...staticProducts.filter(sp => !fsProducts.find(fp => fp.slug === sp.slug))];
+  // Same precedence + hidden-filtering rule as src/hooks/useAllProducts.js: Firestore
+  // products win over the static catalog by slug, and a `hidden: true` doc (how the
+  // admin panel "deletes" a built-in product it can't remove from source, or hides an
+  // admin-created one) must block the static fallback too, not just disappear from the
+  // list — otherwise a "deleted" product would still be directly orderable via the API
+  // even though it's invisible in the Shop. Previously this function didn't filter
+  // hidden products at all, unlike the hook it's meant to mirror.
+  const visible = fsProducts.filter(p => !p.hidden);
+  return [...visible, ...staticProducts.filter(sp => !fsProducts.some(fp => fp.slug === sp.slug))];
 }
 
 function resolveUnitPrice(product, variantLabel) {

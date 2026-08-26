@@ -12,6 +12,7 @@ import Footer from './components/Footer/Footer';
 import Loader from './components/Loader/Loader';
 import FloatingInstagram from './components/FloatingInstagram/FloatingInstagram';
 import WelcomePopup from './components/WelcomePopup/WelcomePopup';
+import ChatWidget from './components/ChatWidget/ChatWidget';
 
 // Every route is code-split so a visit to one page (e.g. Home) doesn't download
 // the JS for every other page (Admin panel, all 9 games, Checkout, etc).
@@ -150,6 +151,7 @@ function AppContent() {
       <AnimatedRoutes />
       <Footer />
       <FloatingInstagram />
+      <ChatWidget />
       <WelcomePopup />
     </>
   );
