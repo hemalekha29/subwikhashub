@@ -32,7 +32,7 @@ export default function Scroll3DShowcase({
   label = '✦ Every Gift, An Experience ✦',
   title = 'Unwrap Something Special',
   subtitle = 'Scroll to see it come together — just like every order does, by hand.',
-  theme = 'box', // 'box' (Home/About — a wrapped gift) | 'gem' (Shop — a faceted resin gem)
+  theme = 'box', // 'box' (Home — a wrapped gift) | 'gem' (Shop — a faceted resin gem)
 }) {
   const wrapRef = useRef(null);
   const mountRef = useRef(null);
@@ -124,9 +124,9 @@ function mountScene(THREE, wrapEl, mountEl, theme) {
   rim.position.set(-4, 2, -3);
   scene.add(rim);
 
-  // ── Hero object group — the box (Home/About) or gem (Shop), whichever this
-  // instance was asked to build. Both expose the same update()/dispose() shape so
-  // the rest of mountScene (particles/flash/burst/fragments/camera) stays identical
+  // ── Hero object group — the box (Home) or gem (Shop), whichever this instance
+  // was asked to build. Both expose the same update()/dispose() shape so the rest
+  // of mountScene (particles/flash/burst/fragments/camera) stays identical
   // regardless of theme. ──
   const gift = new THREE.Group();
   gift.scale.setScalar(0.8);
@@ -163,8 +163,8 @@ function mountScene(THREE, wrapEl, mountEl, theme) {
   scene.add(particles);
 
   // ── Fragments that burst outward radially from the hero object at the finale —
-  // mini gift boxes for the box theme, glassy shards for the gem theme — each starts
-  // at zero scale/centered and flies out along its own fixed direction. ──
+  // mini gift boxes (box), glassy shards (gem) — each starts at zero scale/centered
+  // and flies out along its own fixed direction. ──
   const FRAGMENT_COUNT = 7;
   const FRAGMENT_COLORS = theme === 'gem'
     ? [0xee87a2, 0xc9a84c, 0xffffff, 0xf6a9bc, 0xe0c56a]
