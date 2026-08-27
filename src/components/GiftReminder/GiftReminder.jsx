@@ -134,15 +134,72 @@ export default function GiftReminder() {
         )}
       </div>
 
-      <div className={styles.imageWrap}>
-        <img
-          src="/images/3dcalender.webp"
-          alt="A 3D illustration of a calendar with a date marked with a heart, a wrapped gift box, a notification bell, and a birthday cake"
-          className={styles.image}
-          loading="lazy"
-        />
+      <div
+        className={styles.imageWrap}
+        role="img"
+        aria-label="Illustration of a calendar with a date marked with a heart, a wrapped gift box, and a notification bell"
+      >
+        <div className={styles.scene} aria-hidden="true">
+          <span className={`${styles.sparkle} ${styles.sparkle1}`} />
+          <span className={`${styles.sparkle} ${styles.sparkle2}`} />
+          <span className={`${styles.sparkle} ${styles.sparkle3}`} />
+
+          <div className={styles.floatHeart1}><HeartIcon /></div>
+          <div className={styles.floatHeart2}><HeartIcon /></div>
+
+          <div className={styles.calendarFloat}>
+            <div className={styles.calendar}>
+              <span className={styles.ring} style={{ left: '28%' }} />
+              <span className={styles.ring} style={{ left: '50%' }} />
+              <span className={styles.ring} style={{ left: '72%' }} />
+              <div className={styles.calHeader} />
+              <div className={styles.calGrid}>
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <span key={i} className={i === 6 ? `${styles.cell} ${styles.cellMarked}` : styles.cell}>
+                    {i === 6 && <HeartIcon small />}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.bellWrap}>
+            <BellIcon />
+          </div>
+
+          <div className={styles.giftFloat}>
+            <div className={styles.gift}>
+              <div className={styles.giftLid} />
+              <span className={styles.ribbonV} />
+              <span className={styles.bowLeft} />
+              <span className={styles.bowRight} />
+              <span className={styles.bowKnot} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+function BellIcon() {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dark)" strokeWidth="1.6">
+      <path
+        d="M12 3a5 5 0 00-5 5v3.2c0 .6-.24 1.18-.66 1.6L4.6 14.5A1 1 0 005.3 16h13.4a1 1 0 00.7-1.71l-1.74-1.7a2.26 2.26 0 01-.66-1.6V8a5 5 0 00-5-5z"
+        fill="var(--gold-light)"
+      />
+      <path d="M10 18.5a2 2 0 004 0" fill="none" />
+    </svg>
+  );
+}
+
+function HeartIcon({ small }) {
+  const size = small ? 10 : 20;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="#e0607a">
+      <path d="M12 21s-7.2-4.6-9.9-9.1C.5 8.7 1.7 5 5.2 4.2c2-.5 3.9.4 4.8 2 .9-1.6 2.8-2.5 4.8-2 3.5.8 4.7 4.5 3.1 7.7C19.2 16.4 12 21 12 21z" />
+    </svg>
   );
 }
 

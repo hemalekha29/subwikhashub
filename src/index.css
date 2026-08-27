@@ -5,6 +5,10 @@
 }
 
 :root {
+  /* Tells the browser this page is dark-themed so native chrome — <select> dropdown
+     lists, scrollbars, date/time pickers — renders dark instead of falling back to
+     the OS default light popup (the bug behind the white select-list flash). */
+  color-scheme: dark;
   --black: #0a0a0a;
   --black-soft: #111111;
   --black-card: #161616;
@@ -27,6 +31,14 @@
 
 html {
   scroll-behavior: auto;
+}
+
+/* color-scheme alone doesn't reliably darken the <option> popup list in every
+   Chromium render path — set the option colors explicitly as a belt-and-suspenders
+   fix for the same white-dropdown bug color-scheme targets above. */
+select option {
+  background-color: var(--black-card);
+  color: var(--white);
 }
 
 /* Grain texture overlay for premium feel */
