@@ -92,36 +92,67 @@
   align-items: center;
 }
 
+/* A small raised gold "chip" behind each icon — same circular-badge language already
+   used for the wishlist/share/close icon buttons elsewhere on the site (ProductCard,
+   Cart, AdminOrders), so these fields read as part of the same design system instead
+   of a plain form bolted onto a fancy card. */
 .fieldIcon {
   position: absolute;
-  left: 14px;
-  color: var(--gold);
-  opacity: 0.7;
-  pointer-events: none;
+  left: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  background: radial-gradient(circle at 35% 30%, rgba(201, 168, 76, 0.25), rgba(201, 168, 76, 0.08));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 1;
 }
 
+/* Carved-in / embossed depth — a dark inner shadow at the top edge plus a faint
+   highlight at the bottom makes each field read as pressed into the card's surface,
+   like a groove, rather than a flat rectangle sitting on top of it. */
 .input, .select {
   width: 100%;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(255, 255, 255, 0.02);
   color: var(--white);
-  border: 1px solid rgba(201, 168, 76, 0.25);
+  border: 1px solid rgba(201, 168, 76, 0.22);
   border-radius: 10px;
-  padding: 13px 14px 13px 42px;
+  padding: 13px 14px 13px 48px;
   font-size: 0.88rem;
   font-family: var(--font-sans);
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  box-shadow:
+    inset 0 3px 6px rgba(0, 0, 0, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+  transform: translateY(0);
+  transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
-.select { padding-left: 42px; cursor: pointer; }
+.select { padding-left: 48px; cursor: pointer; }
 
 .input::placeholder { color: rgba(255, 255, 255, 0.35); }
 
+/* On focus the field "lifts" toward the user — shadow flips from carved-in to
+   floating, plus a gold glow — the tactile inverse of the resting state above. */
 .input:focus, .select:focus {
   outline: none;
   border-color: var(--gold);
-  background: rgba(201, 168, 76, 0.06);
-  box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+  background: linear-gradient(180deg, rgba(201, 168, 76, 0.1) 0%, rgba(201, 168, 76, 0.03) 100%);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 8px 20px rgba(201, 168, 76, 0.22),
+    0 0 0 3px rgba(201, 168, 76, 0.14);
+}
+
+.fieldWrap:focus-within .fieldIcon {
+  color: var(--black);
+  background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--gold));
+  box-shadow: 0 2px 8px rgba(201, 168, 76, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .row { display: flex; gap: 12px; }
