@@ -1,0 +1,118 @@
+/* Tall scroll track — the pinned view inside stays fixed via position:sticky while
+   the user scrolls through this height, giving the scroll-driven open/rotate/dolly
+   room to play out. 260vh ≈ a comfortable few seconds of scroll on most devices. */
+.wrap {
+  position: relative;
+  height: 260vh;
+}
+
+.pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 50% 30%, rgba(201, 168, 76, 0.07) 0%, transparent 60%), var(--black);
+}
+
+.canvasHost {
+  position: absolute;
+  inset: 0;
+}
+
+.canvasHost canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.overlay {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.2s linear;
+  padding: 0 24px;
+}
+
+.label {
+  display: inline-block;
+  color: var(--gold);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(1.9rem, 4.5vw, 3rem);
+  color: var(--white);
+  margin-bottom: 12px;
+}
+
+.sub {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+/* Erupts from the blast — centered over the canvas, scaled/faded up by JS
+   (mountScene's applyProgress) as the finale plays out. Starts invisible/small;
+   opacity and transform:scale are driven per-frame, not by a CSS transition, so
+   they stay locked to scroll position rather than lagging behind it. */
+.blastReveal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.5);
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.revealText {
+  font-family: var(--font-serif);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  color: var(--gold-light);
+  text-shadow: 0 0 30px rgba(224, 197, 106, 0.6), 0 4px 20px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.revealImg {
+  width: 130px;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 14px;
+  border: 2px solid var(--gold-light);
+  box-shadow: 0 0 40px rgba(224, 197, 106, 0.5), 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.revealName {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: var(--white);
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.7);
+}
+
+@media (max-width: 640px) {
+  .wrap { height: 200vh; }
+  .revealImg { width: 96px; height: 96px; }
+  .revealText { font-size: 1.5rem; white-space: normal; max-width: 260px; }
+}
+
+/* No 3D module loaded yet (Three.js hasn't been dynamically imported), or the user
+   has reduced motion set — the pin/text still render, just without a spinning canvas
+   filling the background behind them until (if ever) it mounts. */
+@media (prefers-reduced-motion: reduce) {
+  .wrap { height: 100vh; }
+  .pin { position: relative; }
+}

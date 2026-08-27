@@ -6,6 +6,7 @@ import ProductCard from '../../components/ProductCard/ProductCard';
 import UgcGallery from '../../components/UgcGallery/UgcGallery';
 import InstagramFeed from '../../components/InstagramFeed/InstagramFeed';
 import HeroShowcase from '../../components/HeroShowcase/HeroShowcase';
+import Scroll3DShowcase from '../../components/Scroll3DShowcase/Scroll3DShowcase';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 import styles from './Home.module.css';
 
@@ -145,6 +146,9 @@ export default function Home() {
           <span>Scroll</span>
         </div>
       </section>
+
+      {/* ── 3D SCROLL SHOWCASE ── */}
+      <Scroll3DShowcase products={products} />
 
       {/* ── GOLD MARQUEE ── */}
       <div className={styles.marqueeWrap}>

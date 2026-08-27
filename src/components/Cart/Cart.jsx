@@ -1,13 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import styles from './Cart.module.css';
 
 const FREE_SHIP = 500;
+const REMOVE_ANIM_MS = 300;
 const FOCUSABLE_SELECTOR = 'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export default function Cart() {
   const { items, total, isOpen, dispatch } = useCart();
+  // Removal used to just vanish the row instantly (dispatch → item gone from `items`
+  // → row unmounts with no exit transition), which read as broken next to the
+  // entrance slideIn every other row gets. This plays a matching exit first, then
+  // dispatches once it's done — the item stays in `items` (and stays interactive-looking)
+  // for the animation's duration, so it's tracked separately rather than removed early.
+  const [removingIds, setRemovingIds] = useState(() => new Set());
+
+  const handleRemove = (id) => {
+    setRemovingIds(prev => new Set(prev).add(id));
+    setTimeout(() => {
+      dispatch({ type: 'REMOVE_ITEM', payload: id });
+      setRemovingIds(prev => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, REMOVE_ANIM_MS);
+  };
   const progress = Math.min((total / FREE_SHIP) * 100, 100);
   const remaining = FREE_SHIP - total;
   // Referral-based free shipping is confirmed against Firestore at Checkout,
@@ -139,7 +158,11 @@ export default function Cart() {
                 of this list — see the same fix/explanation in AdminProducts.jsx. */}
             <ul className={styles.items} data-lenis-prevent>
               {items.map((item, idx) => (
-                <li key={item.id} className={styles.item} style={{ animationDelay: `${idx * 0.06}s` }}>
+                <li
+                  key={item.id}
+                  className={`${styles.item} ${removingIds.has(item.id) ? styles.itemRemoving : ''}`}
+                  style={{ animationDelay: `${idx * 0.06}s` }}
+                >
                   <div className={styles.itemAccent} />
                   <div className={styles.imgWrap}>
                     <img src={item.images[0]} alt={item.name} className={styles.img} />
@@ -153,7 +176,7 @@ export default function Cart() {
                       <div className={styles.qtyPill}>
                         <button
                           className={styles.qtyBtn}
-                          onClick={() => dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty - 1 } })}
+                          onClick={() => item.qty === 1 ? handleRemove(item.id) : dispatch({ type: 'UPDATE_QTY', payload: { id: item.id, qty: item.qty - 1 } })}
                         >−</button>
                         <span className={styles.qty}>{item.qty}</span>
                         <button
@@ -166,7 +189,7 @@ export default function Cart() {
                   </div>
                   <button
                     className={styles.removeBtn}
-                    onClick={() => dispatch({ type: 'REMOVE_ITEM', payload: item.id })}
+                    onClick={() => handleRemove(item.id)}
                     aria-label="Remove item"
                   >
                     <TrashIcon />
@@ -198,7 +221,13 @@ export default function Cart() {
                 <Link to="/shop" className={styles.continueLink} onClick={close}>
                   ← Continue Shopping
                 </Link>
-                <button className={styles.clearBtn} onClick={() => dispatch({ type: 'CLEAR_CART' })}>
+                <button
+                  className={styles.clearBtn}
+                  onClick={() => {
+                    setRemovingIds(new Set(items.map(i => i.id)));
+                    setTimeout(() => dispatch({ type: 'CLEAR_CART' }), REMOVE_ANIM_MS);
+                  }}
+                >
                   Clear All
                 </button>
               </div>

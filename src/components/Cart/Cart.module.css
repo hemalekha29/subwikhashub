@@ -248,7 +248,20 @@
   position: relative;
   overflow: hidden;
   animation: slideIn 0.3s ease both;
-  transition: border-color 0.2s;
+  max-height: 160px;
+  transition: border-color 0.2s, max-height 0.3s ease, opacity 0.3s ease, padding 0.3s ease, transform 0.3s ease;
+}
+
+/* Mirrors slideIn on the way out instead of the row just vanishing when the item
+   leaves `items` — dispatched only after this finishes, see Cart.jsx handleRemove. */
+.itemRemoving {
+  animation: none;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  transform: translateX(16px);
+  pointer-events: none;
 }
 
 .item:hover {
