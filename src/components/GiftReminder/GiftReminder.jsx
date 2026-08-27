@@ -1,5 +1,4 @@
-import { useState, useRef } from 'react';
-import { motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
+import { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { isValidEmail } from '../../lib/validators';
@@ -12,25 +11,6 @@ export default function GiftReminder() {
   const [form, setForm] = useState({ name: '', email: '', occasion: 'Birthday', date: '', recurringYearly: true });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const cardRef = useRef(null);
-
-  // Subtle 3D tilt that follows the cursor — spring-smoothed so it settles rather than
-  // snapping. translateZ() on the inner elements (see .module.css) gives the tilted
-  // card a real sense of depth instead of just rotating a flat image.
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const rotateX = useSpring(useTransform(mouseY, [-100, 100], [7, -7]), { stiffness: 200, damping: 20 });
-  const rotateY = useSpring(useTransform(mouseX, [-100, 100], [-7, 7]), { stiffness: 200, damping: 20 });
-
-  function handleMouseMove(e) {
-    const rect = cardRef.current.getBoundingClientRect();
-    mouseX.set(e.clientX - rect.left - rect.width / 2);
-    mouseY.set(e.clientY - rect.top - rect.height / 2);
-  }
-  function handleMouseLeave() {
-    mouseX.set(0);
-    mouseY.set(0);
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -76,116 +56,93 @@ export default function GiftReminder() {
 
   return (
     <div className={styles.wrap}>
-      <motion.div
-        ref={cardRef}
-        className={styles.card}
-        style={{ rotateX, rotateY }}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.3 }}
-        transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
-      >
-        <div className={styles.glow} />
+      <div className={styles.content}>
+        <h3 className={styles.title}>Never Miss a Gifting Moment</h3>
+        <p className={styles.subtitle}>
+          Set a reminder for a birthday, anniversary or special date — we'll email you a week in advance.
+        </p>
 
         {saved ? (
           <div className={styles.successCard}>
             <div className={styles.successCheck}><CheckIcon /></div>
             <p className={styles.successText}>
-              ✓ We'll email you a week before your {form.occasion.toLowerCase()} reminder.
+              We'll email you a week before your {form.occasion.toLowerCase()} reminder.
             </p>
           </div>
         ) : (
-          <>
-            <div className={styles.iconWrap}><GiftIcon /></div>
-            <h3 className={styles.title}>Never Miss a Gifting Moment</h3>
-            <p className={styles.subtitle}>
-              Set a reminder for a birthday, anniversary or special date — we'll email you a week in advance.
-            </p>
+          <form onSubmit={handleSubmit} noValidate className={styles.form}>
+            <div className={styles.fieldWrap}>
+              <span className={styles.fieldIcon}><UserIcon /></span>
+              <input
+                aria-label="Your name"
+                className={styles.input}
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder="Your name"
+              />
+            </div>
 
-            <form onSubmit={handleSubmit} noValidate className={styles.form}>
+            <div className={styles.fieldWrap}>
+              <span className={styles.fieldIcon}><MailIcon /></span>
+              <input
+                type="email"
+                aria-label="Your email"
+                className={styles.input}
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder="Your email"
+              />
+            </div>
+
+            <div className={styles.row}>
               <div className={styles.fieldWrap}>
-                <span className={styles.fieldIcon}><UserIcon /></span>
-                <input
-                  aria-label="Your name"
-                  className={styles.input}
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="Your name"
-                />
+                <span className={styles.fieldIcon}><TagIcon /></span>
+                <select
+                  aria-label="Occasion"
+                  className={styles.select}
+                  value={form.occasion}
+                  onChange={e => setForm(f => ({ ...f, occasion: e.target.value }))}
+                >
+                  {OCCASIONS.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
-
               <div className={styles.fieldWrap}>
-                <span className={styles.fieldIcon}><MailIcon /></span>
+                <span className={styles.fieldIcon}><CalendarIcon /></span>
                 <input
-                  type="email"
-                  aria-label="Your email"
+                  type="date"
+                  aria-label="Reminder date"
                   className={styles.input}
-                  value={form.email}
-                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="Your email"
+                  value={form.date}
+                  onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 />
               </div>
+            </div>
 
-              <div className={styles.row}>
-                <div className={styles.fieldWrap}>
-                  <span className={styles.fieldIcon}><TagIcon /></span>
-                  <select
-                    aria-label="Occasion"
-                    className={styles.select}
-                    value={form.occasion}
-                    onChange={e => setForm(f => ({ ...f, occasion: e.target.value }))}
-                  >
-                    {OCCASIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                  </select>
-                </div>
-                <div className={styles.fieldWrap}>
-                  <span className={styles.fieldIcon}><CalendarIcon /></span>
-                  <input
-                    type="date"
-                    aria-label="Reminder date"
-                    className={styles.input}
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  />
-                </div>
-              </div>
+            <label className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={form.recurringYearly}
+                onChange={e => setForm(f => ({ ...f, recurringYearly: e.target.checked }))}
+              />
+              Remind me every year
+            </label>
 
-              <label className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={form.recurringYearly}
-                  onChange={e => setForm(f => ({ ...f, recurringYearly: e.target.checked }))}
-                />
-                Remind me every year
-              </label>
-
-              <motion.button
-                type="submit"
-                className={`btn-gold ${styles.submitBtn}`}
-                disabled={saving}
-                whileHover={{ scale: saving ? 1 : 1.03 }}
-                whileTap={{ scale: saving ? 1 : 0.97 }}
-              >
-                {saving ? 'Saving…' : 'Set Reminder'}
-              </motion.button>
-            </form>
-          </>
+            <button type="submit" className={`btn-gold ${styles.submitBtn}`} disabled={saving}>
+              {saving ? 'Saving…' : 'Set Reminder'}
+            </button>
+          </form>
         )}
-      </motion.div>
-    </div>
-  );
-}
+      </div>
 
-function GiftIcon() {
-  return (
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M20 12v10H4V12" /><path d="M22 7H2v5h20V7z" />
-      <path d="M12 22V7" />
-      <path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z" />
-      <path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z" />
-    </svg>
+      <div className={styles.imageWrap}>
+        <img
+          src="/images/3dcalender.webp"
+          alt="A 3D illustration of a calendar with a date marked with a heart, a wrapped gift box, a notification bell, and a birthday cake"
+          className={styles.image}
+          loading="lazy"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -225,7 +182,7 @@ function CalendarIcon() {
 
 function CheckIcon() {
   return (
-    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--black)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
       <polyline points="20 6 9 17 4 12" />
     </svg>
   );

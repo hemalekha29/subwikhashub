@@ -1,89 +1,50 @@
 .wrap {
-  perspective: 1400px;
-  max-width: 520px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 48px;
+  align-items: center;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
-.card {
-  position: relative;
-  background: linear-gradient(155deg, var(--black-card) 0%, #141210 60%, var(--black-card) 100%);
-  border: 1px solid rgba(201, 168, 76, 0.25);
-  border-radius: 18px;
-  padding: 40px 36px 36px;
-  text-align: center;
-  transform-style: preserve-3d;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(201, 168, 76, 0.05) inset;
-  overflow: hidden;
-}
-
-/* Soft rotating gold glow behind the card — pure CSS, no per-frame JS cost */
-.glow {
-  position: absolute;
-  inset: -40%;
-  background: conic-gradient(from 0deg, transparent 0%, rgba(201, 168, 76, 0.18) 15%, transparent 30%, transparent 100%);
-  animation: rotateGlow 8s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes rotateGlow {
-  to { transform: rotate(360deg); }
-}
-
-.iconWrap {
-  position: relative;
-  z-index: 1;
-  width: 68px;
-  height: 68px;
-  margin: 0 auto 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, var(--gold-light) 0%, var(--gold) 55%, var(--gold-dark) 100%);
-  box-shadow: 0 10px 24px rgba(201, 168, 76, 0.4), 0 0 0 6px rgba(201, 168, 76, 0.08);
-  transform: translateZ(50px);
-  animation: floatIcon 3.5s ease-in-out infinite;
-}
-
-@keyframes floatIcon {
-  0%, 100% { transform: translateZ(50px) translateY(0) rotate(-3deg); }
-  50%      { transform: translateZ(50px) translateY(-8px) rotate(3deg); }
-}
-
-.iconWrap svg { color: var(--black); }
+.content { text-align: left; }
 
 .title {
-  position: relative;
-  z-index: 1;
   font-family: var(--font-serif);
-  font-size: 1.5rem;
-  margin-bottom: 8px;
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  margin-bottom: 10px;
   color: var(--white);
-  transform: translateZ(30px);
 }
 
 .subtitle {
-  position: relative;
-  z-index: 1;
   opacity: 0.75;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  margin-bottom: 26px;
-  max-width: 380px;
-  margin-left: auto;
-  margin-right: auto;
-  transform: translateZ(20px);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin-bottom: 28px;
+  max-width: 420px;
+}
+
+/* The illustration — a plain, static, framed panel. No motion, no overlay effects;
+   the image itself (a premium 3D render) is what carries the visual interest here. */
+.imageWrap {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 3 / 2;
 }
 
 .form {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 13px;
-  text-align: left;
-  transform: translateZ(20px);
 }
 
 .fieldWrap {
@@ -113,8 +74,8 @@
 }
 
 /* Carved-in / embossed depth — a dark inner shadow at the top edge plus a faint
-   highlight at the bottom makes each field read as pressed into the card's surface,
-   like a groove, rather than a flat rectangle sitting on top of it. */
+   highlight at the bottom makes each field read as pressed into the page surface,
+   like a groove. This is a resting/focus state, not a decorative animation. */
 .input, .select {
   width: 100%;
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(255, 255, 255, 0.02) 100%), rgba(255, 255, 255, 0.02);
@@ -128,7 +89,6 @@
     inset 0 3px 6px rgba(0, 0, 0, 0.45),
     inset 0 -1px 0 rgba(255, 255, 255, 0.04),
     0 1px 0 rgba(255, 255, 255, 0.03);
-  transform: translateY(0);
   transition: border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
@@ -136,8 +96,6 @@
 
 .input::placeholder { color: rgba(255, 255, 255, 0.35); }
 
-/* On focus the field "lifts" toward the user — shadow flips from carved-in to
-   floating, plus a gold glow — the tactile inverse of the resting state above. */
 .input:focus, .select:focus {
   outline: none;
   border-color: var(--gold);
@@ -170,41 +128,37 @@
 
 .checkboxRow input { accent-color: var(--gold); width: 15px; height: 15px; cursor: pointer; }
 
-.submitBtn {
-  position: relative;
-  z-index: 1;
-  transform: translateZ(20px);
-  margin-top: 4px;
-}
+.submitBtn { margin-top: 4px; align-self: flex-start; min-width: 200px; }
 
 .successCard {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-  padding: 20px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
 }
 
 .successCheck {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 14px;
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: radial-gradient(circle at 35% 30%, #6ee7a0 0%, #4ade80 60%, #22a35a 100%);
   box-shadow: 0 10px 24px rgba(74, 222, 128, 0.4);
-  animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes popIn {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
 }
 
 .successText { color: var(--white); font-size: 0.95rem; line-height: 1.6; }
 
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: 1fr; gap: 28px; }
+  .content { text-align: center; }
+  .subtitle { margin-left: auto; margin-right: auto; }
+  .form { text-align: left; }
+  .imageWrap { order: -1; max-width: 460px; margin: 0 auto; }
+  .submitBtn { align-self: stretch; }
+}
+
 @media (max-width: 600px) {
-  .card { padding: 32px 22px 28px; }
   .row { flex-direction: column; }
 }
