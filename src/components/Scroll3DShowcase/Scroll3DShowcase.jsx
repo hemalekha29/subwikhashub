@@ -8,7 +8,7 @@ import styles from './Scroll3DShowcase.module.css';
 
 const MOBILE_BREAKPOINT = 640;
 
-const TAGLINES = [
+const DEFAULT_TAGLINES = [
   'Handcrafted With Love',
   'Every Gift Tells a Story',
   'Free Shipping Above ₹500',
@@ -18,19 +18,25 @@ const TAGLINES = [
 
 // Picked once per mount — a different visitor (or a fresh page load) sees a different
 // catchword or product photo emerge from the blast, rather than the same one every time.
-function pickReveal(products) {
+function pickReveal(products, taglines) {
   if (products.length > 0 && Math.random() < 0.5) {
     const p = products[Math.floor(Math.random() * products.length)];
     if (p?.images?.[0]) return { type: 'product', image: p.images[0], name: p.name };
   }
-  return { type: 'tagline', text: TAGLINES[Math.floor(Math.random() * TAGLINES.length)] };
+  return { type: 'tagline', text: taglines[Math.floor(Math.random() * taglines.length)] };
 }
 
-export default function Scroll3DShowcase({ products = [] }) {
+export default function Scroll3DShowcase({
+  products = [],
+  taglines = DEFAULT_TAGLINES,
+  label = '✦ Every Gift, An Experience ✦',
+  title = 'Unwrap Something Special',
+  subtitle = 'Scroll to see it come together — just like every order does, by hand.',
+}) {
   const wrapRef = useRef(null);
   const mountRef = useRef(null);
   const [active, setActive] = useState(false);
-  const [reveal] = useState(() => pickReveal(products));
+  const [reveal] = useState(() => pickReveal(products, taglines));
 
   // Only start loading Three.js once the section is close to view.
   useEffect(() => {
@@ -62,9 +68,9 @@ export default function Scroll3DShowcase({ products = [] }) {
       <div className={styles.pin}>
         <div className={styles.canvasHost} ref={mountRef} />
         <div className={styles.overlay}>
-          <span className={styles.label}>✦ Every Gift, An Experience ✦</span>
-          <h2 className={styles.title}>Unwrap Something Special</h2>
-          <p className={styles.sub}>Scroll to see it come together — just like every order does, by hand.</p>
+          <span className={styles.label}>{label}</span>
+          <h2 className={styles.title}>{title}</h2>
+          <p className={styles.sub}>{subtitle}</p>
         </div>
         {/* Erupts from the blast at the end of the scroll — see applyProgress's
             blastPulse in mountScene, which drives this element's opacity/scale. */}
@@ -159,9 +165,17 @@ function mountScene(THREE, wrapEl, mountEl) {
   glow.position.set(0, 0, 0);
   gift.add(glow);
 
-  // ── Sparkle particles orbiting the gift ──
-  const particleCount = isMobile ? 60 : 160;
+  // ── Confetti particles orbiting the gift — vertex-colored (pink/gold/cream/white)
+  // rather than a flat tint, so the blast scatter reads as actual confetti. ──
+  const particleCount = isMobile ? 70 : 180;
   const positions = new Float32Array(particleCount * 3);
+  const particleColors = new Float32Array(particleCount * 3);
+  const CONFETTI_PALETTE = [
+    [0.93, 0.53, 0.64], // pink
+    [0.79, 0.66, 0.30], // gold
+    [1.00, 0.96, 0.90], // cream
+    [1.00, 1.00, 1.00], // white
+  ];
   for (let i = 0; i < particleCount; i++) {
     const r = 2.6 + Math.random() * 1.8;
     const theta = Math.random() * Math.PI * 2;
@@ -169,22 +183,57 @@ function mountScene(THREE, wrapEl, mountEl) {
     positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
     positions[i * 3 + 1] = r * Math.cos(phi) * 0.6;
     positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+    const c = CONFETTI_PALETTE[i % CONFETTI_PALETTE.length];
+    particleColors[i * 3] = c[0]; particleColors[i * 3 + 1] = c[1]; particleColors[i * 3 + 2] = c[2];
   }
   const particleGeo = new THREE.BufferGeometry();
   particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  const particleMat = new THREE.PointsMaterial({ color: 0xe0c56a, size: 0.045, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+  particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
+  const particleMat = new THREE.PointsMaterial({ vertexColors: true, size: 0.045, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
   const particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
-  // ── Blast flash — a billboarded glow sprite that pulses bright at the finale.
+  // ── Mini gift boxes that burst outward radially from the main box at the finale —
+  // each starts at zero scale/centered and flies out along its own fixed direction. ──
+  const FRAGMENT_COUNT = 7;
+  const FRAGMENT_COLORS = [0xee87a2, 0xc9a84c, 0xfff6e6, 0xf6a9bc, 0xe0c56a, 0xffffff, 0xf3899f];
+  const fragmentGeo = new THREE.BoxGeometry(0.42, 0.42, 0.42);
+  const fragments = [];
+  for (let i = 0; i < FRAGMENT_COUNT; i++) {
+    const mat = new THREE.MeshPhysicalMaterial({ color: FRAGMENT_COLORS[i % FRAGMENT_COLORS.length], roughness: 0.35, metalness: 0.15, clearcoat: 0.6 });
+    const mesh = new THREE.Mesh(fragmentGeo, mat);
+    const theta = (i / FRAGMENT_COUNT) * Math.PI * 2 + Math.random() * 0.5;
+    const phi = Math.PI / 2 + (Math.random() - 0.5) * 1.6;
+    const dir = new THREE.Vector3(
+      Math.sin(phi) * Math.cos(theta),
+      Math.cos(phi) * 0.7 + 0.45,
+      Math.sin(phi) * Math.sin(theta)
+    );
+    mesh.scale.setScalar(0.001);
+    gift.add(mesh);
+    fragments.push({
+      mesh, mat, dir,
+      distance: 3.2 + Math.random() * 2.2,
+      spin: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(5 + Math.random() * 4),
+    });
+  }
+
+  // ── Blast flash — a soft glow sprite plus a rotating sunburst-ray sprite behind it.
   // MeshPhysicalMaterial surfaces don't "glow" on their own without post-processing
-  // bloom, so this is what actually sells the blast regardless of camera framing. ──
+  // bloom, so these are what actually sell the blast regardless of camera framing. ──
   const flashTex = makeGlowTexture(THREE);
   const flashMat = new THREE.SpriteMaterial({ map: flashTex, color: 0xfff3d6, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
   const flash = new THREE.Sprite(flashMat);
   flash.position.set(0, 0.3, 0);
   flash.scale.setScalar(0.001);
   scene.add(flash);
+
+  const burstTex = makeBurstTexture(THREE);
+  const burstMat = new THREE.SpriteMaterial({ map: burstTex, color: 0xfff3d6, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  const burst = new THREE.Sprite(burstMat);
+  burst.position.set(0, 0.3, -0.2);
+  burst.scale.setScalar(0.001);
+  scene.add(burst);
 
   // ── Scroll-driven progress (0 → 1 across the pinned track) ──
   let progress = 0;
@@ -217,12 +266,30 @@ function mountScene(THREE, wrapEl, mountEl) {
     const blastAmount = Math.min(1, Math.max(0, (progress - 0.82) / 0.15));
     const blastEase = blastAmount * blastAmount * (3 - 2 * blastAmount); // smoothstep
     const blastPulse = Math.sin(blastAmount * Math.PI); // 0 → 1 → 0 across the blast window
+    // Everything solid — base, ribbon, and the lid itself — shrinks away on this same
+    // timer so nothing is left standing once the blast fully lands, not just the base.
+    const baseBlast = Math.min(1, Math.max(0, (blastEase - 0.55) / 0.45));
+    const baseShrink = 1 - baseBlast;
 
     lidGroup.rotation.x = -openAmount * (Math.PI / 2.6) - blastEase * 0.7;
     lidGroup.position.y = 0.35 + blastEase * 1.1;
+    lidGroup.scale.setScalar(baseShrink);
     glow.intensity = openAmount * 3.2 + blastEase * 7;
     gift.rotation.y = progress * Math.PI * 0.85;
     gift.scale.setScalar(0.8 + blastPulse * 0.1);
+
+    // The base and ribbon used to just sit there intact while the lid/fragments flew
+    // apart around them — blows them apart too, right at the peak of the blast, so
+    // nothing solid is left standing once it fully lands.
+    base.scale.setScalar(baseShrink);
+    base.position.y = -0.4 - baseBlast * 1.6;
+    base.rotation.set(baseBlast * 2.2, baseBlast * 1.4, baseBlast * 1.8);
+    ribbonV.scale.setScalar(baseShrink);
+    ribbonV.position.set(baseBlast * 2.1, -0.4 + baseBlast * 0.5, baseBlast * -0.6);
+    ribbonV.rotation.set(0, 0, baseBlast * 2.5);
+    ribbonH.scale.setScalar(baseShrink);
+    ribbonH.position.set(baseBlast * -0.6, -0.4 + baseBlast * 0.5, baseBlast * 2.1);
+    ribbonH.rotation.set(baseBlast * 2.5, 0, 0);
     camera.position.z = 10.5 - progress * 1.4;
     camera.position.y = 0.8 + progress * 0.3;
     particles.rotation.y = progress * 1.1;
@@ -231,6 +298,15 @@ function mountScene(THREE, wrapEl, mountEl) {
     particleMat.size = 0.045 + blastEase * 0.09;
     flash.scale.setScalar(0.6 + blastEase * 7);
     flashMat.opacity = blastPulse * 0.9;
+    burst.scale.setScalar(0.4 + blastEase * 9);
+    burstMat.opacity = blastPulse * 0.7;
+    burstMat.rotation = blastEase * Math.PI;
+
+    fragments.forEach(f => {
+      f.mesh.position.copy(f.dir).multiplyScalar(blastEase * f.distance);
+      f.mesh.rotation.set(f.spin.x * blastEase * 3, f.spin.y * blastEase * 3, f.spin.z * blastEase * 3);
+      f.mesh.scale.setScalar(Math.min(0.42, blastEase * 0.5));
+    });
 
     const overlayFade = progress < 0.12 ? progress / 0.12 : progress > 0.85 ? Math.max(0, (1 - progress) / 0.15) : 1;
     if (overlayEl) overlayEl.style.opacity = String(overlayFade);
@@ -284,6 +360,10 @@ function mountScene(THREE, wrapEl, mountEl) {
     particleMat.dispose();
     flashMat.dispose();
     flashTex.dispose();
+    burstMat.dispose();
+    burstTex.dispose();
+    fragmentGeo.dispose();
+    fragments.forEach(f => f.mat.dispose());
     [baseMat, lidMat, ribbonMat].forEach(m => m.dispose());
     [base.geometry, lid.geometry, ribbonV.geometry, ribbonH.geometry, bowKnot.geometry, loopGeo].forEach(g => g.dispose());
     if (renderer.domElement.parentElement) renderer.domElement.parentElement.removeChild(renderer.domElement);
@@ -302,5 +382,30 @@ function makeGlowTexture(THREE) {
   grad.addColorStop(1, 'rgba(255,200,120,0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(canvas);
+}
+
+// A rotating sunburst of soft rays, layered behind the glow flash for a punchier,
+// more "explosion" read than a plain circular glow gives on its own.
+function makeBurstTexture(THREE) {
+  const size = 256;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const cx = size / 2, cy = size / 2, R = size / 2;
+  const rays = 14;
+  for (let i = 0; i < rays; i++) {
+    const a0 = (i / rays) * Math.PI * 2;
+    const width = ((Math.PI * 2) / rays) * 0.32;
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+    grad.addColorStop(0, 'rgba(255,244,214,0.9)');
+    grad.addColorStop(1, 'rgba(255,244,214,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, R, a0 - width / 2, a0 + width / 2);
+    ctx.closePath();
+    ctx.fill();
+  }
   return new THREE.CanvasTexture(canvas);
 }

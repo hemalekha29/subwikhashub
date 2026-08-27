@@ -5,7 +5,16 @@ import { categories, occasions } from '../../data/products';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import PlayNudge from '../../components/PlayNudge/PlayNudge';
+import Scroll3DShowcase from '../../components/Scroll3DShowcase/Scroll3DShowcase';
 import styles from './Shop.module.css';
+
+const SHOP_TAGLINES = [
+  'Every Order, Made By Hand',
+  'From Coimbatore, With Love',
+  'Custom Names, Custom Colors',
+  'No Two Gifts Are Ever Alike',
+  'Free Shipping Above ₹500',
+];
 
 const SORT_OPTIONS = [
   { value: 'default', label: 'Featured' },
@@ -280,6 +289,18 @@ export default function Shop() {
           </div>
         )}
       </div>
+
+      {/* Placed after the grid, not above it — this page's job is getting shoppers to
+          products fast, so the scroll-pinned showcase shouldn't sit between them and it. */}
+      {filtered.length > 0 && (
+        <Scroll3DShowcase
+          products={filtered}
+          taglines={SHOP_TAGLINES}
+          label="✦ Handmade To Order ✦"
+          title="Every Piece, Crafted By Hand"
+          subtitle="Keep scrolling — there's a little surprise waiting at the end."
+        />
+      )}
     </div>
   );
 }

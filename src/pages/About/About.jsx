@@ -1,6 +1,17 @@
 ﻿import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import Scroll3DShowcase from '../../components/Scroll3DShowcase/Scroll3DShowcase';
 import styles from './About.module.css';
+
+// Story-themed, not shopping-themed — no product prop is passed to Scroll3DShowcase
+// below, so the blast reveal always shows one of these instead of a product photo.
+const STORY_TAGLINES = [
+  'Built On Encouragement',
+  'A Simple Dream, A Real Journey',
+  'From Coimbatore, With Heart',
+  'This Is Just The Beginning',
+  '50+ Orders & Still Growing',
+];
 
 const milestones = [
   { year: '2024', label: 'The Beginning', text: 'Subwikha\'s Hub was born: the first handmade gifts created with love and shared with friends and family.' },
@@ -66,6 +77,14 @@ export default function About() {
           </div>
         </div>
       </section>
+
+      {/* 3D Scroll Showcase */}
+      <Scroll3DShowcase
+        taglines={STORY_TAGLINES}
+        label="✦ Every Chapter, By Hand ✦"
+        title="This Is Just The Beginning"
+        subtitle="Keep scrolling — the next chapter's still being written."
+      />
 
       {/* Milestones / Timeline */}
       <section className={styles.timeline}>
