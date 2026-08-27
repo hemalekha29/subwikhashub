@@ -129,6 +129,7 @@ export default function Navbar() {
           {/* Cart */}
           <button
             className={styles.cartBtn}
+            data-cart-icon
             onClick={() => dispatch({ type: 'TOGGLE_CART' })}
             aria-label="Open cart"
           >

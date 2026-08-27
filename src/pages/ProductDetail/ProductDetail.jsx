@@ -9,6 +9,7 @@ import ShareStrip from '../../components/ShareStrip/ShareStrip';
 import PlayNudge from '../../components/PlayNudge/PlayNudge';
 import { isOutOfStock, stockRemaining } from '../../lib/stock';
 import { trackEvent, toGaItem } from '../../lib/analytics';
+import { flyToCart } from '../../lib/flyToCart';
 import toast from 'react-hot-toast';
 import styles from './ProductDetail.module.css';
 
@@ -88,8 +89,9 @@ export default function ProductDetail() {
   const remaining = stockRemaining(product);
   const atStockLimit = remaining !== null && inCart && cartItem.qty >= remaining;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
     if (outOfStock) return;
+    flyToCart({ sourceEl: document.querySelector(`.${styles.mainImg} img`) || e?.currentTarget, imageSrc: product.images[activeImg] });
     for (let i = 0; i < qty; i++) {
       dispatch({ type: 'ADD_ITEM', payload: cartPayload });
     }

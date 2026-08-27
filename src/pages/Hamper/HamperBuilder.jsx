@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import { isOutOfStock } from '../../lib/stock';
+import { flyToCart } from '../../lib/flyToCart';
 import toast from 'react-hot-toast';
 import styles from './HamperBuilder.module.css';
 
@@ -43,11 +44,12 @@ export default function HamperBuilder() {
     });
   };
 
-  const addHamperToCart = () => {
+  const addHamperToCart = (e) => {
     if (selected.length < MIN_ITEMS) {
       toast.error(`Pick at least ${MIN_ITEMS} gifts to build a hamper`);
       return;
     }
+    flyToCart({ sourceEl: e?.currentTarget, imageSrc: selected[0].images[0] });
     dispatch({
       type: 'ADD_ITEM',
       payload: {

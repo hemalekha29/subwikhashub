@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../hooks/useWishlist';
 import { isOutOfStock, stockRemaining } from '../../lib/stock';
 import { trackEvent, toGaItem } from '../../lib/analytics';
+import { flyToCart } from '../../lib/flyToCart';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
 
@@ -53,6 +54,7 @@ export default function ProductCard({ product }) {
   const handleAddToCart = (e) => {
     e.preventDefault(); e.stopPropagation();
     if (outOfStock) return;
+    flyToCart({ sourceEl: cardRef.current?.querySelector(`.${styles.img}.${styles.imgVisible}`) || e.currentTarget, imageSrc: product.images[0] });
     dispatch({ type: 'ADD_ITEM', payload: product });
     trackEvent('add_to_cart', { currency: 'INR', value: product.price, items: [toGaItem(product)] });
     toast.custom(t => (
