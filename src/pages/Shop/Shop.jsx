@@ -294,10 +294,11 @@ export default function Shop() {
           products fast, so the scroll-pinned showcase shouldn't sit between them and it. */}
       {filtered.length > 0 && (
         <Scroll3DShowcase
+          theme="gem"
           products={filtered}
           taglines={SHOP_TAGLINES}
           label="✦ Handmade To Order ✦"
-          title="Every Piece, Crafted By Hand"
+          title="Every Piece, A Little Gem"
           subtitle="Keep scrolling — there's a little surprise waiting at the end."
         />
       )}

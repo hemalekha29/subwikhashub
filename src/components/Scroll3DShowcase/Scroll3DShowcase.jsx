@@ -32,6 +32,7 @@ export default function Scroll3DShowcase({
   label = '✦ Every Gift, An Experience ✦',
   title = 'Unwrap Something Special',
   subtitle = 'Scroll to see it come together — just like every order does, by hand.',
+  theme = 'box', // 'box' (Home/About — a wrapped gift) | 'gem' (Shop — a faceted resin gem)
 }) {
   const wrapRef = useRef(null);
   const mountRef = useRef(null);
@@ -57,10 +58,12 @@ export default function Scroll3DShowcase({
 
     import('three').then((THREE) => {
       if (disposed) return;
-      cleanup = mountScene(THREE, wrapRef.current, mountRef.current);
+      cleanup = mountScene(THREE, wrapRef.current, mountRef.current, theme);
     });
 
     return () => { disposed = true; cleanup(); };
+    // theme is fixed per page/mount, not expected to change on a live instance
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active]);
 
   return (
@@ -89,7 +92,7 @@ export default function Scroll3DShowcase({
   );
 }
 
-function mountScene(THREE, wrapEl, mountEl) {
+function mountScene(THREE, wrapEl, mountEl, theme) {
   const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
   const pinEl = mountEl.parentElement;
@@ -121,49 +124,15 @@ function mountScene(THREE, wrapEl, mountEl) {
   rim.position.set(-4, 2, -3);
   scene.add(rim);
 
-  // ── Gift box group ──
+  // ── Hero object group — the box (Home/About) or gem (Shop), whichever this
+  // instance was asked to build. Both expose the same update()/dispose() shape so
+  // the rest of mountScene (particles/flash/burst/fragments/camera) stays identical
+  // regardless of theme. ──
   const gift = new THREE.Group();
   gift.scale.setScalar(0.8);
   scene.add(gift);
 
-  const baseMat = new THREE.MeshPhysicalMaterial({ color: 0xee87a2, roughness: 0.4, metalness: 0.05, clearcoat: 0.6, clearcoatRoughness: 0.3 });
-  const base = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 2.2), baseMat);
-  base.position.y = -0.4;
-  gift.add(base);
-
-  const lidGroup = new THREE.Group();
-  lidGroup.position.set(0, 0.35, -1.1); // hinge at back edge
-  gift.add(lidGroup);
-  const lidMat = new THREE.MeshPhysicalMaterial({ color: 0xf6a9bc, roughness: 0.3, metalness: 0.05, clearcoat: 0.7 });
-  const lid = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.32, 2.32), lidMat);
-  lid.position.set(0, 0, 1.1);
-  lidGroup.add(lid);
-
-  const ribbonMat = new THREE.MeshPhysicalMaterial({ color: 0xc9a84c, roughness: 0.2, metalness: 0.6, clearcoat: 0.8 });
-  const ribbonV = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.7, 2.3), ribbonMat);
-  ribbonV.position.y = -0.4;
-  gift.add(ribbonV);
-  const ribbonH = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.7, 0.32), ribbonMat);
-  ribbonH.position.y = -0.4;
-  gift.add(ribbonH);
-
-  const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), ribbonMat);
-  bowKnot.position.set(0, 0.55, 0);
-  lidGroup.add(bowKnot);
-  const loopGeo = new THREE.TorusGeometry(0.32, 0.1, 16, 32);
-  const loopL = new THREE.Mesh(loopGeo, ribbonMat);
-  loopL.position.set(-0.32, 0.6, 0);
-  loopL.rotation.set(Math.PI / 2, 0.5, 0);
-  lidGroup.add(loopL);
-  const loopR = new THREE.Mesh(loopGeo, ribbonMat);
-  loopR.position.set(0.32, 0.6, 0);
-  loopR.rotation.set(Math.PI / 2, -0.5, 0);
-  lidGroup.add(loopR);
-
-  // Warm glow inside the box, revealed once the lid opens
-  const glow = new THREE.PointLight(0xffdf9e, 0, 4);
-  glow.position.set(0, 0, 0);
-  gift.add(glow);
+  const hero = theme === 'gem' ? buildGemHero(THREE, gift) : buildBoxHero(THREE, gift);
 
   // ── Confetti particles orbiting the gift — vertex-colored (pink/gold/cream/white)
   // rather than a flat tint, so the blast scatter reads as actual confetti. ──
@@ -193,11 +162,16 @@ function mountScene(THREE, wrapEl, mountEl) {
   const particles = new THREE.Points(particleGeo, particleMat);
   scene.add(particles);
 
-  // ── Mini gift boxes that burst outward radially from the main box at the finale —
-  // each starts at zero scale/centered and flies out along its own fixed direction. ──
+  // ── Fragments that burst outward radially from the hero object at the finale —
+  // mini gift boxes for the box theme, glassy shards for the gem theme — each starts
+  // at zero scale/centered and flies out along its own fixed direction. ──
   const FRAGMENT_COUNT = 7;
-  const FRAGMENT_COLORS = [0xee87a2, 0xc9a84c, 0xfff6e6, 0xf6a9bc, 0xe0c56a, 0xffffff, 0xf3899f];
-  const fragmentGeo = new THREE.BoxGeometry(0.42, 0.42, 0.42);
+  const FRAGMENT_COLORS = theme === 'gem'
+    ? [0xee87a2, 0xc9a84c, 0xffffff, 0xf6a9bc, 0xe0c56a]
+    : [0xee87a2, 0xc9a84c, 0xfff6e6, 0xf6a9bc, 0xe0c56a, 0xffffff, 0xf3899f];
+  const fragmentGeo = theme === 'gem'
+    ? new THREE.TetrahedronGeometry(0.3)
+    : new THREE.BoxGeometry(0.42, 0.42, 0.42);
   const fragments = [];
   for (let i = 0; i < FRAGMENT_COUNT; i++) {
     const mat = new THREE.MeshPhysicalMaterial({ color: FRAGMENT_COLORS[i % FRAGMENT_COLORS.length], roughness: 0.35, metalness: 0.15, clearcoat: 0.6 });
@@ -266,30 +240,11 @@ function mountScene(THREE, wrapEl, mountEl) {
     const blastAmount = Math.min(1, Math.max(0, (progress - 0.82) / 0.15));
     const blastEase = blastAmount * blastAmount * (3 - 2 * blastAmount); // smoothstep
     const blastPulse = Math.sin(blastAmount * Math.PI); // 0 → 1 → 0 across the blast window
-    // Everything solid — base, ribbon, and the lid itself — shrinks away on this same
-    // timer so nothing is left standing once the blast fully lands, not just the base.
-    const baseBlast = Math.min(1, Math.max(0, (blastEase - 0.55) / 0.45));
-    const baseShrink = 1 - baseBlast;
 
-    lidGroup.rotation.x = -openAmount * (Math.PI / 2.6) - blastEase * 0.7;
-    lidGroup.position.y = 0.35 + blastEase * 1.1;
-    lidGroup.scale.setScalar(baseShrink);
-    glow.intensity = openAmount * 3.2 + blastEase * 7;
     gift.rotation.y = progress * Math.PI * 0.85;
     gift.scale.setScalar(0.8 + blastPulse * 0.1);
+    hero.update(openAmount, blastEase, blastPulse, progress);
 
-    // The base and ribbon used to just sit there intact while the lid/fragments flew
-    // apart around them — blows them apart too, right at the peak of the blast, so
-    // nothing solid is left standing once it fully lands.
-    base.scale.setScalar(baseShrink);
-    base.position.y = -0.4 - baseBlast * 1.6;
-    base.rotation.set(baseBlast * 2.2, baseBlast * 1.4, baseBlast * 1.8);
-    ribbonV.scale.setScalar(baseShrink);
-    ribbonV.position.set(baseBlast * 2.1, -0.4 + baseBlast * 0.5, baseBlast * -0.6);
-    ribbonV.rotation.set(0, 0, baseBlast * 2.5);
-    ribbonH.scale.setScalar(baseShrink);
-    ribbonH.position.set(baseBlast * -0.6, -0.4 + baseBlast * 0.5, baseBlast * 2.1);
-    ribbonH.rotation.set(baseBlast * 2.5, 0, 0);
     camera.position.z = 10.5 - progress * 1.4;
     camera.position.y = 0.8 + progress * 0.3;
     particles.rotation.y = progress * 1.1;
@@ -364,10 +319,139 @@ function mountScene(THREE, wrapEl, mountEl) {
     burstTex.dispose();
     fragmentGeo.dispose();
     fragments.forEach(f => f.mat.dispose());
-    [baseMat, lidMat, ribbonMat].forEach(m => m.dispose());
-    [base.geometry, lid.geometry, ribbonV.geometry, ribbonH.geometry, bowKnot.geometry, loopGeo].forEach(g => g.dispose());
+    hero.dispose();
     if (renderer.domElement.parentElement) renderer.domElement.parentElement.removeChild(renderer.domElement);
   };
+}
+
+// ── Box hero (Home/About) — a wrapped gift that opens, then blows itself apart:
+// base/ribbon/lid all shrink and fly outward together at the blast's peak so
+// nothing solid is left standing once it fully lands. ──
+function buildBoxHero(THREE, gift) {
+  const baseMat = new THREE.MeshPhysicalMaterial({ color: 0xee87a2, roughness: 0.4, metalness: 0.05, clearcoat: 0.6, clearcoatRoughness: 0.3 });
+  const base = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.5, 2.2), baseMat);
+  base.position.y = -0.4;
+  gift.add(base);
+
+  const lidGroup = new THREE.Group();
+  lidGroup.position.set(0, 0.35, -1.1); // hinge at back edge
+  gift.add(lidGroup);
+  const lidMat = new THREE.MeshPhysicalMaterial({ color: 0xf6a9bc, roughness: 0.3, metalness: 0.05, clearcoat: 0.7 });
+  const lid = new THREE.Mesh(new THREE.BoxGeometry(2.32, 0.32, 2.32), lidMat);
+  lid.position.set(0, 0, 1.1);
+  lidGroup.add(lid);
+
+  const ribbonMat = new THREE.MeshPhysicalMaterial({ color: 0xc9a84c, roughness: 0.2, metalness: 0.6, clearcoat: 0.8 });
+  const ribbonV = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.7, 2.3), ribbonMat);
+  ribbonV.position.y = -0.4;
+  gift.add(ribbonV);
+  const ribbonH = new THREE.Mesh(new THREE.BoxGeometry(2.3, 1.7, 0.32), ribbonMat);
+  ribbonH.position.y = -0.4;
+  gift.add(ribbonH);
+
+  const bowKnot = new THREE.Mesh(new THREE.SphereGeometry(0.22, 24, 24), ribbonMat);
+  bowKnot.position.set(0, 0.55, 0);
+  lidGroup.add(bowKnot);
+  const loopGeo = new THREE.TorusGeometry(0.32, 0.1, 16, 32);
+  const loopL = new THREE.Mesh(loopGeo, ribbonMat);
+  loopL.position.set(-0.32, 0.6, 0);
+  loopL.rotation.set(Math.PI / 2, 0.5, 0);
+  lidGroup.add(loopL);
+  const loopR = new THREE.Mesh(loopGeo, ribbonMat);
+  loopR.position.set(0.32, 0.6, 0);
+  loopR.rotation.set(Math.PI / 2, -0.5, 0);
+  lidGroup.add(loopR);
+
+  // Warm glow inside the box, revealed once the lid opens
+  const glow = new THREE.PointLight(0xffdf9e, 0, 4);
+  glow.position.set(0, 0, 0);
+  gift.add(glow);
+
+  function update(openAmount, blastEase) {
+    // Everything solid — base, ribbon, and the lid itself — shrinks away on this same
+    // timer so nothing is left standing once the blast fully lands, not just the base.
+    const baseBlast = Math.min(1, Math.max(0, (blastEase - 0.55) / 0.45));
+    const baseShrink = 1 - baseBlast;
+
+    lidGroup.rotation.x = -openAmount * (Math.PI / 2.6) - blastEase * 0.7;
+    lidGroup.position.y = 0.35 + blastEase * 1.1;
+    lidGroup.scale.setScalar(baseShrink);
+    glow.intensity = openAmount * 3.2 + blastEase * 7;
+
+    base.scale.setScalar(baseShrink);
+    base.position.y = -0.4 - baseBlast * 1.6;
+    base.rotation.set(baseBlast * 2.2, baseBlast * 1.4, baseBlast * 1.8);
+    ribbonV.scale.setScalar(baseShrink);
+    ribbonV.position.set(baseBlast * 2.1, -0.4 + baseBlast * 0.5, baseBlast * -0.6);
+    ribbonV.rotation.set(0, 0, baseBlast * 2.5);
+    ribbonH.scale.setScalar(baseShrink);
+    ribbonH.position.set(baseBlast * -0.6, -0.4 + baseBlast * 0.5, baseBlast * 2.1);
+    ribbonH.rotation.set(baseBlast * 2.5, 0, 0);
+  }
+
+  function dispose() {
+    [baseMat, lidMat, ribbonMat].forEach(m => m.dispose());
+    [base.geometry, lid.geometry, ribbonV.geometry, ribbonH.geometry, bowKnot.geometry, loopGeo].forEach(g => g.dispose());
+  }
+
+  return { update, dispose };
+}
+
+// ── Gem hero (Shop) — a faceted resin-like crystal that grows/forms as you scroll
+// with two orbiting satellite shards, then shatters (shrinks to nothing) at the
+// blast's peak, same as the box's base/lid do, so the finale reads the same way. ──
+function buildGemHero(THREE, gift) {
+  const gemMat = new THREE.MeshPhysicalMaterial({
+    color: 0xee87a2, roughness: 0.15, metalness: 0.1,
+    transmission: 0.5, thickness: 1.1, clearcoat: 1, clearcoatRoughness: 0.1, ior: 1.4,
+  });
+  const gemGeo = new THREE.IcosahedronGeometry(1.15, 0);
+  const gem = new THREE.Mesh(gemGeo, gemMat);
+  gift.add(gem);
+
+  const satMat = new THREE.MeshPhysicalMaterial({ color: 0xc9a84c, roughness: 0.2, metalness: 0.5, clearcoat: 0.8 });
+  const satGeo = new THREE.OctahedronGeometry(0.24, 0);
+  const satellites = [0, 1, 2].map(i => {
+    const mesh = new THREE.Mesh(satGeo, satMat);
+    gift.add(mesh);
+    return { mesh, angleOffset: (i / 3) * Math.PI * 2, radius: 1.9 + i * 0.18 };
+  });
+
+  // Warm glow at the gem's core, brightening as it forms — the gem-theme equivalent
+  // of the box's "glow revealed once the lid opens".
+  const glow = new THREE.PointLight(0xffdf9e, 0, 4);
+  gift.add(glow);
+
+  function update(openAmount, blastEase, blastPulse, progress) {
+    const shatter = Math.min(1, Math.max(0, (blastEase - 0.55) / 0.45));
+    const shrink = 1 - shatter;
+    const growScale = 0.35 + openAmount * 0.65; // the gem "forms" as you scroll, not just spins
+
+    gem.scale.setScalar(shrink * growScale);
+    gem.rotation.y = progress * Math.PI * 1.6;
+    gem.rotation.x = Math.sin(progress * Math.PI) * 0.3;
+    glow.intensity = openAmount * 2.8 + blastEase * 6;
+
+    satellites.forEach((s, i) => {
+      const angle = s.angleOffset + progress * Math.PI * 2.4;
+      s.mesh.position.set(
+        Math.cos(angle) * s.radius * (0.4 + openAmount * 0.6),
+        Math.sin(progress * 5 + i) * 0.3,
+        Math.sin(angle) * s.radius * (0.4 + openAmount * 0.6)
+      );
+      s.mesh.rotation.set(angle, angle * 0.6, blastEase * 3);
+      s.mesh.scale.setScalar(shrink * (0.5 + openAmount * 0.5) + blastPulse * 0.15);
+    });
+  }
+
+  function dispose() {
+    gemMat.dispose();
+    gemGeo.dispose();
+    satMat.dispose();
+    satGeo.dispose();
+  }
+
+  return { update, dispose };
 }
 
 // A soft white→gold radial gradient, used as the blast flash sprite's texture.
