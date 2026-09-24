@@ -1,6 +1,9 @@
 ﻿import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
+import { SUMMARY, SITE, liveProducts, priceText } from '../../data/site';
+import { ExploreLinks } from '../../seo/content';
 import { products, testimonials } from '../../data/products';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import UgcGallery from '../../components/UgcGallery/UgcGallery';
@@ -69,15 +72,7 @@ export default function Home() {
 
   return (
     <div className={styles.home}>
-      <Helmet>
-        <title>Subwikha's Hub | Handcrafted Gifts in Coimbatore, Tamil Nadu</title>
-        <meta name="description" content="Subwikha's Hub – Handcrafted gifts in Coimbatore, Tamil Nadu. Custom chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes. Free shipping across India." />
-        <meta name="keywords" content="personalized gifts Coimbatore, custom gifts Tamil Nadu, handmade gifts Coimbatore, birthday gifts boyfriend, anniversary gifts, resin keychain Coimbatore, chocolate bouquet Coimbatore, photo frame Tamil Nadu, gift shop Coimbatore, customized gifts India" />
-        <link rel="canonical" href="https://subwikhahub.vercel.app" />
-        <meta property="og:title" content="Subwikha's Hub | Handcrafted Gifts in Coimbatore" />
-        <meta property="og:description" content="Handcrafted gifts from Coimbatore — chocolate bouquets, resin art, personalized keepsakes &amp; more. Free shipping across India." />
-        <meta property="og:url" content="https://subwikhahub.vercel.app" />
-      </Helmet>
+      <Seo head={staticHeads.home()} />
 
       {/* ── HERO ── */}
       <section className={styles.hero}>
@@ -101,17 +96,14 @@ export default function Home() {
         <div className={styles.ring3} />
 
         <div className={styles.heroContent}>
-            <span className={styles.heroLabel}>✦ Est. 2024 · Handcrafted Gifting ✦</span>
+            <span className={styles.heroLabel}>✦ {SITE.tagline} ✦</span>
 
           <h1 className={styles.heroTitle}>
-            <span className={styles.heroLine1}>Where Every Memory</span>
-            <em className={styles.heroLine2}>Becomes a Gift</em>
+            <span className={styles.heroLine1}>Handmade Customized Gifts, Chocolate Bouquets &amp; Resin Art</span>
+            <em className={styles.heroLine2}>in Coimbatore</em>
           </h1>
 
-          <p className={styles.heroSub}>
-            Handcrafted with love: chocolate bouquets, resin art,<br />
-            and keepsakes that make moments last forever.
-          </p>
+          <p className={styles.heroSub}>{SUMMARY}</p>
 
           <div className={styles.heroBtns}>
             <Link to="/shop" className={`btn-gold ${styles.heroBtn}`}>
@@ -175,14 +167,14 @@ export default function Home() {
 
         <div className={styles.catGrid}>
           {[
-            { label: 'Bouquets', emoji: '💐', img: '/images/bouquet-1.webp', cat: 'bouquets' },
-            { label: 'Photo Frames', emoji: '🖼️', img: '/images/frame-1.webp', cat: 'frames' },
-            { label: 'Night Lights', emoji: '🌙', img: '/images/lamp-4.webp', cat: 'lighting' },
-            { label: 'Keychains', emoji: '✨', img: '/images/resin-photo-1.webp', cat: 'keychains' },
-          ].map(({ label, emoji, img, cat }, i) => (
+            { label: 'Bouquets', emoji: '💐', img: '/images/bouquet-1.webp', cat: 'bouquets', to: '/category/bouquets' },
+            { label: 'Photo Frames', emoji: '🖼️', img: '/images/frame-1.webp', cat: 'frames', to: '/category/photo-frames' },
+            { label: 'Night Lights', emoji: '🌙', img: '/images/lamp-4.webp', cat: 'lighting', to: '/category/night-lights' },
+            { label: 'Keychains', emoji: '✨', img: '/images/resin-photo-1.webp', cat: 'keychains', to: '/category/keychains' },
+          ].map(({ label, emoji, img, to }, i) => (
             <RevealSection key={label} delay={i * 80}>
-              <Link to={`/shop?cat=${cat}`} className={styles.catCard}>
-                <img src={img} alt={label} className={styles.catImg} />
+              <Link to={to} className={styles.catCard}>
+                <img src={img} alt={`${label} — handmade gifts from ${SITE.city}`} className={styles.catImg} />
                 <div className={styles.catOverlay} />
                 <div className={styles.catLabel}>
                   <span className={styles.catEmoji}>{emoji}</span>
@@ -308,6 +300,20 @@ export default function Home() {
               />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Real <a href> links to every landing page and product — the sitewide hub crawlers
+          (and AI engines) follow from the homepage. Mirrors the prerendered static page. */}
+      <section className={`${styles.section} seo-page`}>
+        <div className="seo-frame">
+          <ExploreLinks LinkComp={Link} heading="Shop by category and occasion" />
+          <h2>All handmade gifts</h2>
+          <ul className="seo-linkrow">
+            {liveProducts.map(p => (
+              <li key={p.slug}><Link to={`/product/${p.slug}`}>{p.name} · {priceText(p)}</Link></li>
+            ))}
+          </ul>
         </div>
       </section>
 

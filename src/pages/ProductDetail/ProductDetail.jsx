@@ -1,6 +1,9 @@
 ﻿import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/Seo/Seo';
+import { productHead, productImageAlt } from '../../lib/seo';
+import { buildProductFaqs } from '../../data/seoContent';
+import { FaqList } from '../../seo/content';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { useProductSalesCount } from '../../hooks/useProductSales';
 import { useCart } from '../../context/CartContext';
@@ -140,65 +143,9 @@ export default function ProductDetail() {
     toast('Removed from cart', { icon: null, style: { background: 'var(--black-soft)', color: 'var(--white)', border: '1px solid rgba(255,255,255,0.1)', fontSize: '0.85rem' } });
   };
 
-  const BASE = 'https://subwikhahub.vercel.app';
-  const pageTitle = `${product.name} | Subwikha's Hub`;
-  const pageDesc = product.description?.substring(0, 160) ?? `Buy ${product.name} from Subwikha's Hub – handcrafted with love.`;
-  const pageImg = `${BASE}${product.images[0]}`;
-  const pageUrl = `${BASE}/product/${product.slug}`;
-
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name: product.name,
-    image: product.images.map(img => `${BASE}${img}`),
-    description: product.description,
-    brand: { "@type": "Brand", name: "Subwikha's Hub" },
-    offers: {
-      "@type": "Offer",
-      url: pageUrl,
-      priceCurrency: "INR",
-      price: String(activePrice),
-      availability: outOfStock
-        ? "https://schema.org/OutOfStock"
-        : "https://schema.org/InStock",
-      seller: { "@type": "Organization", name: "Subwikha's Hub" },
-    },
-  };
-
-  // Matches the visible breadcrumb (Home > Shop > product) below — gives Google enough
-  // to show a breadcrumb trail in search results instead of the raw URL.
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: BASE },
-      { "@type": "ListItem", position: 2, name: "Shop", item: `${BASE}/shop` },
-      { "@type": "ListItem", position: 3, name: product.name, item: pageUrl },
-    ],
-  };
-
   return (
     <div className={`page-container ${styles.detail}`}>
-      <Helmet>
-        <title>{pageTitle}</title>
-        <meta name="description" content={pageDesc} />
-        <link rel="canonical" href={pageUrl} />
-        <meta property="og:type" content="product" />
-        <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDesc} />
-        <meta property="og:image" content={pageImg} />
-        <meta property="og:image:width" content="800" />
-        <meta property="og:image:height" content="800" />
-        <meta property="og:url" content={pageUrl} />
-        <meta property="product:price:amount" content={String(activePrice)} />
-        <meta property="product:price:currency" content="INR" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDesc} />
-        <meta name="twitter:image" content={pageImg} />
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
-        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
-      </Helmet>
+      <Seo head={productHead(product, { outOfStock })} />
 
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
@@ -216,7 +163,7 @@ export default function ProductDetail() {
         {/* Images */}
         <div className={styles.images}>
           <div className={styles.mainImg}>
-            <img src={product.images[activeImg]} alt={product.name} loading="lazy" />
+            <img src={product.images[activeImg]} alt={productImageAlt(product, activeImg)} loading="lazy" />
             {product.badge && <span className={styles.badge}>{product.badge}</span>}
             {discount > 0 && <span className={styles.discountTag}>−{discount}% OFF</span>}
           </div>
@@ -227,7 +174,7 @@ export default function ProductDetail() {
                 className={`${styles.thumb} ${activeImg === i ? styles.thumbActive : ''}`}
                 onClick={() => setActiveImg(i)}
               >
-                <img src={img} alt="" loading="lazy" />
+                <img src={img} alt={productImageAlt(product, i)} loading="lazy" />
               </button>
             ))}
           </div>
@@ -427,6 +374,14 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      {/* Product FAQs, built from this product's own data. Same Q&A is in the FAQPage
+          schema (productHead) and the prerendered static page. */}
+      <section className="seo-page">
+        <div className="seo-frame">
+          <FaqList faqs={buildProductFaqs(product)} heading={`${product.name} — frequently asked questions`} />
+        </div>
+      </section>
 
       {/* Related Products */}
       {related.length > 0 && (

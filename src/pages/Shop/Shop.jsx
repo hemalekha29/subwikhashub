@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Link, useSearchParams } from 'react-router-dom';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
 import { categories, occasions } from '../../data/products';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import PlayNudge from '../../components/PlayNudge/PlayNudge';
 import Scroll3DShowcase from '../../components/Scroll3DShowcase/Scroll3DShowcase';
+import { ExploreLinks } from '../../seo/content';
 import styles from './Shop.module.css';
 
 const SHOP_TAGLINES = [
@@ -133,16 +135,7 @@ export default function Shop() {
 
   return (
     <div className={styles.shop}>
-      <Helmet>
-        <title>Shop Handcrafted Gifts | Subwikha's Hub</title>
-        <meta name="description" content="Shop handcrafted gifts from Coimbatore — custom resin keychains, chocolate bouquets, personalized photo frames, night lights &amp; pipe cleaner flowers. Free shipping above ₹500 across India." />
-        <meta name="keywords" content="handcrafted gifts Coimbatore, resin keychain Tamil Nadu, chocolate bouquet Coimbatore, photo frame Coimbatore, custom gifts India, personalized gifts, birthday gifts boyfriend, anniversary gifts Tamil Nadu, gift shop Coimbatore, customized resin keychains Coimbatore" />
-        <link rel="canonical" href="https://subwikhahub.vercel.app/shop" />
-        <meta property="og:title" content="Shop Handcrafted Gifts | Subwikha's Hub" />
-        <meta property="og:description" content="Explore premium handcrafted gifts made with love — keychains, bouquets, frames & more." />
-        <meta property="og:url" content="https://subwikhahub.vercel.app/shop" />
-        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-      </Helmet>
+      <Seo head={staticHeads.shop()} />
 
       {/* Page Hero */}
       <div className={styles.hero}>
@@ -288,6 +281,12 @@ export default function Shop() {
             {filtered.map(p => <ProductCard key={p.slug} product={p} />)}
           </div>
         )}
+      </div>
+
+      {/* Real <a href> links to every category / occasion / budget landing page — the filter
+          chips above are buttons (client-side state), which crawlers can't follow. */}
+      <div className="seo-frame seo-page">
+        <ExploreLinks LinkComp={Link} heading="Browse by category and occasion" />
       </div>
 
       {/* Placed after the grid, not above it — this page's job is getting shoppers to

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
 import { FAQS } from '../../data/faqs';
 import styles from './FAQ.module.css';
 
@@ -12,8 +13,8 @@ import styles from './FAQ.module.css';
 // fluff, no "click here to find out" — because that's what gets quoted verbatim. Content
 // (src/data/faqs.js) is sourced only from what's already true elsewhere on the site
 // (PolicyPage.jsx, Checkout.jsx, About.jsx, Contact.jsx) — nothing here is invented for
-// SEO purposes. The FAQPage JSON-LD below must stay in sync with the visible Q&A text —
-// a mismatch between what's shown and what's marked up reads as manipulative to both AI
+// SEO purposes. The FAQPage JSON-LD (src/lib/seo.js, rendered by <Seo>) is built from the same
+// FAQS array as the visible Q&A — a mismatch between what's shown and what's marked up reads as manipulative to both AI
 // crawlers and Google, and defeats the purpose.
 
 function ChevronIcon({ open }) {
@@ -23,32 +24,9 @@ function ChevronIcon({ open }) {
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
 
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: FAQS.map(({ q, a }) => ({
-      '@type': 'Question',
-      name: q,
-      acceptedAnswer: { '@type': 'Answer', text: a },
-    })),
-  };
-
   return (
     <div className={`page-container ${styles.page}`}>
-      <Helmet>
-        <title>Frequently Asked Questions | Subwikha's Hub</title>
-        <meta
-          name="description"
-          content="Answers to common questions about Subwikha's Hub: shipping times, payment methods, returns, cancellations, customization, and order tracking."
-        />
-        <link rel="canonical" href="https://subwikhahub.vercel.app/faq" />
-        <meta property="og:type" content="website" />
-        <meta property="og:title" content="Frequently Asked Questions | Subwikha's Hub" />
-        <meta property="og:description" content="Shipping, payment, returns, cancellations, customization and order tracking — answered." />
-        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-        <meta property="og:url" content="https://subwikhahub.vercel.app/faq" />
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
-      </Helmet>
+      <Seo head={staticHeads.faq(FAQS)} />
 
       <div className={styles.header}>
         <span className="section-label">Help Center</span>

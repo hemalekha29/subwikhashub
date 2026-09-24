@@ -113,9 +113,12 @@
 }
 
 .heroTitle {
-  font-size: clamp(3rem, 7.5vw, 6.5rem);
+  /* The H1 is now a literal, descriptive headline (what we sell + where) instead of the
+     short slogan, so it runs longer — scaled down from the old 6.5rem display size. */
+  font-size: clamp(2.1rem, 4.6vw, 4.4rem);
   font-weight: 600;
-  line-height: 1.08;
+  line-height: 1.12;
+  text-wrap: balance; /* avoids a one-word last line ("Art") now that the headline is longer */
   margin-bottom: 24px;
   animation: fadeUp 1s ease 0.3s both;
   display: flex;
@@ -151,7 +154,7 @@
   color: rgba(255,255,255,0.9);
   font-weight: 400;
   line-height: 1.8;
-  max-width: 460px;
+  max-width: 640px;
   margin-bottom: 36px;
   animation: fadeUp 1s ease 0.4s both;
   text-shadow: 0 2px 12px rgba(0,0,0,0.8);
@@ -690,7 +693,9 @@
   .stat { padding: 0 16px; }
   .statNum { font-size: 1.3rem; }
   .heroLogo { height: 80px; }
-  .heroContent { padding: 80px 16px 60px; }
-  .heroTitle { font-size: clamp(2.4rem, 8vw, 4rem); }
+  /* top padding clears the fixed announcement bar + navbar (~108px) now that the H1 + summary
+     make the hero content taller than the viewport centre would leave room for */
+  .heroContent { padding: 124px 16px 60px; }
+  .heroTitle { font-size: clamp(1.9rem, 7.4vw, 3rem); }
   .ctaSection { padding: 80px 20px; }
 }

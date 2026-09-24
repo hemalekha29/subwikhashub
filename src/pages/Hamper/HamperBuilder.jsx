@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import { useCart } from '../../context/CartContext';
 import { isOutOfStock } from '../../lib/stock';
 import { flyToCart } from '../../lib/flyToCart';
+import { productImageAlt } from '../../lib/seo';
 import toast from 'react-hot-toast';
 import styles from './HamperBuilder.module.css';
 
@@ -68,15 +70,7 @@ export default function HamperBuilder() {
 
   return (
     <div className={`page-container ${styles.page}`}>
-      <Helmet>
-        <title>Build a Hamper | Subwikha's Hub</title>
-        <meta name="description" content="Build your own custom gift hamper — pick 2 to 4 handcrafted gifts and get 10% off the bundle." />
-        <link rel="canonical" href="https://subwikhahub.vercel.app/hamper" />
-        <meta property="og:title" content="Build a Hamper | Subwikha's Hub" />
-        <meta property="og:description" content="Build your own custom gift hamper — pick 2 to 4 handcrafted gifts and get 10% off the bundle." />
-        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-        <meta property="og:url" content="https://subwikhahub.vercel.app/hamper" />
-      </Helmet>
+      <Seo head={staticHeads.hamper()} />
 
       <div className={styles.header}>
         <span className="section-label">Mix &amp; Match</span>
@@ -99,7 +93,7 @@ export default function HamperBuilder() {
               className={`${styles.card} ${isSelected ? styles.cardSelected : ''}`}
               style={outOfStock ? { opacity: 0.45, cursor: 'not-allowed' } : undefined}
             >
-              <img src={p.images[0]} alt={p.name} className={`${styles.cardImg} ${isSelected ? styles.cardImgSelected : ''}`} />
+              <img src={p.images[0]} alt={productImageAlt(p, 0)} className={`${styles.cardImg} ${isSelected ? styles.cardImgSelected : ''}`} />
               <div className={styles.cardInfo}>
                 <p className={styles.cardName}>{p.name}</p>
                 <p className={styles.cardPrice}>{outOfStock ? 'Out of Stock' : `₹${p.price}`}</p>

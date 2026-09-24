@@ -70,7 +70,8 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
+    <header>
+    <nav aria-label="Main" className={`${styles.nav} ${scrolled ? styles.scrolled : ''}`}>
       <div className={styles.inner}>
         {/* Logo */}
         <Link to="/" className={styles.logo}>
@@ -185,6 +186,7 @@ export default function Navbar() {
         </div>
       </div>
     </nav>
+    </header>
   );
 }
 

@@ -5,6 +5,7 @@ import { useWishlist } from '../../hooks/useWishlist';
 import { isOutOfStock, stockRemaining } from '../../lib/stock';
 import { trackEvent, toGaItem } from '../../lib/analytics';
 import { flyToCart } from '../../lib/flyToCart';
+import { productImageAlt } from '../../lib/seo';
 import toast from 'react-hot-toast';
 import styles from './ProductCard.module.css';
 
@@ -112,7 +113,7 @@ export default function ProductCard({ product }) {
       <div className={styles.imgWrap}>
         {product.images.map((src, i) => (
           <img
-            key={i} src={src} alt={product.name}
+            key={i} src={src} alt={productImageAlt(product, i)}
             loading="lazy"
             className={`${styles.img} ${imgIdx === i ? styles.imgVisible : ''}`}
           />

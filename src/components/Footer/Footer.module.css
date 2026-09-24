@@ -21,8 +21,8 @@
   margin: 0 auto;
   padding: 80px 40px 60px;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: 1.8fr 1fr 1fr 1fr 1fr;
+  gap: 44px;
 }
 
 .brand {}
@@ -70,6 +70,16 @@
   color: var(--gold);
   background: var(--gold-muted);
 }
+
+/* NAP block under the brand blurb */
+.nap {
+  font-style: normal;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin: 14px 0 16px;
+}
+.nap a { color: var(--gold); }
 
 .col {}
 

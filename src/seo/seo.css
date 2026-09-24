@@ -1,0 +1,82 @@
+/* Shared styles for the crawlable content blocks (src/seo/content.jsx). Used two ways:
+   - inside the SPA's new landing pages (category / gifts / blog), and
+   - in the prerendered static HTML every route ships with before JavaScript runs.
+   Imported once from main.jsx so it lands in the entry CSS (render-blocking <link>), which
+   means the static pre-JS page is styled, not a plain browser-default document. */
+
+.seo-static { max-width: 1100px; margin: 0 auto; padding: 24px 24px 60px; }
+.seo-static a { color: var(--gold); }
+.seo-static img { height: auto; }
+
+.seo-shell-header { border-bottom: 1px solid var(--black-border); padding: 14px 24px; }
+.seo-shell-header nav { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; max-width: 1100px; margin: 0 auto; font-size: 0.85rem; }
+.seo-shell-header .seo-brand { font-family: var(--font-serif); font-size: 1.1rem; color: var(--white); margin-right: 8px; }
+.seo-shell-footer { border-top: 1px solid var(--black-border); padding: 32px 24px; margin-top: 40px; font-size: 0.85rem; color: var(--text-secondary); }
+.seo-shell-footer .seo-foot-inner { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; }
+.seo-shell-footer h2 { font-size: 0.9rem; color: var(--gold); text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 10px; }
+.seo-shell-footer ul { list-style: none; }
+.seo-shell-footer li { margin: 4px 0; }
+.seo-shell-footer address { font-style: normal; line-height: 1.7; }
+
+.seo-crumbs { font-size: 0.8rem; color: var(--text-secondary); margin: 8px 0 18px; }
+.seo-crumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.seo-crumbs li + li::before { content: '›'; margin-right: 8px; color: var(--gold); }
+.seo-crumbs a { color: var(--text-secondary); }
+.seo-crumbs a:hover { color: var(--gold); }
+
+.seo-page h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 14px; color: var(--white); }
+.seo-page h2 { font-size: clamp(1.25rem, 2.6vw, 1.7rem); margin: 34px 0 12px; color: var(--white); }
+.seo-page h3 { font-size: 1.05rem; margin: 20px 0 6px; color: var(--white-muted); }
+.seo-page p { color: var(--white-muted); margin-bottom: 12px; max-width: 78ch; }
+.seo-page ul, .seo-page ol.seo-list { margin: 8px 0 14px 20px; color: var(--white-muted); max-width: 78ch; }
+.seo-page li { margin: 5px 0; }
+.seo-page a { color: var(--gold); }
+.seo-page a:hover { color: var(--gold-light); }
+
+/* The 40–60 word direct answer at the top of a page — the passage answer engines quote. */
+.seo-answer {
+  border-left: 3px solid var(--gold);
+  background: var(--gold-muted);
+  padding: 14px 18px;
+  margin: 6px 0 22px;
+  border-radius: 0 6px 6px 0;
+  font-size: 1.02rem;
+  color: var(--white) !important;
+}
+
+.seo-table-wrap { overflow-x: auto; margin: 10px 0 20px; }
+.seo-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 480px; }
+.seo-table caption { text-align: left; font-size: 0.8rem; color: var(--text-secondary); padding-bottom: 6px; }
+.seo-table th, .seo-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--black-border); vertical-align: top; }
+.seo-table th { color: var(--gold); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.seo-table td { color: var(--white-muted); }
+
+.seo-faq { margin-top: 10px; }
+.seo-faq h3 { margin-top: 18px; color: var(--white); }
+.seo-faq p { margin-bottom: 8px; }
+
+.seo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin: 14px 0 26px; padding: 0; list-style: none; }
+.seo-card { border: 1px solid var(--black-border); border-radius: 10px; overflow: hidden; background: var(--black-card); }
+.seo-card a { display: block; color: var(--white); }
+.seo-card img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.seo-card .seo-card-body { padding: 12px 14px 14px; }
+.seo-card .seo-card-name { font-family: var(--font-serif); font-size: 1rem; display: block; }
+.seo-card .seo-card-price { color: var(--gold); font-size: 0.9rem; }
+.seo-card .seo-card-tag { display: block; font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
+
+.seo-linkrow { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 8px 0 22px; list-style: none; padding: 0; }
+.seo-linkrow a { border: 1px solid var(--black-border); border-radius: 999px; padding: 6px 14px; font-size: 0.85rem; color: var(--white-muted); }
+.seo-linkrow a:hover { border-color: var(--gold); color: var(--gold); }
+
+.seo-post-meta { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 18px; }
+.seo-hero-img { width: 100%; max-height: 380px; object-fit: cover; border-radius: 10px; margin: 6px 0 20px; }
+
+@media (max-width: 600px) {
+  .seo-static { padding: 16px 16px 40px; }
+  .seo-shell-header nav { gap: 6px 14px; }
+}
+
+/* SPA landing pages (category / gifts / blog): interactive ProductCard grid + page frame */
+.seo-frame { max-width: 1180px; margin: 0 auto; padding: 0 24px 80px; }
+.seo-product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 24px; margin: 18px 0 30px; }
+@media (max-width: 600px) { .seo-frame { padding: 0 16px 60px; } .seo-product-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; } }

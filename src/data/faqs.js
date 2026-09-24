@@ -1,9 +1,9 @@
 // Single source of truth for FAQ content — used by src/pages/FAQ/FAQ.jsx (rendered to
-// visitors) and api/chat.js (grounds the chatbot's answers). middleware.js keeps its own
-// copy for bots (Edge Runtime function, deliberately kept import-free for cold-start
-// speed, matching the existing PRODUCTS duplication there) — if you edit this file,
-// update middleware.js's FAQ_ITEMS array to match, or the bot-rendered page and the
-// chatbot will start giving different answers than the page itself.
+// visitors), the build-time prerender (scripts/prerender.mjs → crawlable /faq HTML +
+// FAQPage schema + llms-full.txt) and api/chat.js (grounds the chatbot's answers).
+// Edit here and every consumer updates on the next build.
+import { SITE, PRICE_RANGE, DELIVERY_SUMMARY } from './site.js';
+
 export const FAQS = [
   {
     q: "What is Subwikha's Hub?",
@@ -52,5 +52,37 @@ export const FAQS = [
   {
     q: 'Is my payment and personal information safe?',
     a: 'Yes. Payments are processed by Razorpay, which is PCI-DSS compliant, and Subwikha\'s Hub never stores card or payment details on its own servers. Customer information (name, email, phone, address) is collected only to fulfil the order and is never sold or shared for marketing purposes.',
+  },
+  {
+    q: 'How do I order a custom gift?',
+    a: `Pick a gift on the Shop page, add it to your cart and pay securely through Razorpay at checkout. Photo-based gifts take your photo as part of the order; for other custom details (colour, size, chocolate choice, names or engraving text) message ${SITE.instagramHandle} on Instagram after ordering. Each product page lists exactly what can be customized.`,
+  },
+  {
+    q: 'How long does resin art take?',
+    a: 'Resin keychains (letter, heart and globe designs) take 3–5 business days to make. Custom photo resin pieces — resin photo keychains and resin photo coasters — take 5–7 business days because the photo has to be printed and cast, and resin needs time to cure. Courier delivery is added on top.',
+  },
+  {
+    q: 'Can I add my own photo to a gift?',
+    a: 'Yes. Resin photo keychains, resin photo coasters, custom photo frames, wedding and birthday frames, and fridge magnets are all made with your own photos. You share the photo as part of the order (at checkout or over Instagram DM, as noted on each product page) along with any names, dates or messages you want on the piece.',
+  },
+  {
+    q: 'Is cash on delivery available?',
+    a: 'No. Cash on Delivery is not available because every gift is made to order. Payment is taken in full at checkout by UPI, card, net banking or wallet through Razorpay, and production starts once payment is confirmed.',
+  },
+  {
+    q: 'How do I care for resin art?',
+    a: 'Keep resin keychains and coasters away from prolonged direct sunlight, heat and harsh chemicals, and wipe them gently with a soft, dry cloth. Avoid dropping them on hard surfaces. Use coasters for occasional display or light use rather than as hot-mug mats.',
+  },
+  {
+    q: "What's the best anniversary gift under ₹1000?",
+    a: 'Popular anniversary picks under ₹1000 are the Custom Photo Frame (₹399), the A4 Wedding & Couple Frame (₹499), a Chocolate Bouquet (from ₹299), a Resin Photo Keychain (₹149) and a Resin Heart Keychain (₹99). Frames and photo keepsakes suit couples best because they carry your own pictures.',
+  },
+  {
+    q: 'What is the price range of your gifts?',
+    a: `Gifts at ${SITE.name} range from ${PRICE_RANGE}. Pipe cleaner keychains start at ₹49; resin keychains are ₹99–₹149; frames are ₹179–₹499; night lights are ₹129–₹399; and chocolate bouquets are ₹299 (small), ₹499 (medium) or ₹699 (large).`,
+  },
+  {
+    q: `Where is ${SITE.name} based and where do you deliver?`,
+    a: `${SITE.name} is based in ${SITE.city}, ${SITE.region}, ${SITE.countryName}, and delivers to addresses all over ${SITE.countryName}. ${DELIVERY_SUMMARY}`,
   },
 ];

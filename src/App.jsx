@@ -13,6 +13,8 @@ import Loader from './components/Loader/Loader';
 import FloatingInstagram from './components/FloatingInstagram/FloatingInstagram';
 import WelcomePopup from './components/WelcomePopup/WelcomePopup';
 import ChatWidget from './components/ChatWidget/ChatWidget';
+import Seo from './components/Seo/Seo';
+import { staticHeads } from './lib/seo';
 
 // Every route is code-split so a visit to one page (e.g. Home) doesn't download
 // the JS for every other page (Admin panel, all 9 games, Checkout, etc).
@@ -32,6 +34,10 @@ const ReturnsPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ 
 const PrivacyPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('./pages/Policy/PolicyPage').then(m => ({ default: m.TermsPage })));
 const Game = lazy(() => import('./pages/Game/Game'));
+const CategoryPage = lazy(() => import('./pages/Category/CategoryPage'));
+const GiftsPage = lazy(() => import('./pages/Gifts/GiftsPage'));
+const BlogIndex = lazy(() => import('./pages/Blog/BlogIndex'));
+const BlogPost = lazy(() => import('./pages/Blog/BlogPost'));
 const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
 const AdminOrders = lazy(() => import('./pages/Admin/AdminOrders'));
@@ -90,7 +96,7 @@ function AnimatedRoutes() {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
-      <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="animate" exit="exit">
+      <motion.main id="main" key={location.pathname} variants={pageVariants} initial="initial" animate="animate" exit="exit">
         <Suspense fallback={<PageFallback />}>
           <Routes location={location}>
             <Route path="/" element={<Home />} />
@@ -98,6 +104,10 @@ function AnimatedRoutes() {
             <Route path="/hamper" element={<HamperBuilder />} />
             <Route path="/gift-finder" element={<GiftFinder />} />
             <Route path="/product/:slug" element={<ProductDetail />} />
+            <Route path="/category/:slug" element={<CategoryPage />} />
+            <Route path="/gifts/:slug" element={<GiftsPage />} />
+            <Route path="/blog" element={<BlogIndex />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/order-success" element={<OrderSuccess />} />
             <Route path="/track-order" element={<TrackOrder />} />
@@ -113,7 +123,7 @@ function AnimatedRoutes() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-      </motion.div>
+      </motion.main>
     </AnimatePresence>
   );
 }
@@ -225,8 +235,9 @@ function NotFound() {
       display: 'flex', flexDirection: 'column', alignItems: 'center',
       justifyContent: 'center', minHeight: '100vh', gap: 24, textAlign: 'center', padding: '100px 20px'
     }}>
-      <span style={{ fontFamily: 'var(--font-serif)', fontSize: '8rem', color: 'var(--gold)', opacity: 0.15 }}>404</span>
-      <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem' }}>Page Not Found</h2>
+      <Seo head={staticHeads.notFound()} />
+      <span aria-hidden="true" style={{ fontFamily: 'var(--font-serif)', fontSize: '8rem', color: 'var(--gold)', opacity: 0.15 }}>404</span>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: '2.2rem' }}>Page Not Found</h1>
       <a href="/" className="btn-gold">Go Home</a>
     </div>
   );

@@ -8,52 +8,18 @@
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="format-detection" content="telephone=no" />
 
-    <!-- Primary SEO -->
-    <title>Subwikha's Hub | Customized Gifts, Chocolate Bouquets &amp; Resin Art</title>
-    <meta name="description" content="Subwikha's Hub - Premium handcrafted gifts: chocolate bouquets, resin art, personalized photo frames, keychains &amp; memory keepsakes for every occasion." />
-    <meta name="keywords" content="customized gifts India, chocolate bouquet, resin art gifts, handmade gifts, personalized gifts, anniversary gifts, birthday gifts, couple gifts, photo frame gift, night light gift" />
+    <!-- SEO:START -->
+    <!-- Default (dev-server / unknown-route) head. In production scripts/prerender.mjs replaces
+         everything between the SEO markers with each route's own title, description, canonical,
+         Open Graph/Twitter tags and JSON-LD, and fills #root with the page's real content.
+         The site-wide schema (Organization, Store, WebSite) is generated there too — see
+         src/lib/seo.js — so it no longer lives in this file. -->
+    <title data-rh="true">Handmade Customized Gifts in Coimbatore | Subwikha's Hub</title>
+    <meta data-rh="true" name="description" content="Handmade customized gifts from Coimbatore: chocolate bouquets, resin art, personalized photo frames, keychains and night lights. Delivered across India." />
+    <link data-rh="true" rel="canonical" href="https://subwikhahub.vercel.app/" />
+    <!-- SEO:END -->
     <meta name="author" content="Subwikha's Hub" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://subwikhahub.vercel.app" />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-
-    <!-- Open Graph (WhatsApp, Facebook, LinkedIn) -->
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Subwikha's Hub" />
-    <meta property="og:title" content="Subwikha's Hub | Where Memories Become Gifts" />
-    <meta property="og:description" content="Premium handcrafted gifts: chocolate bouquets, resin art, personalized keepsakes &amp; more - crafted with love for every occasion." />
-    <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-    <meta property="og:image:width" content="512" />
-    <meta property="og:image:height" content="512" />
-    <meta property="og:url" content="https://subwikhahub.vercel.app" />
-    <meta property="og:locale" content="en_IN" />
-
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Subwikha's Hub | Where Memories Become Gifts" />
-    <meta name="twitter:description" content="Premium handcrafted gifts: chocolate bouquets, resin art, personalized keepsakes &amp; more." />
-    <meta name="twitter:image" content="https://subwikhahub.vercel.app/logo.png" />
-
-    <!-- Schema.org Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "OnlineStore",
-        "name": "Subwikha's Hub",
-        "url": "https://subwikhahub.vercel.app",
-        "logo": "https://subwikhahub.vercel.app/logo.png",
-        "description": "Premium handcrafted customized gifts: chocolate bouquets, resin art, photo frames, keychains and personalized keepsakes.",
-        "slogan": "Where Memories Become Gifts",
-        "foundingDate": "2024",
-        "currenciesAccepted": "INR",
-        "paymentAccepted": "Credit Card, Debit Card, UPI, Net Banking",
-        "areaServed": "IN",
-        "knowsAbout": ["Handmade gifts", "Chocolate bouquets", "Resin art", "Personalized photo frames", "Custom keychains", "Gift hampers"],
-        "sameAs": [
-          "https://www.instagram.com/subwikhahub"
-        ]
-      }
-    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -61,15 +27,6 @@
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&family=Nunito:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
-
-    <!-- Preloads the homepage hero's background image (src/components/HeroShowcase/HeroShowcase.jsx
-         slide 0 = product id 8's first photo) so the browser starts fetching it immediately
-         instead of waiting for React to hydrate and set the inline background-image style —
-         this is the page's LCP element, so this directly improves LCP (a Core Web Vital /
-         Google ranking signal). Harmless on other routes; browsers only act on it if it's
-         actually used within a few seconds. Update this path if HeroShowcase's SLIDE_IDS[0]
-         or that product's first image ever changes. -->
-    <link rel="preload" as="image" href="/images/bouquet-1.webp" fetchpriority="high" />
 
     <!-- Razorpay's checkout.js was previously loaded here in <head> on every single page —
          it's now loaded on-demand only on /checkout (see src/pages/Checkout/Checkout.jsx),

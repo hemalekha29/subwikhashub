@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
 import { occasions } from '../../data/products';
 import { useAllProducts } from '../../hooks/useAllProducts';
 import ProductCard from '../../components/ProductCard/ProductCard';
@@ -97,15 +98,7 @@ export default function GiftFinder() {
 
   return (
     <div className={`page-container ${styles.page}`}>
-      <Helmet>
-        <title>Gift Finder | Subwikha's Hub</title>
-        <meta name="description" content="Not sure what to gift? Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget." />
-        <link rel="canonical" href="https://subwikhahub.vercel.app/gift-finder" />
-        <meta property="og:title" content="Gift Finder | Subwikha's Hub" />
-        <meta property="og:description" content="Not sure what to gift? Answer 3 quick questions and we'll recommend the perfect handcrafted gift for the occasion and budget." />
-        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-        <meta property="og:url" content="https://subwikhahub.vercel.app/gift-finder" />
-      </Helmet>
+      <Seo head={staticHeads.giftFinder()} />
 
       <div className={styles.header}>
         <span className="section-label">Not Sure What to Gift?</span>

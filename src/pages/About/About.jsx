@@ -1,27 +1,17 @@
-﻿import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
+import Seo from '../../components/Seo/Seo';
+import { staticHeads } from '../../lib/seo';
+import { SITE, SUMMARY } from '../../data/site';
+import {
+  storyParagraphs, storyHighlight, storyThanks, milestones, values, howItsMade, aboutFacts,
+} from '../../data/aboutContent';
+import { AnswerBox } from '../../seo/content';
 import styles from './About.module.css';
-
-const milestones = [
-  { year: '2024', label: 'The Beginning', text: 'Subwikha\'s Hub was born: the first handmade gifts created with love and shared with friends and family.' },
-  { year: '~10mo', label: 'A Pause to Reflect', text: 'A period of doubt and rest. The passion for creating never disappeared: it quietly grew stronger.' },
-  { year: 'Comeback', label: 'Renewed & Reimagined', text: 'A fresh start with bolder ideas, unique designs, and a deeper commitment to meaningful gifts.' },
-  { year: '50+', label: 'Orders & Counting', text: 'Every order is a new story, a new memory. Growing every day with the support of a wonderful community.' },
-];
 
 export default function About() {
   return (
     <div className={`page-container ${styles.about}`}>
-      <Helmet>
-        <title>Our Story | Subwikha's Hub</title>
-        <meta name="description" content="Learn the story behind Subwikha's Hub — a handcrafted gift brand based in Coimbatore, Tamil Nadu, creating personalized keepsakes and unique gifts with love since 2024." />
-        <meta name="keywords" content="about Subwikha's Hub, handmade gifts Coimbatore, gift brand Tamil Nadu, gifting story India, personalized gifts Coimbatore" />
-        <link rel="canonical" href="https://subwikhahub.vercel.app/about" />
-        <meta property="og:title" content="Our Story | Subwikha's Hub" />
-        <meta property="og:description" content="A passion project turned gifting brand — handcrafted with love since 2024." />
-        <meta property="og:url" content="https://subwikhahub.vercel.app/about" />
-        <meta property="og:image" content="https://subwikhahub.vercel.app/logo.png" />
-      </Helmet>
+      <Seo head={staticHeads.about()} />
 
       {/* Hero */}
       <section className={styles.hero}>
@@ -41,29 +31,33 @@ export default function About() {
           <div className={styles.storyText}>
             <span className="section-label">How It All Began</span>
             <h2 className={styles.storyTitle}>A Simple Dream, A Beautiful Journey</h2>
-            <p>
-              Subwikha's Hub began in 2024 with a simple dream: creating handmade gifts that bring genuine happiness to people.
-            </p>
-            <p>
-              What started as a small idea quickly became something special. When the first few gifts were made, friends and family responded with love and encouragement. That support gave the confidence to turn a personal passion into a real business.
-            </p>
-            <p>
-              The journey wasn't always easy. After completing several orders, there came a pause: nearly 10 months of doubt, of questioning whether this dream could truly grow. But the love for creating meaningful gifts never left.
-            </p>
-            <p>
-              With renewed determination came a comeback: fresh ideas, unique designs, and more personalized creations. From chocolate bouquets and resin art to customized gifts and handmade keepsakes, every product is crafted with care and attention to detail.
-            </p>
-            <p className={styles.highlight}>
-              Today, 50+ orders in and still growing: fuelled by wonderful customers, friends, and family. Every order is motivation to create something even more special. This is just the beginning.
-            </p>
-            <p className={styles.thanks}>Thank you for being part of our story. ❤</p>
+            {storyParagraphs.map(t => <p key={t}>{t}</p>)}
+            <p className={styles.highlight}>{storyHighlight}</p>
+            <p className={styles.thanks}>{storyThanks}</p>
           </div>
           <div className={styles.storyImg}>
             <img
               src="https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=700&q=80"
-              alt="Subwikha's Hub: Handmade Gifts"
+              alt="Handmade gifts from Subwikha's Hub in Coimbatore — a wrapped gift with a ribbon"
             />
           </div>
+        </div>
+      </section>
+
+      {/* At a glance + how it's made: first-hand facts about who makes the gifts and how
+          (E-E-A-T). Same content is in the prerendered static /about page. */}
+      <section className="seo-page">
+        <div className="seo-frame">
+          <AnswerBox>{SUMMARY}</AnswerBox>
+          <h2>At a glance</h2>
+          <div className="seo-table-wrap">
+            <table className="seo-table">
+              <tbody>{aboutFacts.map(([k, v]) => <tr key={k}><th scope="row">{k}</th><td>{v}</td></tr>)}</tbody>
+            </table>
+          </div>
+          {SITE.founderStory && (<><h2>About the founder</h2><p>{SITE.founderStory}</p></>)}
+          <h2>How our gifts are made</h2>
+          {howItsMade.map(x => <div key={x.h}><h3>{x.h}</h3><p>{x.t}</p></div>)}
         </div>
       </section>
 
@@ -102,12 +96,7 @@ export default function About() {
             <div className="divider" />
           </div>
           <div className={styles.valuesGrid}>
-            {[
-              { symbol: '◈', title: 'Handmade with Love', text: 'From chocolate bouquets to resin art: every piece is made by hand, with care poured into every detail.' },
-              { symbol: '◇', title: 'Deeply Personal', text: 'Each gift is created to feel uniquely theirs. Customization is at the heart of everything we do.' },
-              { symbol: '◆', title: 'Built on Encouragement', text: 'Every kind word from a customer or loved one pushes us to create something even better.' },
-              { symbol: '◉', title: 'Always Evolving', text: 'We never stop learning, creating, and imagining new ways to make someone\'s day extraordinary.' },
-            ].map(({ symbol, title, text }) => (
+            {values.map(({ symbol, title, text }) => (
               <div key={title} className={styles.valueCard}>
                 <span className={styles.valueSymbol}>{symbol}</span>
                 <h3 className={styles.valueTitle}>{title}</h3>

@@ -1,8 +1,38 @@
 {
   "rewrites": [
-    { "source": "/((?!.*\\..*).*)", "destination": "/index.html" }
+    {
+      "source": "/admin",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/checkout",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/order-success",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/track-order",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/wishlist",
+      "destination": "/app.html"
+    },
+    {
+      "source": "/product/:slug",
+      "destination": "/app.html"
+    }
   ],
   "crons": [
-    { "path": "/api/send-reminders", "schedule": "0 3 * * *" }
+    {
+      "path": "/api/send-reminders",
+      "schedule": "0 3 * * *"
+    }
   ]
 }
