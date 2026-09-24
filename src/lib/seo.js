@@ -356,7 +356,10 @@ export function productHead(p, opts = {}) {
     imageAlt: productImageAlt(p, 0),
     type: 'product',
     jsonLd: [
-      productSchema(p, opts),
+      // Google requires `image` on Product rich results, so a product with no usable photo
+      // (the Custom Fridge Magnet, until its photo is uploaded — see MISSING_IMAGES) gets no
+      // Product schema rather than an invalid one.
+      ...(goodImages(p).length ? [productSchema(p, opts)] : []),
       breadcrumbSchema([HOME, crumb('Shop', '/shop'), crumb(p.name, `/product/${p.slug}`)]),
       faqSchema(buildProductFaqs(p)),
     ],
