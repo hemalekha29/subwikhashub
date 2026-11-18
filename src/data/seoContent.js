@@ -37,7 +37,7 @@ export const categoryPages = [
       'Order a handmade chocolate bouquet or a pipe cleaner flower bouquet online. Made to order in Coimbatore, customizable, delivered across India from ₹179.',
     match: (p) => p.category === 'bouquets',
     answer: (s) =>
-      `A bouquet from ${SITE.name} costs ${s.range}: chocolate bouquets start at ${rupee(299)} (small) and go up to ${rupee(699)} (large), while a pipe cleaner flower bouquet is ${rupee(179)}. Each is made to order in ${SITE.city} in ${s.days} business days and delivered across ${SITE.countryName}, with free shipping above ${rupee(SITE.freeShippingAbove)}.`,
+      `A bouquet from ${SITE.name} costs ${s.range}: chocolate bouquets start at ${rupee(299)} (small) and go up to ${rupee(699)} (large), while a pipe cleaner flower bouquet is ${rupee(179)}. Each is made to order in ${SITE.city} in ${s.days} business days and delivered across ${SITE.countryName}, with delivery charges worked out from your PIN code at checkout.`,
     details: [
       { h: 'Sizes and customization', items: [
         'Chocolate bouquet: Small (from ₹299), Medium (₹499) or Large (₹699) — you choose the chocolates and add a personalized message card.',
@@ -408,8 +408,8 @@ export function buildProductFaqs(p) {
   faqs.push({
     q: `How much does the ${p.name} cost?`,
     a: p.priceVariants?.length
-      ? `The ${p.name} is ${priceText(p)} depending on size: ${p.priceVariants.map((v) => `${v.label} ${rupee(v.price)}`).join(', ')}. Free shipping applies on orders above ${rupee(SITE.freeShippingAbove)}.`
-      : `The ${p.name} costs ${rupee(p.price)}. Free shipping applies on orders above ${rupee(SITE.freeShippingAbove)}; below that, shipping is ${rupee(SITE.shippingFee)}.`,
+      ? `The ${p.name} is ${priceText(p)} depending on size: ${p.priceVariants.map((v) => `${v.label} ${rupee(v.price)}`).join(', ')}. Delivery charges are worked out from your PIN code at checkout.`
+      : `The ${p.name} costs ${rupee(p.price)}. Delivery charges are worked out from your PIN code at checkout — ${rupee(SITE.deliveryChargeFrom)} for local areas around ${SITE.city}, ${rupee(SITE.deliveryChargeOuter)} for outer ${SITE.city}, ${rupee(SITE.deliveryChargeState)} elsewhere in ${SITE.region}, ${rupee(SITE.deliveryChargeIndia)} elsewhere in India, or collect it free from our studio.`,
   });
   faqs.push({
     q: `How long does the ${p.name} take to make and deliver?`,

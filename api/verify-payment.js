@@ -1,21 +1,11 @@
 import crypto from 'crypto';
 import admin from 'firebase-admin';
-import { EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY } from '../src/lib/emailjsConfig.js';
-
-function getDb() {
-  if (!admin.apps.length) {
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-    admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-  }
-  return admin.firestore();
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((email || '').trim());
-}
-function isValidPhone(phone) {
-  return /^\d{10}$/.test((phone || '').trim());
-}
+import { ORDER_TYPE } from '../src/lib/giftOrders.js';
+import { getDb, createPaidOrder } from '../src/lib/server/orderCreation.js';
+import { sendNotification, sendCustomerEmail } from '../src/lib/server/emailService.js';
+import { renderOrderEmail } from '../src/lib/server/emailTemplates.js';
+import { NOTIFICATION_TYPE } from '../src/lib/emailConfig.js';
+import { SITE } from '../src/data/site.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -25,8 +15,8 @@ export default async function handler(req, res) {
 
   try {
     const {
-      razorpay_order_id, razorpay_payment_id, razorpay_signature,
-      customer, giftMessage, photos,
+      razorpay_order_id, razorpay_payment_id, razorpay_signature, photos,
+      customer, recipient,
     } = req.body || {};
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -52,119 +42,154 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!customer?.firstName || !customer?.lastName || !isValidEmail(customer?.email) || !isValidPhone(customer?.phone) || !customer?.address) {
-      res.status(400).json({ ok: false, error: 'Delivery details are incomplete.' });
-      return;
-    }
-
     const db = getDb();
-    const pendingRef = db.collection('pendingOrders').doc(razorpay_order_id);
-    const orderRef = db.collection('orders').doc();
 
-    // The whole consumed-check -> stock-check -> order-create -> consumed-flip sequence
-    // runs as ONE transaction. Previously this was a plain read-then-branch outside any
-    // transaction (only the stock decrement itself was atomic) — two near-simultaneous
-    // calls for the same payment (a retried webhook + a client retry landing within the
-    // same window) could both observe consumed:false before either wrote it, and both
-    // create a separate order + double-decrement stock. A transaction makes Firestore
-    // serialize these instead: the second one always sees the first one's write.
-    let pending, stockIssue = false, alreadyProcessed = false, existingGrandTotal = null;
-    try {
-      await db.runTransaction(async (tx) => {
-        const pendingSnap = await tx.get(pendingRef);
-        if (!pendingSnap.exists) throw new Error('PENDING_NOT_FOUND');
-        pending = pendingSnap.data();
+    // The order itself is created from the PENDING order — the copy the server
+    // validated when the customer pressed Pay. Nothing the browser sends here
+    // is trusted for anything except the photos it uploaded to Cloudinary.
+    const result = await createPaidOrder(db, {
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+      photos,
+      // Only used for pending orders created before the server began capturing
+      // the buyer's details itself (i.e. a checkout started before a deploy).
+      fallbackCustomer: customer,
+      fallbackRecipient: recipient,
+    });
 
-        if (pending.consumed) {
-          alreadyProcessed = true;
-          existingGrandTotal = pending.grandTotal;
-          return; // no writes — nothing left to do, already processed by an earlier call
-        }
-
-        // All reads must happen before any writes in a Firestore transaction.
-        const targets = pending.decrementTargets || [];
-        const refs = targets.map(t => db.collection('products').doc(t.firestoreId));
-        const snaps = targets.length ? await Promise.all(refs.map(r => tx.get(r))) : [];
-        snaps.forEach((snap, i) => {
-          const have = snap.data()?.stock;
-          if (typeof have === 'number' && have < targets[i].qty) stockIssue = true;
-        });
-
-        // Payment is already captured by Razorpay at this point, so an oversell is
-        // recorded rather than silently dropped — the order is still created so the
-        // money is accounted for, flagged for a human to resolve.
-        snaps.forEach((snap, i) => {
-          tx.update(refs[i], { stock: admin.firestore.FieldValue.increment(-targets[i].qty) });
-        });
-
-        tx.set(orderRef, {
-          orderId: razorpay_order_id,
-          paymentId: razorpay_payment_id,
-          customer: {
-            name: `${customer.firstName} ${customer.lastName}`,
-            email: customer.email,
-            phone: customer.phone,
-            address: customer.address,
-          },
-          items: pending.items,
-          subtotal: pending.subtotal,
-          discount: pending.discountAmount,
-          discountPercent: pending.discountPercent,
-          shipping: pending.shipping,
-          grandTotal: pending.grandTotal,
-          giftMessage: (giftMessage || '').slice(0, 1000),
-          photos: photos && typeof photos === 'object' ? photos : {},
-          status: 'paid',
-          stockIssue,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        tx.update(pendingRef, { consumed: true });
+    if (result.alreadyProcessed) {
+      // The webhook (or an earlier call) already created this order. Do nothing
+      // again — no duplicate order, no duplicate stock decrement, and no
+      // duplicate email: the notification key is the order id.
+      res.status(200).json({
+        ok: true,
+        orderId: razorpay_order_id,
+        paymentId: razorpay_payment_id,
+        alreadyProcessed: true,
+        grandTotal: result.existingGrandTotal,
       });
-    } catch (err) {
-      if (err.message === 'PENDING_NOT_FOUND') {
-        res.status(400).json({ ok: false, error: 'This order could not be found. Please contact us with your payment ID.' });
-        return;
-      }
-      throw err;
-    }
-
-    if (alreadyProcessed) {
-      res.status(200).json({ ok: true, orderId: razorpay_order_id, paymentId: razorpay_payment_id, alreadyProcessed: true, grandTotal: existingGrandTotal });
       return;
     }
+
+    const { pending, orderDetails, stockIssue } = result;
 
     if (pending.referralCode) {
       const refSnap = await db.collection('referrals').where('code', '==', pending.referralCode).limit(1).get();
       if (!refSnap.empty) await refSnap.docs[0].ref.update({ uses: admin.firestore.FieldValue.increment(1) });
     }
 
-    try {
-      const itemsList = pending.items.map(i => `${i.name}${i.variant ? ` (${i.variant})` : ''} × ${i.qty} = ₹${i.price * i.qty}`).join('\n');
-      const photoSection = photos && Object.entries(photos).length > 0
-        ? '\n\n━━━ CUSTOMER PHOTOS ━━━\n' + Object.entries(photos).map(([name, urls]) => `📎 ${name}:\n${(urls || []).join('\n')}`).join('\n\n')
-        : '';
-      await fetch('https://api.emailjs.com/api/v1.0/email/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          service_id: EMAILJS_SERVICE_ID,
-          template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_PUBLIC_KEY,
-          template_params: {
-            name: 'Order Alert',
-            email: 'enistechteam@gmail.com',
-            subject: `New Order ${razorpay_order_id}: ₹${pending.grandTotal}${stockIssue ? ' ⚠ STOCK ISSUE' : ''}`,
-            message: `New order received!\n\nOrder ID: ${razorpay_order_id}\nPayment ID: ${razorpay_payment_id}\n${stockIssue ? '\n⚠ One or more items may be oversold — check stock before confirming.\n' : ''}\nCustomer: ${customer.firstName} ${customer.lastName}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nAddress: ${customer.address}\n\nItems:\n${itemsList}\n\nSubtotal: ₹${pending.subtotal}\nDiscount: ₹${pending.discountAmount}\nShipping: ₹${pending.shipping}\nTotal: ₹${pending.grandTotal}\n\nGift Message: ${giftMessage || 'None'}${photoSection}`,
-          },
-        }),
-      });
-    } catch (err) {
-      console.error('Order email notification failed:', err);
-    }
+    // Notifications never block or break a paid order: the order is already
+    // written, and every email problem is caught and logged.
+    await sendOrderNotifications({
+      db,
+      pending,
+      orderDetails,
+      stockIssue,
+      razorpayOrderId: razorpay_order_id,
+      razorpayPaymentId: razorpay_payment_id,
+    });
 
     res.status(200).json({ ok: true, orderId: razorpay_order_id, paymentId: razorpay_payment_id, grandTotal: pending.grandTotal });
   } catch (err) {
+    if (err.userMessage) {
+      res.status(400).json({ ok: false, error: err.userMessage });
+      return;
+    }
     console.error('verify-payment failed:', err);
     res.status(500).json({ ok: false, error: 'Payment succeeded but we hit an error saving your order. Please contact us with your payment ID.' });
+  }
+}
+
+/**
+ * The order notifications.
+ *
+ * Two, and only two, people can ever receive them:
+ *   - the shop (the admin notification, with everything), and
+ *   - the BUYER (their own confirmation, never the recipient of a gift).
+ *
+ * The admin notification's key is the order id, so a webhook that fires twice
+ * still produces exactly one email.
+ */
+export async function sendOrderNotifications({
+  db, pending, orderDetails, stockIssue, razorpayOrderId, razorpayPaymentId,
+}) {
+  const isGift = orderDetails?.orderType === ORDER_TYPE.GIFT;
+  const adminUrl = `${SITE.url}/admin/orders/${razorpayOrderId}`;
+
+  const email = renderOrderEmail({
+    orderId: razorpayOrderId,
+    createdAt: new Date().toLocaleString('en-IN', {
+      dateStyle: 'medium', timeStyle: 'short',
+    }),
+    customer: {
+      name: orderDetails?.buyer
+        ? `${orderDetails.buyer.firstName} ${orderDetails.buyer.lastName}`.trim()
+        : '',
+      phone: orderDetails?.buyer?.phone,
+      email: orderDetails?.buyer?.email,
+      address: orderDetails?.addressLine,
+    },
+    items: pending.items,
+    subtotal: pending.subtotal,
+    discount: pending.discountAmount,
+    deliveryCharge: pending.shipping,
+    grandTotal: pending.grandTotal,
+    paymentId: razorpayPaymentId,
+    paymentStatus: stockIssue ? 'Paid (⚠ stock issue — please check)' : 'Paid',
+    deliveryMethod: pending.deliveryMethod,
+    deliveryZoneName: pending.deliveryZoneName,
+    deliveryPincode: pending.deliveryPincode,
+    pickupLocation: pending.pickupLocation,
+    orderType: orderDetails?.orderType,
+    isSurpriseGift: orderDetails?.isSurpriseGift,
+    hideSenderIdentity: orderDetails?.hideSenderIdentity,
+    giftMessage: orderDetails?.giftMessage,
+    recipient: isGift ? {
+      name: orderDetails.recipient.name,
+      phone: orderDetails.recipient.phone,
+      address: [
+        orderDetails.recipient.address,
+        orderDetails.recipient.city,
+        orderDetails.recipient.state,
+        orderDetails.recipient.pincode,
+      ].filter(Boolean).join(', '),
+    } : null,
+  }, { adminUrl });
+
+  await sendNotification(db, {
+    // The idempotency key: one notification per order, however many times
+    // the webhook fires.
+    key: `order_${razorpayOrderId}`,
+    type: NOTIFICATION_TYPE.ORDER_CONFIRMED,
+    subject: email.subject,
+    html: email.html,
+    text: email.text,
+    orderId: razorpayOrderId,
+  });
+
+  // The buyer only. The recipient is never emailed.
+  if (orderDetails?.buyer?.email) {
+    const giftLine = isGift
+      ? `\n\n🎁 This is a GIFT order.\nDelivering to: ${orderDetails.recipient.name}${orderDetails.recipient.city ? `, ${orderDetails.recipient.city}` : ''}\nSurprise gift: ${orderDetails.isSurpriseGift ? 'Yes — we will not reveal your name' : 'No'}\nPreferred delivery date: ${orderDetails.preferredDeliveryDate || 'As soon as possible'}\n\nYour gift message:\n"${orderDetails.giftMessage || '—'}"`
+      : `\n\n${pending.deliveryMethod === 'PICKUP' ? 'Collection from our studio' : `Delivering to:\n${orderDetails.addressLine || ''}`}`;
+
+    await sendCustomerEmail(db, {
+      to: orderDetails.buyer.email,
+      name: orderDetails.buyer.firstName,
+      subject: `Your Subwikha's Hub order is confirmed 🎁 (${razorpayOrderId})`,
+      message: `Hi ${orderDetails.buyer.firstName},\n\nThank you for your order! We've received it and our team is already getting it ready.\n\n`
+        + `Order ID: ${razorpayOrderId}\n`
+        + pending.items.map(i => `• ${i.name}${i.variant ? ` (${i.variant})` : ''} × ${i.qty} — ₹${i.price * i.qty}`).join('\n')
+        + `\n\nSubtotal: ₹${pending.subtotal}\nDiscount: ₹${pending.discountAmount}\n`
+        + `Delivery Charge: ${pending.shipping === 0 ? 'Free' : `₹${pending.shipping}`}\nTotal paid: ₹${pending.grandTotal}${giftLine}\n\n`
+        + `We'll keep you posted on WhatsApp${orderDetails.buyer.email ? ' and email' : ''} as it moves along.\n\n`
+        + `With love,\nSubwikha's Hub — Where Memories Become Gifts`,
+    });
+
+    // ── The feedback form ────────────────────────────────────────────────
+    // NOT sent here: the customer is asked how the product, the packaging and
+    // the delivery were only AFTER the gift has reached them. The admin panel
+    // sends it the moment the order is marked delivered
+    // (see api/send-feedback-request.js).
   }
 }

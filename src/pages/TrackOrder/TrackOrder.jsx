@@ -87,12 +87,19 @@ export default function TrackOrder() {
           <p className={styles.statusText}>
             Status: <strong className={styles.statusValue}>{STATUS_LABELS[order.status] || order.status}</strong>
           </p>
+          {order.isGift && (
+            <p className={styles.giftNote}>
+              🎁 This is a gift order — tracked with the buyer's phone number.
+            </p>
+          )}
           <OrderTimeline status={order.status} />
         </div>
       )}
 
       <div className={styles.helpNote}>
         Can't find your order? <Link to="/contact" className={styles.helpLink}>Contact us</Link> and we'll help you out.
+        {' · '}
+        <Link to="/feedback" className={styles.helpLink}>Share feedback</Link>
       </div>
     </div>
   );

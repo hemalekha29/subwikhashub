@@ -261,7 +261,11 @@ export default function AdminAnalytics() {
         </div>
         <nav className={styles.topNav}>
           <Link to="/admin/orders"    className={styles.navLink}>Orders</Link>
+          <Link to="/admin/leads"     className={styles.navLink}>Leads</Link>
+          <Link to="/admin/feedback"  className={styles.navLink}>Feedback</Link>
           <Link to="/admin/products"  className={styles.navLink}>Products</Link>
+          <Link to="/admin/delivery"  className={styles.navLink}>Delivery</Link>
+          <Link to="/admin/settings"  className={styles.navLink}>Settings</Link>
           <Link to="/admin/analytics" className={`${styles.navLink} ${styles.navActive}`}>Analytics</Link>
           <Link to="/admin/gallery"   className={styles.navLink}>Gallery</Link>
         </nav>

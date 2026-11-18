@@ -39,12 +39,17 @@ const GiftsPage = lazy(() => import('./pages/Gifts/GiftsPage'));
 const BlogIndex = lazy(() => import('./pages/Blog/BlogIndex'));
 const BlogPost = lazy(() => import('./pages/Blog/BlogPost'));
 const Wishlist = lazy(() => import('./pages/Wishlist/Wishlist'));
+const Feedback = lazy(() => import('./pages/Feedback/Feedback'));
 const AdminLogin = lazy(() => import('./pages/Admin/AdminLogin'));
 const AdminOrders = lazy(() => import('./pages/Admin/AdminOrders'));
 const AdminOrderDetail = lazy(() => import('./pages/Admin/AdminOrderDetail'));
 const AdminAnalytics = lazy(() => import('./pages/Admin/AdminAnalytics'));
 const AdminProducts = lazy(() => import('./pages/Admin/AdminProducts'));
 const AdminGallery = lazy(() => import('./pages/Admin/AdminGallery'));
+const AdminLeads = lazy(() => import('./pages/Admin/AdminLeads'));
+const AdminDelivery = lazy(() => import('./pages/Admin/AdminDelivery'));
+const AdminFeedback = lazy(() => import('./pages/Admin/AdminFeedback'));
+const AdminEmailSettings = lazy(() => import('./pages/Admin/AdminEmailSettings'));
 
 function PageFallback() {
   return (
@@ -120,6 +125,7 @@ function AnimatedRoutes() {
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/game" element={<Game />} />
             <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/feedback" element={<Feedback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -139,6 +145,10 @@ function AdminRoutes() {
         <Route path="/admin/analytics" element={<AdminAnalytics />} />
         <Route path="/admin/products"  element={<AdminProducts />} />
         <Route path="/admin/gallery"   element={<AdminGallery />} />
+        <Route path="/admin/leads"     element={<AdminLeads />} />
+        <Route path="/admin/delivery"  element={<AdminDelivery />} />
+        <Route path="/admin/feedback"  element={<AdminFeedback />} />
+        <Route path="/admin/settings"  element={<AdminEmailSettings />} />
       </Routes>
     </Suspense>
   );

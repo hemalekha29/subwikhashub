@@ -90,7 +90,7 @@
 /* ── Stats Row ── */
 .statsRow {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
 
@@ -131,6 +131,20 @@
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
+}
+
+.filterGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filterGroupLabel {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+  white-space: nowrap;
 }
 
 .filterTabs {
@@ -284,6 +298,7 @@
 }
 
 .orderId {
+  display: inline-block;
   font-family: monospace;
   font-size: 0.78rem;
   color: rgba(255,255,255,0.5);
@@ -295,6 +310,31 @@
 .customerCell { display: flex; flex-direction: column; gap: 2px; }
 .customerName { font-size: 0.88rem; font-weight: 500; color: #fff; }
 .customerSub { font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+
+.recipientSub {
+  font-size: 0.72rem;
+  color: #e879f9;
+  margin-top: 2px;
+}
+
+.giftBadge {
+  display: block;
+  width: fit-content;
+  margin-top: 6px;
+  padding: 3px 9px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #f0abfc;
+  background: rgba(232, 121, 249, 0.12);
+  border: 1px solid rgba(232, 121, 249, 0.3);
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.giftBadgeSub {
+  color: rgba(255,255,255,0.5);
+  font-weight: 400;
+}
 
 .itemCount { font-size: 0.83rem; color: rgba(255,255,255,0.6); }
 
@@ -363,19 +403,11 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 1200px) {
-  .statsRow { grid-template-columns: repeat(4, 1fr); }
-}
-
-@media (max-width: 1100px) {
-  .statsRow { grid-template-columns: repeat(3, 1fr); }
-}
-
 @media (max-width: 768px) {
   .content { padding: 16px; }
-  .statsRow { grid-template-columns: repeat(2, 1fr); }
   .toolbar { flex-direction: column; align-items: stretch; }
-  .filterTabs { overflow-x: auto; }
+  .filterGroup { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .filterTabs { overflow-x: auto; width: 100%; }
   .search { max-width: 100%; }
   .table th:nth-child(5),
   .table td:nth-child(5) { display: none; }

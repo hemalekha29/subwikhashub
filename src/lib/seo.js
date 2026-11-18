@@ -137,14 +137,17 @@ export function itemListSchema(list, name, path) {
 }
 
 // Merchant-listing details that are true of every product on the site (see the Shipping and
-// Returns pages): free shipping above ₹500 else ₹80, courier ~3–4 days, no returns on
-// customized items, damaged/incorrect items replaced or refunded if reported within 48h.
+// Returns pages): delivery charged by PIN-code zone (from ₹45, or free collection from the
+// studio), courier ~3–4 days, no returns on customized items, damaged/incorrect items replaced
+// or refunded if reported within 48h.
+//
+// There is deliberately no `shippingRate` here any more: the delivery charge now depends on
+// the customer's PIN code, and a single flat rate in the schema would be a lie. The shipping
+// page explains the zones instead.
 function shippingDetails(p) {
   const [minMake, maxMake] = String(p.deliveryDays || '3-5').split('-').map(Number);
-  const free = priceOf(p).low >= SITE.freeShippingAbove;
   return {
     '@type': 'OfferShippingDetails',
-    shippingRate: { '@type': 'MonetaryAmount', value: free ? 0 : SITE.shippingFee, currency: 'INR' },
     shippingDestination: { '@type': 'DefinedRegion', addressCountry: SITE.country },
     deliveryTime: {
       '@type': 'ShippingDeliveryTime',
@@ -241,7 +244,7 @@ export const staticHeads = {
   }),
   shop: () => head({
     title: `Shop Handmade Gifts Online in India${suffix}`,
-    description: `Browse all handmade gifts: chocolate bouquets, resin keychains, photo frames, night lights and flower bouquets from ${rupee(PRICE_MIN)}. Free shipping above ${rupee(SITE.freeShippingAbove)} across India.`,
+    description: `Browse all handmade gifts: chocolate bouquets, resin keychains, photo frames, night lights and flower bouquets from ${rupee(PRICE_MIN)}. Delivery charges are worked out from your PIN code at checkout.`,
     path: '/shop',
     jsonLd: [breadcrumbSchema([HOME, crumb('Shop', '/shop')])],
   }),
@@ -265,7 +268,7 @@ export const staticHeads = {
   }),
   shipping: () => head({
     title: `Shipping, Delivery Time & Charges in India${suffix}`,
-    description: `How shipping works at ${SITE.name}: making time by product, ${SITE.transitTime} courier delivery across India, free shipping above ${rupee(SITE.freeShippingAbove)} and ${rupee(SITE.shippingFee)} below.`,
+    description: `How shipping works at ${SITE.name}: making time by product, ${SITE.transitTime} courier delivery across India, and delivery charges worked out from your PIN code — ${rupee(SITE.deliveryChargeFrom)} for local areas around ${SITE.city}, ${rupee(SITE.deliveryChargeOuter)} for outer ${SITE.city}, ${rupee(SITE.deliveryChargeState)} elsewhere in ${SITE.region}, ${rupee(SITE.deliveryChargeIndia)} elsewhere in India, or free collection from our studio.`,
     path: '/shipping',
     jsonLd: [breadcrumbSchema([HOME, crumb('Shipping', '/shipping')])],
   }),
@@ -343,9 +346,9 @@ export function productHead(p, opts = {}) {
   const descs = [
     `${lead} Handmade to order in ${SITE.city}, ${priceLine}, ready in ${days}. Delivered across India.`,
     `${lead} Handmade to order in ${SITE.city}, ${priceLine}, ready in ${days}. Delivered across India with secure checkout.`,
-    `${lead} Handmade to order in ${SITE.city} from ${priceLine}, ready in ${days}. Free shipping above ${rupee(SITE.freeShippingAbove)}.`,
+    `${lead} Handmade to order in ${SITE.city} from ${priceLine}, ready in ${days}. Delivery charge worked out from your PIN code.`,
     `${lead} Handmade in ${SITE.city}, ${priceLine}, ready in ${days}, delivered across India. Secure Razorpay checkout.`,
-    `${lead} Handmade to order in ${SITE.city}, ${priceLine}, ready in ${days}. Free shipping above ${rupee(SITE.freeShippingAbove)} across India.`,
+    `${lead} Handmade to order in ${SITE.city}, ${priceLine}, ready in ${days}. Delivery charges by PIN-code zone across India.`,
     `${lead} Handmade to order in ${SITE.city}, ${priceLine}, ready in ${days}. Delivered across India. Secure Razorpay checkout.`,
   ];
   return head({

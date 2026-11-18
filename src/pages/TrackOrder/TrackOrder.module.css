@@ -81,6 +81,17 @@
   font-weight: 600;
 }
 
+.giftNote {
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--white-muted);
+  background: rgba(201, 168, 76, 0.07);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 8px;
+}
+
 .submitBtn {
   min-height: 48px;
 }

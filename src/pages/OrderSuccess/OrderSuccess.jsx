@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import ReferralShare from '../../components/ReferralShare/ReferralShare';
+import FeedbackForm from '../../components/Feedback/FeedbackForm';
+import { ORDER_TYPE, formatDeliveryDate } from '../../lib/giftOrders';
 import styles from './OrderSuccess.module.css';
 
 function makeReferralCode(firstName) {
@@ -17,6 +19,19 @@ export default function OrderSuccess() {
   const canvasRef = useRef(null);
   const [referralCode, setReferralCode] = useState(null);
 
+  // The buyer is the person who placed the order. `address` is kept as the
+  // fallback so an older checkout session still renders correctly.
+  const buyer = useMemo(() => state?.buyer || {
+    firstName: state?.address?.firstName,
+    lastName: state?.address?.lastName,
+    email: state?.address?.email,
+    phone: state?.address?.phone,
+  }, [state]);
+  const isGift = state?.orderType === ORDER_TYPE.GIFT;
+  const recipient = state?.recipient;
+  const isSurprise = Boolean(state?.isSurpriseGift);
+  const hideIdentity = Boolean(state?.hideSenderIdentity);
+
   useEffect(() => {
     if (!state) return;
     let code = localStorage.getItem('subwikha_my_referral_code');
@@ -24,11 +39,11 @@ export default function OrderSuccess() {
       setReferralCode(code);
       return;
     }
-    code = makeReferralCode(state.address?.firstName);
+    code = makeReferralCode(buyer.firstName);
     addDoc(collection(db, 'referrals'), {
       code,
-      ownerName: `${state.address?.firstName || ''} ${state.address?.lastName || ''}`.trim(),
-      ownerEmail: state.address?.email || '',
+      ownerName: `${buyer.firstName || ''} ${buyer.lastName || ''}`.trim(),
+      ownerEmail: buyer.email || '',
       uses: 0,
       createdAt: serverTimestamp(),
     })
@@ -37,7 +52,7 @@ export default function OrderSuccess() {
         setReferralCode(code);
       })
       .catch(() => {});
-  }, [state]);
+  }, [state, buyer]);
 
   useEffect(() => {
     if (!state) {
@@ -100,11 +115,36 @@ export default function OrderSuccess() {
         </div>
 
         <img src="/logo.png" alt="Subwikha's Hub" className={styles.logo} />
-        <h1 className={styles.title}>Order Confirmed!</h1>
+        <h1 className={styles.title}>{isGift ? 'Your Gift is Confirmed! 🎁' : 'Order Confirmed!'}</h1>
         <p className={styles.subtitle}>
-          Your memory is on its way.<br />
-          Thank you for gifting with <span className={styles.gold}>Subwikha's Hub</span>.
+          {isGift ? (
+            <>
+              Your surprise is being prepared with love.<br />
+              Thank you for gifting with <span className={styles.gold}>Subwikha's Hub</span>.
+            </>
+          ) : (
+            <>
+              Your memory is on its way.<br />
+              Thank you for shopping with <span className={styles.gold}>Subwikha's Hub</span>.
+            </>
+          )}
         </p>
+
+        {isGift && (
+          <div className={styles.giftBanner}>
+            <span className={styles.giftBannerIcon} aria-hidden="true">💝</span>
+            <div className={styles.giftBannerText}>
+              <strong>Gift Order</strong>
+              <span>
+                {isSurprise
+                  ? (hideIdentity
+                    ? 'Your name is hidden — the recipient will only see the gift and your message.'
+                    : 'Your name will be included with the gift.')
+                  : 'Your name will be included with the gift.'}
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className={styles.orderCard}>
           <div className={styles.orderRow}>
@@ -120,12 +160,27 @@ export default function OrderSuccess() {
             <span className={styles.orderAmount}>₹{state.total?.toLocaleString('en-IN')}</span>
           </div>
           <div className={styles.orderRow}>
-            <span>Deliver To</span>
+            <span>{isGift ? 'Delivering To' : 'Deliver To'}</span>
             <span className={styles.orderValue}>
-              {state.address?.firstName} {state.address?.lastName}, {state.address?.city}
+              {isGift
+                ? `${recipient?.name || 'The recipient'}${recipient?.city ? `, ${recipient.city}` : ''}`
+                : `${state.address?.firstName} ${state.address?.lastName}, ${state.address?.city}`}
             </span>
           </div>
+          {isGift && state.preferredDeliveryDate && (
+            <div className={styles.orderRow}>
+              <span>Preferred Delivery</span>
+              <span className={styles.orderValue}>{formatDeliveryDate(state.preferredDeliveryDate)}</span>
+            </div>
+          )}
         </div>
+
+        {isGift && state.giftMessage?.trim() && (
+          <div className={styles.giftNote}>
+            <span className={styles.giftNoteLabel}>Your Gift Message</span>
+            <p className={styles.giftNoteText}>{state.giftMessage}</p>
+          </div>
+        )}
 
         {state.items?.length > 0 && (
           <div className={styles.itemsList}>
@@ -144,8 +199,24 @@ export default function OrderSuccess() {
         )}
 
         <p className={styles.emailNote}>
-          A confirmation email has been sent to <strong>{state.address?.email}</strong>
+          {buyer.email && state.buyerEmailEnabled
+            ? <>A confirmation email has been sent to <strong>{buyer.email}</strong></>
+            : <>We have your order and will keep you updated on WhatsApp at <strong>{buyer.phone}</strong></>}
         </p>
+
+        {/* The universal feedback form — the order id is attached automatically. */}
+        <div className={styles.feedbackBlock}>
+          <h3 className={styles.feedbackTitle}>How did we do?</h3>
+          <p className={styles.feedbackHint}>
+            Your order is in good hands — but we'd love to hear what you think 💌
+          </p>
+          <FeedbackForm
+            compact
+            sourcePage="order-success"
+            orderId={state.orderId}
+            title="Tell us about your experience"
+          />
+        </div>
 
         {referralCode && <ReferralShare code={referralCode} />}
 

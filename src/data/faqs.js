@@ -11,7 +11,7 @@ export const FAQS = [
   },
   {
     q: 'Does Subwikha\'s Hub ship across India?',
-    a: 'Yes. Subwikha\'s Hub delivers across India. Orders above ₹500 get free shipping; orders below ₹500 have an ₹80 shipping fee. Exact delivery time depends on your location and comes in addition to the handmade processing time for your specific product.',
+    a: 'Yes. Subwikha\'s Hub delivers across India. Delivery charges are worked out from your PIN code at checkout — ₹45 for local areas around Coimbatore (Thondamuthur, Vadavalli, Selvapuram, Perur, Vedapatti & nearby), ₹90 for outer Coimbatore areas, ₹150 for the rest of Tamil Nadu and ₹200 for the rest of India. You can also collect your order free from our studio if you are in our main area. Exact delivery time depends on your location and comes in addition to the handmade processing time for your specific product.',
   },
   {
     q: 'How long does it take to make and deliver an order?',

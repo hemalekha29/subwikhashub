@@ -522,3 +522,72 @@
   .actions { flex-direction: column; }
   .relatedGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
 }
+
+/* ── Product feedback ── */
+.feedback {
+  padding: 64px 40px 72px;
+  border-top: 1px solid rgba(201, 168, 76, 0.12);
+}
+
+.feedbackInner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.feedbackTitle {
+  font-family: var(--font-serif);
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 300;
+  margin: 4px 0 0;
+}
+
+.feedbackHint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 0 0 24px;
+}
+
+@media (max-width: 600px) {
+  .feedback { padding: 48px 20px 56px; }
+}
+
+/* ── Personalization studio (product page) ─────────────────────────────── */
+.studioHint {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin: 8px 0 14px;
+}
+
+.studioSummary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.studioThumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.studioThumbs img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(201, 168, 76, 0.35);
+}
+
+.studioDone {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--gold);
+  font-weight: 600;
+}

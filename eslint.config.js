@@ -26,4 +26,13 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  {
+    // Server-only helpers shared by the api/ functions. They live under src/ so
+    // they can be imported by both the serverless functions and each other, but
+    // they are never part of the browser bundle — hence Node globals here.
+    files: ['src/lib/server/**/*.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

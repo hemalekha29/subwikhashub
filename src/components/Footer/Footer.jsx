@@ -40,6 +40,7 @@ export default function Footer() {
             <li><Link to="/faq">FAQ</Link></li>
             <li><Link to="/gift-finder">Gift Finder Quiz</Link></li>
             <li><Link to="/track-order">Track Order</Link></li>
+            <li><Link to="/feedback">Share Your Feedback</Link></li>
             <li><Link to="/blog">Gift Guides</Link></li>
             <li><Link to="/hamper">Build a Hamper</Link></li>
           </ul>

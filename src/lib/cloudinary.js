@@ -31,3 +31,51 @@ export async function uploadToCloudinary(file, folder) {
   }
   return data.secure_url;
 }
+
+/**
+ * Shrinks a photo in the browser before it is uploaded.
+ *
+ * A 12-megapixel phone photo is ~8 MB and takes a noticeable while to upload
+ * over a shop's connection — and the customer is staring at a spinner the
+ * whole time. Resizing it to a sensible print size (1600px on the long edge,
+ * which is still more than enough for an A4 frame at 300dpi) makes the upload
+ * several times smaller and faster, and it keeps the page from holding a huge
+ * decoded bitmap in memory.
+ *
+ * Returns a File ready for uploadToCloudinary(), or the original file when the
+ * browser can't do the resize (e.g. HEIC) — the upload still works, it is just
+ * bigger.
+ */
+export async function prepareImageForUpload(file, maxDim = 1600, quality = 0.85) {
+  if (!file || !file.type?.startsWith('image/')) return file;
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+    if (scale === 1 && file.size < 2 * 1024 * 1024) {
+      bitmap.close?.();
+      return file; // Already small enough — don't waste a canvas round-trip.
+    }
+    const width = Math.round(bitmap.width * scale);
+    const height = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close?.();
+
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (!blob) return file;
+    const name = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], name, { type: 'image/jpeg', lastModified: Date.now() });
+  } catch (err) {
+    // A format the browser can't decode (HEIC on some browsers) — upload it as
+    // it is rather than failing the whole personalization.
+    console.warn('Could not resize the photo, uploading it as it is:', err);
+    return file;
+  }
+}

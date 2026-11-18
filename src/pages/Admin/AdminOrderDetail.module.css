@@ -440,6 +440,27 @@
   color: #c9a84c;
 }
 
+/* ── Personalization (the customer's own design) ── */
+.personalFields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #161616;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+}
+
+.personalField {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.personalField strong { color: #c9a84c; font-weight: 600; }
+
 /* ── Danger Zone ── */
 .dangerZone {
   display: flex;
@@ -459,6 +480,155 @@
 }
 
 .deleteOrderBtn:hover { background: rgba(239,68,68,0.18); }
+
+/* ── Gift orders ── */
+.headerBadges {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.giftBadge {
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #f0abfc;
+  background: rgba(232, 121, 249, 0.12);
+  border: 1px solid rgba(232, 121, 249, 0.3);
+  white-space: nowrap;
+}
+
+.cardNote {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.4);
+  line-height: 1.6;
+  margin: -8px 0 14px;
+}
+
+.cardNote code {
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.purgeBtn {
+  margin-top: 18px;
+  padding: 9px 16px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.purgeBtn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.75);
+}
+
+.purgeBtn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.recipientCard {
+  border-color: rgba(232, 121, 249, 0.28);
+}
+
+.surpriseCard {
+  border-color: rgba(201, 168, 76, 0.3);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(201, 168, 76, 0.08), transparent 55%),
+    #111;
+}
+
+.giftNoteBox {
+  margin-top: 18px;
+  padding: 20px 22px;
+  background: linear-gradient(160deg, rgba(201,168,76,0.08), rgba(201,168,76,0.02));
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.giftNoteLabel {
+  display: block;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #c9a84c;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.giftNoteText {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #e8e0d0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+.giftNoteFooter {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.recipientBtn {
+  padding: 8px 18px;
+  background: rgba(232, 121, 249, 0.1);
+  border: 1px solid rgba(232, 121, 249, 0.3);
+  border-radius: 8px;
+  color: #f0abfc;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.recipientBtn:hover { background: rgba(232, 121, 249, 0.2); }
+
+/* The feedback form — sent to the buyer once the gift has been delivered. */
+.feedbackBtn {
+  padding: 8px 18px;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid rgba(201, 168, 76, 0.35);
+  border-radius: 8px;
+  color: #c9a84c;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.feedbackBtn:hover:not(:disabled) { background: rgba(201, 168, 76, 0.22); }
+.feedbackBtn:disabled { opacity: 0.5; cursor: default; }
+
+.recipientError {
+  padding: 14px 16px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: rgba(253, 230, 138, 0.9);
+}
+
+.recipientError code {
+  background: rgba(255,255,255,0.08);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+}
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

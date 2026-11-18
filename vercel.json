@@ -25,6 +25,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/feedback",
+      "destination": "/app.html"
+    },
+    {
       "source": "/product/:slug",
       "destination": "/app.html"
     }
@@ -33,6 +37,10 @@
     {
       "path": "/api/send-reminders",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/sweep-leads",
+      "schedule": "0 4 * * *"
     }
   ]
 }

@@ -101,7 +101,7 @@ function HomeBody() {
       <ul>
         <li>Handmade with love — every gift is made to order in {SITE.city}.</li>
         <li>Fully personalized — custom names, photos, colours and messages.</li>
-        <li>Free shipping above {rupee(SITE.freeShippingAbove)} across {SITE.countryName}.</li>
+        <li>Delivery charges worked out from your PIN code — {rupee(SITE.deliveryChargeFrom)} for local areas around {SITE.city}, {rupee(SITE.deliveryChargeOuter)} for outer {SITE.city}, {rupee(SITE.deliveryChargeState)} elsewhere in {SITE.region}, {rupee(SITE.deliveryChargeIndia)} elsewhere in India, or free collection from our studio.</li>
         <li>Gift-ready packaging on every order.</li>
       </ul>
       <h2>What customers say</h2>
@@ -123,7 +123,7 @@ function ShopBody() {
     <>
       <Breadcrumbs items={[HOME_CRUMB, { name: 'Shop', path: '/shop' }]} />
       <h1>Handcrafted Gifts</h1>
-      <AnswerBox>{`${SITE.name} sells ${s.n} handmade gifts priced ${s.range}: chocolate bouquets, resin art, personalized photo frames, keychains, night lights and pipe cleaner flowers. Everything is made to order in ${SITE.city} and delivered across ${SITE.countryName}, with free shipping above ${rupee(SITE.freeShippingAbove)}.`}</AnswerBox>
+      <AnswerBox>{`${SITE.name} sells ${s.n} handmade gifts priced ${s.range}: chocolate bouquets, resin art, personalized photo frames, keychains, night lights and pipe cleaner flowers. Everything is made to order in ${SITE.city} and delivered across ${SITE.countryName}, with delivery charges worked out from your PIN code at checkout.`}</AnswerBox>
       <ExploreLinks heading="Browse by category and occasion" />
       <h2>All gifts</h2>
       <ProductGridStatic list={liveProducts} />
@@ -175,7 +175,7 @@ function ProductBody({ p }) {
       <Breadcrumbs items={[HOME_CRUMB, { name: 'Shop', path: '/shop' }, ...(cat ? [{ name: cat.name, path: `/category/${cat.slug}` }] : []), { name: p.name, path: `/product/${p.slug}` }]} />
       <p>{p.tagline}</p>
       <h1>{p.name}</h1>
-      <AnswerBox>{`${p.name}: ${priceText(p)}. Handmade to order in ${SITE.city}, ready in ${daysText(p)}, then delivered across ${SITE.countryName} in about ${SITE.transitTime}. ${p.inStock === false ? 'Currently out of stock.' : 'Free shipping on orders above ' + rupee(SITE.freeShippingAbove) + '.'}`}</AnswerBox>
+      <AnswerBox>{`${p.name}: ${priceText(p)}. Handmade to order in ${SITE.city}, ready in ${daysText(p)}, then delivered across ${SITE.countryName} in about ${SITE.transitTime}. ${p.inStock === false ? 'Currently out of stock.' : 'Delivery charges are worked out from your PIN code at checkout.'}`}</AnswerBox>
       <ul className="seo-grid">
         {goodImages(p).map((src, i) => (
           <li key={src} className="seo-card"><img src={src} alt={productImageAlt(p, i)} width="600" height="600" loading={i ? 'lazy' : 'eager'} /></li>

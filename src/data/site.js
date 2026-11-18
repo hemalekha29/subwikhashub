@@ -26,13 +26,29 @@ export const SITE = {
   // appears in the footer NAP block, Contact page and schema. Left null so nothing
   // fake is published.
   phone: null,
+  // The shop's WhatsApp number, digits only with the country code (e.g.
+  // '919876543210'). Powers the "Chat on WhatsApp" buttons — the delivery
+  // "we don't deliver here" message and the checkout-lead follow-ups. Left
+  // null so no broken link is published; the buttons fall back to the contact
+  // page until it is filled in.
+  whatsapp: null,
   instagramUrl: 'https://www.instagram.com/subwikhahub',
   instagramHandle: '@subwikhahub',
   ordersDelivered: '50+',
   supportHours: 'Monday to Saturday, 10am–7pm IST',
   // Order channel: website checkout (Razorpay) + Instagram DM for customization details.
-  freeShippingAbove: 500,
-  shippingFee: 80,
+  //
+  // Delivery pricing is PIN-code based and is configured in the admin panel
+  // (/admin/delivery) — ₹45 for local areas, ₹90 for outer Coimbatore, ₹150 for
+  // the rest of Tamil Nadu, ₹200 for the rest of India, and free collection from
+  // the studio. These numbers are used ONLY for the public copy ("from ₹X"); the
+  // checkout and the server always read the real, admin-configured charges. If
+  // you change a charge in the admin panel, update these figures so the site's
+  // public copy stays true.
+  deliveryChargeFrom: 45,
+  deliveryChargeOuter: 90,
+  deliveryChargeState: 150,
+  deliveryChargeIndia: 200,
   // Courier transit after dispatch, and typical turnaround for custom photo pieces (from the
   // business brief). Per-product making time lives in products.js `deliveryDays`.
   transitTime: '3–4 days',
@@ -81,6 +97,29 @@ export function daysText(p) {
 
 export const CITY_LINE = `${SITE.city}, ${SITE.region}, ${SITE.countryName}`;
 
+/**
+ * The one sentence that explains delivery pricing in the site's public copy.
+ * Kept here so every page says the same thing.
+ */
+export const DELIVERY_COST_SENTENCE =
+  `Delivery charges are worked out from your PIN code at checkout — `
+  + `${rupee(SITE.deliveryChargeFrom)} for local areas around ${SITE.city}, `
+  + `${rupee(SITE.deliveryChargeOuter)} for outer ${SITE.city}, `
+  + `${rupee(SITE.deliveryChargeState)} elsewhere in ${SITE.region}, `
+  + `${rupee(SITE.deliveryChargeIndia)} elsewhere in India, `
+  + `and free if you collect your order from our studio.`;
+
+/**
+ * A wa.me link to the shop, with an optional prefilled message.
+ * Returns null when the WhatsApp number hasn't been configured yet, so callers
+ * can fall back to the contact page instead of publishing a broken link.
+ */
+export function whatsappLink(message = '') {
+  if (!SITE.whatsapp) return null;
+  const base = `https://wa.me/${SITE.whatsapp}`;
+  return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+}
+
 // Plain-language summary quoted by AI answer engines. Used verbatim under the homepage H1,
 // at the top of llms.txt, and in the Organization schema description.
 export const SUMMARY =
@@ -91,4 +130,5 @@ export const SUMMARY =
 
 export const DELIVERY_SUMMARY =
   `Gifts are made to order in ${SITE.city}: about 2–7 business days depending on the product (around ${SITE.customizationTime} for custom photo pieces), ` +
-  `then ${SITE.transitTime} courier delivery across ${SITE.countryName}. Free shipping above ${rupee(SITE.freeShippingAbove)}, ${rupee(SITE.shippingFee)} below.`;
+  `then ${SITE.transitTime} courier delivery across ${SITE.countryName}. ` +
+  `${rupee(SITE.deliveryChargeFrom)} for local areas around ${SITE.city}, ${rupee(SITE.deliveryChargeOuter)} for outer ${SITE.city}, ${rupee(SITE.deliveryChargeState)} elsewhere in ${SITE.region}, ${rupee(SITE.deliveryChargeIndia)} elsewhere in ${SITE.countryName}, or collect your order free from our studio.`;

@@ -1,0 +1,115 @@
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 100px 40px 80px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroIcon { font-size: 2.6rem; }
+
+.title {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 300;
+}
+
+.subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  max-width: 560px;
+  line-height: 1.8;
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 40px;
+  align-items: start;
+}
+
+.formCard {
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  padding: 32px;
+}
+
+.side { display: flex; flex-direction: column; gap: 24px; }
+
+.sideTitle {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--gold);
+}
+
+.categoryList { display: flex; flex-direction: column; gap: 10px; }
+
+.categoryBtn {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--black-card);
+  border: 1px solid var(--black-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+  font-family: var(--font-sans);
+}
+
+.categoryBtn:hover {
+  border-color: var(--gold-dark);
+  transform: translateX(3px);
+}
+
+.categoryBtnActive {
+  border-color: var(--gold);
+  background: rgba(201, 168, 76, 0.07);
+}
+
+.categoryIcon { font-size: 1.3rem; line-height: 1.3; flex-shrink: 0; }
+
+.categoryText { display: flex; flex-direction: column; gap: 3px; }
+.categoryName { font-size: 0.85rem; color: var(--white); font-weight: 500; }
+.categoryDesc { font-size: 0.72rem; color: var(--text-secondary); line-height: 1.5; }
+
+.privacyNote {
+  padding: 22px 24px;
+  background: rgba(201, 168, 76, 0.04);
+  border: 1px solid var(--black-border);
+  border-radius: 12px;
+}
+
+.privacyTitle {
+  font-size: 0.8rem;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.privacyNote p {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  line-height: 1.75;
+}
+
+.privacyLink { margin-top: 10px; }
+.privacyLink a { color: var(--gold); text-decoration: none; }
+.privacyLink a:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .inner { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .page { padding: 100px 20px 60px; }
+  .formCard { padding: 24px 20px; }
+}

@@ -1,4 +1,5 @@
 import admin from 'firebase-admin';
+import { ORDER_TYPE, normalizeOrderType } from '../src/lib/giftOrders.js';
 
 function getDb() {
   if (!admin.apps.length) {
@@ -54,6 +55,10 @@ export default async function handler(req, res) {
       orderId: order.orderId,
       items: (order.items || []).map(i => ({ name: i.name, qty: i.qty })),
       grandTotal: order.grandTotal,
+      // Only the order TYPE is exposed — never the recipient's name, address or
+      // phone number, and never the buyer's details.
+      orderType: normalizeOrderType(order.orderType),
+      isGift: normalizeOrderType(order.orderType) === ORDER_TYPE.GIFT,
     });
   } catch {
     res.status(500).json({ ok: false, error: 'Something went wrong. Please try again.' });

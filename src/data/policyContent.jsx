@@ -1,7 +1,7 @@
 // Policy-page copy (moved verbatim out of PolicyPage.jsx), shared by the SPA page and the
 // build-time prerender so crawlers read exactly what visitors read. Bodies are JSX so
 // bold text and links survive; nothing here touches the browser, so it renders in Node.
-import { SITE } from './site.js';
+import { SITE, rupee } from './site.js';
 
 const ig = <a href={SITE.instagramUrl} target="_blank" rel="noreferrer">{SITE.instagramHandle}</a>;
 
@@ -28,11 +28,16 @@ export const policies = {
         </ul>
       </>) },
       { title: 'Delivery', body: (<>
-        <p>We currently deliver across India. Shipping timelines depend on your location and are in addition to the processing time above. Courier delivery typically takes about {SITE.transitTime}.</p>
+        <p>We currently deliver across {SITE.countryName}. Shipping timelines depend on your location and are in addition to the processing time above. Courier delivery typically takes about {SITE.transitTime}.</p>
+        <p><strong>Delivery charges are worked out from your PIN code at checkout</strong> — enter your address and we show you the exact charge before you pay:</p>
         <ul>
-          <li>Orders above ₹500: <strong>Free Shipping</strong></li>
-          <li>Orders below ₹500: ₹80 shipping fee</li>
+          <li>Local areas around {SITE.city} (Thondamuthur, Vadavalli, Selvapuram, Perur, Vedapatti &amp; nearby): <strong>{rupee(SITE.deliveryChargeFrom)}</strong></li>
+          <li>Outer {SITE.city} areas (Ukkadam &amp; other outlying areas): <strong>{rupee(SITE.deliveryChargeOuter)}</strong></li>
+          <li>Everywhere else in {SITE.region}: <strong>{rupee(SITE.deliveryChargeState)}</strong></li>
+          <li>Everywhere else in {SITE.countryName}: <strong>{rupee(SITE.deliveryChargeIndia)}</strong></li>
+          <li>Collection from our studio: <strong>FREE</strong> — available to customers in our main area (Thondamuthur, Vadavalli, Selvapuram, Perur, Vedapatti &amp; nearby)</li>
         </ul>
+        <p>If your PIN code is not currently serviceable we will say so at checkout and suggest either direct collection or getting in touch with us to check availability.</p>
         <p>Exact delivery timelines vary by location. You will be provided tracking details once your order is dispatched.</p>
       </>) },
       { title: 'Tracking', body: <p>Once your order is dispatched, tracking details will be shared with you via Instagram DM or the contact details provided at checkout.</p> },

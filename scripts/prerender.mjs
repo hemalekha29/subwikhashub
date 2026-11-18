@@ -142,7 +142,7 @@ try {
   fs.writeFileSync(path.join(dist, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`);
 
   // ── 4. robots.txt — explicit allow for every search + AI crawler ──
-  const privateDisallows = ['/admin', '/checkout', '/order-success', '/track-order', '/wishlist', '/api/'];
+  const privateDisallows = ['/admin', '/checkout', '/order-success', '/track-order', '/wishlist', '/feedback', '/api/'];
   const rules = privateDisallows.map((p) => `Disallow: ${p}`).join('\n');
   // A named User-agent group REPLACES the * group for that bot, so the private-path
   // disallows are repeated in every group instead of assuming they inherit.
