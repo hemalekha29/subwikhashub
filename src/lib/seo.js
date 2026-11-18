@@ -244,7 +244,7 @@ export const staticHeads = {
   }),
   shop: () => head({
     title: `Shop Handmade Gifts Online in India${suffix}`,
-    description: `Browse all handmade gifts: chocolate bouquets, resin keychains, photo frames, night lights and flower bouquets from ${rupee(PRICE_MIN)}. Delivery charges are worked out from your PIN code at checkout.`,
+    description: `Browse handmade gifts: chocolate bouquets, resin keychains, photo frames and night lights from ${rupee(PRICE_MIN)}. Delivery charge worked out from your PIN code.`,
     path: '/shop',
     jsonLd: [breadcrumbSchema([HOME, crumb('Shop', '/shop')])],
   }),
@@ -268,7 +268,7 @@ export const staticHeads = {
   }),
   shipping: () => head({
     title: `Shipping, Delivery Time & Charges in India${suffix}`,
-    description: `How shipping works at ${SITE.name}: making time by product, ${SITE.transitTime} courier delivery across India, and delivery charges worked out from your PIN code — ${rupee(SITE.deliveryChargeFrom)} for local areas around ${SITE.city}, ${rupee(SITE.deliveryChargeOuter)} for outer ${SITE.city}, ${rupee(SITE.deliveryChargeState)} elsewhere in ${SITE.region}, ${rupee(SITE.deliveryChargeIndia)} elsewhere in India, or free collection from our studio.`,
+    description: `How shipping works at ${SITE.name}: making time by product, ${SITE.transitTime} courier delivery, and charges from your PIN code — ${rupee(SITE.deliveryChargeFrom)} local, ${rupee(SITE.deliveryChargeIndia)} rest of India.`,
     path: '/shipping',
     jsonLd: [breadcrumbSchema([HOME, crumb('Shipping', '/shipping')])],
   }),

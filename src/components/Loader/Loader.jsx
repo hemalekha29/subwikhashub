@@ -1,15 +1,54 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './Loader.module.css';
+
+// The splash is a welcome, not a waiting room: it stays up long enough to read
+// as intentional, and no longer.
+const MIN_VISIBLE_MS = 700;   // the shortest it is ever shown
+const MAX_WAIT_MS = 2500;     // the longest it can ever block the site
 
 export default function Loader({ onDone }) {
   const [phase, setPhase] = useState('in'); // in → hold → out
+  // The callback is usually an inline arrow, which changes identity on every
+  // render of the parent — keeping it in a ref stops the effect below from
+  // restarting (and the splash from never finishing).
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('hold'), 600);
-    const t2 = setTimeout(() => setPhase('out'), 2000);
-    const t3 = setTimeout(() => onDone(), 2600);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-  }, [onDone]);
+    const startedAt = Date.now();
+    let holdTimer = null;
+    let doneTimer = null;
+    let finished = false;
+
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      // The bar fills as soon as the page is actually ready.
+      setPhase('hold');
+      // Never flash — but never make anyone wait for a page that is ready.
+      const wait = Math.max(0, MIN_VISIBLE_MS - (Date.now() - startedAt));
+      holdTimer = setTimeout(() => setPhase('out'), wait);
+      doneTimer = setTimeout(() => onDoneRef.current?.(), wait + 600);
+    };
+
+    if (document.readyState === 'complete') {
+      // The page is already loaded — open straight away.
+      finish();
+    } else {
+      window.addEventListener('load', finish, { once: true });
+    }
+
+    // Safety net: if 'load' never fires (a blocked script, a stalled image),
+    // the site still opens.
+    const safety = setTimeout(finish, MAX_WAIT_MS);
+
+    return () => {
+      window.removeEventListener('load', finish);
+      clearTimeout(safety);
+      clearTimeout(holdTimer);
+      clearTimeout(doneTimer);
+    };
+  }, []);
 
   return (
     <div className={`${styles.loader} ${phase === 'out' ? styles.exit : ''}`}>

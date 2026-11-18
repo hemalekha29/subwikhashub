@@ -280,6 +280,8 @@ function mountScene(THREE, wrapEl, mountEl, theme) {
   }
 
   let rafId = null;
+  let running = false;
+
   function tick() {
     if (!reduceMotion) {
       gift.rotation.y += 0.0009; // slow idle drift on top of scroll rotation
@@ -289,11 +291,43 @@ function mountScene(THREE, wrapEl, mountEl, theme) {
     rafId = requestAnimationFrame(tick);
   }
 
+  // ── The loop only runs while it can be seen ────────────────────────────
+  // A WebGL scene at 60fps is the most expensive thing on the page. Once the
+  // section has been scrolled past (or the tab is in the background) there is
+  // nothing to see, so the loop stops completely and the GPU goes idle.
+  function startLoop() {
+    if (running || reduceMotion || document.hidden) return;
+    running = true;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function stopLoop() {
+    if (!running) return;
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
   if (reduceMotion) {
     render();
   } else {
-    tick();
+    startLoop();
   }
+
+  const visibilityObserver = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) startLoop();
+      else stopLoop();
+    },
+    { threshold: 0 }
+  );
+  visibilityObserver.observe(mountEl);
+
+  const onVisibilityChange = () => {
+    if (document.hidden) stopLoop();
+    else startLoop();
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   const onResize = () => {
     const w = mountEl.clientWidth;
@@ -309,6 +343,9 @@ function mountScene(THREE, wrapEl, mountEl, theme) {
   return () => {
     window.removeEventListener('scroll', onScroll);
     window.removeEventListener('resize', onResize);
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    visibilityObserver.disconnect();
+    stopLoop();
     if (rafId) cancelAnimationFrame(rafId);
     renderer.dispose();
     particleGeo.dispose();
